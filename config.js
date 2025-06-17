@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url'
 
 
 global.owner = [
-  ['51928303585', 'Samsit', true],
+  ['5212731590195', 'Withe444', true],
 ]
 
 
@@ -20,17 +20,17 @@ global.sessions = 'Sessions'
 global.jadi = 'JadiBots' 
 global.yukiJadibts = true
 
-global.packname = 'LOVELLOUD'
-global.namebot = 'Anya Forger'
-global.author = 'Samsit'
+global.packname = 'SonicBot'
+global.namebot = 'SonicBot-MF'
+global.author = 'Withe444'
 
 
-global.namecanal = 'LOVELLOUD'
-global.canal = 'https://whatsapp.com/channel/0029VbAZUQ3002T9KZfx2O1M'
-global.idcanal = '120363403143798163@newsletter'
+global.namecanal = 'SonicBot-MF Official'
+global.canal = 'https://whatsapp.com/channel/0029Vb3oShrICVfiTWhDHM13'
+global.idcanal = '120363411154070926@newsletter'
 
 global.ch = {
-ch1: '120363403143798163@newsletter',
+ch1: '120363411154070926@newsletter',
 }
 
 global.multiplier = 69 
