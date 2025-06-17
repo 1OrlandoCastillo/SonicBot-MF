@@ -1,30 +1,26 @@
-// Tagall Mejorado por willzek
-import fetch from 'node-fetch';
-import PhoneNumber from 'awesome-phonenumber';
+const handler = async (m, { conn }) => {
+  if (!m.isGroup) return m.reply('Este comando solo se puede utilizar en grupos');
 
-const handler = async (m, { participants, args }) => {
-  const pesan = args.join` `;
-  const oi = `*» INFO :* ${pesan}`;
-  let mensajes = `*!  MENCION GENERAL  !*\n  *PARA ${participants.length} MIEMBROS* 🗣️\n\n ${oi}\n\n╭  ┄ 𝅄  ۪꒰ \`⡞᪲=͟͟͞SonicBot ≼᳞ׄ\` ꒱  ۟  𝅄 ┄\n`;
+  const participants = await conn.groupParticipants(m.chat);
+  const mentions = participants.map((participant) => participant.id);
 
-  for (const mem of participants) {
-    let numero = PhoneNumber('+' + mem.id.replace('@s.whatsapp.net', '')).getNumber('international');
-    let api = `https://delirius-apiofc.vercel.app/tools/country?text=${numero}`;
-    let response = await fetch(api);
-    let json = await response.json();
+  const tagallMessage = `
+╔═══❖『 *MENCIÓN A TODOS* 』❖═══╗
+║
+║ 👥 *Total de miembros:* ${participants.length}
+║ 📝 *Mensaje:* ${m.text.replace(/tagall/i, '').trim()}
+║
+╚═══❖『 @${m.sender.split('@')[0]} 』❖═══╝
+`;
 
-    let paisdata = json.result ? json.result.emoji : '🍫';
-    mensajes += `${paisdata} @${mem.id.split('@')[0]}\n`;
-  }
-
-    mensajes += `╰⸼ ┄ ┄ ┄ ─  ꒰  ׅ୭ *${vs}* ୧ ׅ ꒱  ┄  ─ ┄ ⸼`;
-
-  conn.sendMessage(m.chat, { text: mensajes, mentions: participants.map((a) => a.id) });
+  await conn.sendMessage(m.chat, {
+    text: tagallMessage,
+    mentions,
+  });
 };
 
-handler.help = ['todos *<mensaje opcional>*'];
-handler.tags = ['grupo'];
-handler.command = /^(tagall|invocar|marcar|todos|invocación)$/i;
-handler.group = true;
+handler.help = ['tagall'];
+handler.tags = ['group'];
+handler.command = /^(tagall)$/i;
 
 export default handler;
