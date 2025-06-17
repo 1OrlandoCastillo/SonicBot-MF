@@ -23,7 +23,7 @@ let tags = {
   'logos': '「EDICION LOGOS」🍨', 
 }
 
-const vid = ['https://files.catbox.moe/5tjmag.mp4', 'https://files.catbox.moe/icwgjw.mp4'].getRandom();
+const vid = ['https://qu.ax/VqumN.mp4', 'https://qu.ax/YKLkz.mp4'].getRandom();
 
 const defaultMenu = {
   before: `*•:•:•:•:•:•:•:•:•:•☾☼☽•:•.•:•.•:•:•:•:•:•*
@@ -146,7 +146,9 @@ readmore: readMore
 }
 text = text.replace(new RegExp(`%(${Object.keys(replace).sort((a, b) => b.length - a.length).join`|`})`, 'g'), (_, name) => '' + replace[name])
 
-await conn.sendMessage(m.chat, { video: { url: vid }, caption: text.trim(), contextInfo: { mentionedJid: [m.sender], isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: channelRD.id, newsletterName: channelRD.name, serverMessageId: -1, }, forwardingScore: 999, externalAdReply: { title: namebot, body: thumbnailUrl: 'https://qu.ax/kJBTp.jpg', sourceUrl: redes, mediaType: 1, renderLargerThumbnail: false,
+await m.react(💎) 
+
+await conn.sendMessage(m.chat, { video: { url: vid }, caption: text.trim(), contextInfo: { mentionedJid: [m.sender], isForwarded: true, serverMessageId: -1, }, thumbnailUrl: 'https://qu.ax/kJBTp.jpg', mediaType: 1, renderLargerThumbnail: false,
 }, }, gifPlayback: true, gifAttribution: 0 }, { quoted: null })
 
   } catch (e) {
