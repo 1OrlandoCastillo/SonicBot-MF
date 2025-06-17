@@ -4,7 +4,7 @@ import { promises as fsp } from 'fs';
 // fsp.readFile(...) → para async/await
 import { join } from 'path'
 import fetch from 'node-fetch'
-import { xpRange } from '../lib/levelling.js'
+import { xpRange } from './lib/levelling.js'
 
 const tags = {
   serbot: '• Subs - Bots',
@@ -237,4 +237,4 @@ const greetingMap = {
   23: 'una linda noche 🌃',
 }
 
-var greeting = 'espero que tengas ' + (greetingMap[hour] || 'un buen día')
+var greeting = 'espero que tengas ' + (greetingMap[hour] || 'un buen día'
