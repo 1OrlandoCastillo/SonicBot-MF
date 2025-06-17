@@ -163,32 +163,30 @@ const handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
       (_, name) => String(replace[name])
     )
 
-    await conn.sendMessage(m.chat, {
-  video: { url: 'https://qu.ax/VqumN.mp4'
-  caption: text.trim(),
-  contextInfo: {
-    mentionedJid: conn.parseMention(text.trim()),
-    isForwarded: true,
-    forwardedNewsletterMessageInfo: {
-      newsletterJid: '//qu.ax/VqumN.mp4' },
-  caption: text.trim(),
-  contextInfo: {
-    mentionedJid: conn.parseMention(text.trim()),
-    isForwarded: true,
-    forwardedNewsletterMessageInfo: {
-      newsletterJid: '120363403143798163@newsletter',
-      newsletterName: 'LOVELLOUD',
-    },
-    externalAdReply: {
-      title: 'Anya Forger',
-      body: '',
-      thumbnail: { url: 'https://qu.ax/VqumN.mp4' },
-      sourceUrl: 'https://dash.lovelloud.uk',
-      mediaType: 2,
-      renderLargerThumbnail: true
+    await conn.sendMessage(
+  m.chat,
+  {
+    image: fs.readFileSync('./storage/img/menu.jpg'),
+    caption: text.trim(),
+    contextInfo: {
+      mentionedJid: conn.parseMention(text.trim()),
+      isForwarded: true,
+      forwardedNewsletterMessageInfo: {
+        newsletterJid: '120363403143798163@newsletter',
+        newsletterName: 'LOVELLOUD',
+        },
+      externalAdReply: {
+        title: 'Anya Forger',
+        body: '',
+        thumbnail: fs.readFileSync('./storage/img/menu2.jpg'),
+        sourceUrl: 'https://dash.lovelloud.uk',
+        mediaType: 1,
+        renderLargerThumbnail: true
+      }
     }
-  }
-}, { quoted: m });
+  },
+  { quoted: m }
+);
 
   } catch (e) {
     conn.reply(m.chat, '❎ Lo sentimos, el menú tiene un error.', m)
