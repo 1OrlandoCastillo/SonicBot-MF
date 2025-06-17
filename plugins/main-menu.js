@@ -42,13 +42,6 @@ const _package = JSON.parse(
       await fs.promises.readFile(join(__dirname, '../package.json'), 'utf-8').catch(() => '{}')
     ) || {}
 
-    // ✅ Validación para evitar error con usuarios no registrados
-    const user = global.db.data?.users?.[m.sender]
-    if (!user) {
-      conn.reply(m.chat, '❎ Usuario no registrado en la base de datos.', m)
-      return
-    }
-
     const { exp, limit, level } = user
     const { min, xp, max } = xpRange(level, global.multiplier)
     const name = await conn.getName(m.sender)
