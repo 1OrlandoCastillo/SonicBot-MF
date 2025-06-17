@@ -1,4 +1,3 @@
-
 import { totalmem, freemem } from 'os'
 import os from 'os'
 import util from 'util'
@@ -44,7 +43,6 @@ conn.reply(m.chat, texto, m, rcanal, )
 handler.help = ['speed']
 handler.tags = ['info']
 handler.command = ['speed']
-handler.register = true
 export default handler
 
 function clockString(ms) {
