@@ -1,3 +1,4 @@
+
 import { totalmem, freemem } from 'os'
 import os from 'os'
 import util from 'util'
@@ -20,7 +21,7 @@ let chats = Object.entries(conn.chats).filter(([id, data]) => id && data.isChats
 let groups = Object.entries(conn.chats).filter(([jid, chat]) => jid.endsWith('@g.us') && chat.isChats && !chat.metadata?.read_only && !chat.metadata?.announce).map(v => v[0])
 
 
-let texto = `🚩 *${global.namebot}*
+let texto = `🚩 *${global.botname}*
 🚀 *Velocidad:*
 → ${latensi.toFixed(4)}
 
@@ -43,6 +44,7 @@ conn.reply(m.chat, texto, m, rcanal, )
 handler.help = ['speed']
 handler.tags = ['info']
 handler.command = ['speed']
+handler.register = true
 export default handler
 
 function clockString(ms) {
