@@ -1,26 +1,22 @@
-const handler = async (m, { conn }) => {
-  if (!m.isGroup) return m.reply('Este comando solo se puede utilizar en grupos');
+const handler = async (m, { conn, args, participants }) => {
+  const message = args.join` `;
 
-  const participants = await conn.groupParticipants(m.chat);
-  const mentions = participants.map((participant) => participant.id);
+  const mentionText = `*! MENCION GENERAL !*\n*PARA ${participants.length} MIEMBROS* 🗣️\n\n*Mensaje:* ${message}\n\n`;
 
-  const tagallMessage = `
-╔═══❖『 *MENCIÓN A TODOS* 』❖═══╗
-║
-║ 👥 *Total de miembros:* ${participants.length}
-║ 📝 *Mensaje:* ${m.text.replace(/tagall/i, '').trim()}
-║
-╚═══❖『 @${m.sender.split('@')[0]} 』❖═══╝
-`;
+  let text = mentionText;
+  for (const participant of participants) {
+    text += `@${participant.id.split('@')[0]}\n`;
+  }
 
-  await conn.sendMessage(m.chat, {
-    text: tagallMessage,
-    mentions,
+  conn.sendMessage(m.chat, {
+    text,
+    mentions: participants.map((a) => a.id),
   });
 };
 
-handler.help = ['tagall'];
+handler.help = ['todos *<mensaje opcional>*'];
 handler.tags = ['group'];
-handler.command = /^(tagall)$/i;
+handler.command = ['todos', 'invocar', 'tagall'];
+handler.group = true;
 
 export default handler;
