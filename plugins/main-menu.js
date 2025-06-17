@@ -6,6 +6,11 @@ import { join } from 'path'
 import fetch from 'node-fetch'
 import { xpRange } from '../lib/levelling.js'
 
+const handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
+  try {
+const user = global.db.data.users[m.sender] || {};
+const namebot = user.namebot || global.namebot;
+
 const tags = {
   serbot: '• Subs - Bots',
   downloader: '• Downloaders',
@@ -18,11 +23,9 @@ const tags = {
 
 const defaultMenu = {
   before: `
-*﹙ ✿ ﹚Sylphy*
-https://api.sylphy.xyz
+Hola yo soy ${namebot} y este es mi .*menu*
 
-*﹙ ✿ ﹚PBT-API*
-https://api-pbt.onrender.com
+Crea un *Sub-Bot* con tu número utilizando *.qr* o *.code*
 
 *﹙ ✿ ﹚Akirax Host*
 https://home.akirax.net
@@ -35,9 +38,7 @@ https://home.akirax.net
   after: '',
 }
 
-const handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
-  try {
-    const _package = JSON.parse(
+const _package = JSON.parse(
       await fs.promises.readFile(join(__dirname, '../package.json'), 'utf-8').catch(() => '{}')
     ) || {}
 
