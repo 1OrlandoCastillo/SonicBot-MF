@@ -1,39 +1,33 @@
-const frasesDespedida = [
-  `╭┈┈┈┈┈┈┈┈┈┈┈┈┈≫ ┊ @${nombre} ┊ (-1) 𝗧𝗲 𝗳𝘂𝗶𝘀𝘁𝗲 𝗺á𝘀 𝗿á𝗽𝗶𝗱𝗼 𝗾𝘂𝗲 𝘁𝘂 𝘃𝗶𝗿𝗴𝗶𝗻𝗶𝗱𝗮. 🚀 ╰┈┈┈┈┈┈┈┈┈┈┈┈┈≫`,
-  `╭┈┈┈┈┈┈┈┈┈┈┈┈┈≫ ┊ @${nombre} ┊ (-1) 𝗡𝗶 𝘁𝘂 𝗺𝗮𝗺á 𝘁𝗲 𝗲́𝘅𝘁𝗿𝗮ñ𝗮, ¿𝗰𝗿𝗲𝗲𝘀 𝗾𝘂𝗲 𝗻𝗼𝘀𝗼𝘁𝗿𝗼𝘀 𝘀𝗶́? 😂 ╰┈┈┈┈┈┈┈┈┈┈┈┈┈≫`
-];
+import { WAMessageStubType } from '@whiskeysockets/baileys';
+import fetch from 'node-fetch';
 
-async function despedirUsuario(conn, user, chatId) {
-  const username = user.split('@')[0];
-  let frase = frasesDespedida[Math.floor(Math.random() * frasesDespedida.length)];
-  frase = frase.replace(/\$\{nombre\}/gi, `${username}`);
-  let ppUrl;
+export async function before(m, { conn, participants, groupMetadata }) {
+  if (!m.messageStubType || !m.isGroup) return !0;
+
+  let pp = 'https:                                             
   try {
-    ppUrl = await conn.profilePictureUrl(user, 'image');
-  } catch (e) {
-    ppUrl = 'https:                                             
-  }
-  await conn.sendMessage(chatId, {
-    image: { url: ppUrl },
-    caption: frase,
-    mentions: [user]
-  });
-}
+    pp = await conn.profilePictureUrl(m.messageStubParameters[0], '//telegra.ph/file/6880771a42bad09dd6087.jpg';
+  try {
+    pp = await conn.profilePictureUrl(m.messageStubParameters[0], 'image');
+  } catch (e) {}
 
-conn.ev.on('//telegra.ph/file/6880771a42bad09dd6087.jpg';
-  }
-  await conn.sendMessage(chatId, {
-    image: { url: ppUrl },
-    caption: frase,
-    mentions: [user]
-  });
-}
+  let chat = global.db.data.chats[m.chat];
 
-conn.ev.on('group-participants.update', async (update) => {
-  const { id, participants, action } = update;
-  if (action === 'remove' || action === 'leave') {
-    for (const user of participants) {
-      await despedirUsuario(conn, user, id);
-    }
+  if (chat.bienvenida && m.messageStubType == 27) {
+    let bienvenida = `🎉 **Bienvenido** 🎉\n\nHola @${m.messageStubParameters[0].split`@`[0]} 👋\nBienvenido a ${groupMetadata.subject} 🤩\n\nEspero que te guste estar aquí 😊`;
+    await conn.sendMessage(m.chat, {
+      image: { url: pp },
+      caption: bienvenida,
+      mentions: [m.messageStubParameters[0]],
+    });
   }
-});
+
+  if (chat.bienvenida && (m.messageStubType == 28 || m.messageStubType == 32)) {
+    let bye = `👋 **Adiós** 👋\n\n@${m.messageStubParameters[0].split`@`[0]} se fue 😢\nEsperamos verte de nuevo 🤗`;
+    await conn.sendMessage(m.chat, {
+      image: { url: pp },
+      caption: bye,
+      mentions: [m.messageStubParameters[0]],
+    });
+  }
+}
