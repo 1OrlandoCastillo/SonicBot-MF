@@ -112,7 +112,7 @@ export async function before(m, { conn, participants, groupMetadata }) {
 
   if (chat.bienvenida && (m.messageStubType == 27)) {
     let nombre = `@${m.messageStubParameters[0].split`@`[0]}`;
-    let bienvenida = mensajesBienvenida[Math.floor(Math.random() * mensajesBienvenidad.length)].replace(/{nombre}/g, nombre);
+    let bienvenida = mensajesBienvenida[Math.floor(Math.random() * mensajesBienvenida.length)].replace(/{nombre}/g, nombre);
     await conn.sendAi(m.chat, namebot, author, bienvenida, img, img, canal);
   }
 
