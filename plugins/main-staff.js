@@ -11,51 +11,30 @@ let handler = async (m, { conn, command, usedPrefix }) => {
   💛 *Numero:* +505 5786 5603
 
 • 🎩 *Rol:* Developer 
-  💛 *Número:* 
+  💛 *Número:* +1234567890
 
 • 🍭 *Rol:* Mod 
-  💛 *Número:* 
+  💛 *Número:* +9876543210
 
 • 🍭 *Rol:* Mod 
-  💛 *Numero:* 
-
-• 🎩 *Rol:* Mod 
-  💛 *Número:* 
-
-• 🍭 *Rol:* Developer 
-  💛 *Número:* 
-
-• 🎩 *Rol:* Mod 
-  💛 *Número:* 
-
-• 🍭 *Rol:* Mod 
-  💛 *Numero:*
+  💛 *Numero:* +1112223333
 `;
 
-  await conn.sendFile(
-    m.chat,
-    'https:                                                                             
-    '//raw.githubusercontent.com/WillZek/Storage-CB/main/images/21396e078a24.jpg',
-    'brook.jpg',
-    staff.trim(),
-    true,
-    {
-      contextInfo: {
-        forwardingScore: 200,
-        isForwarded: false,
-        externalAdReply: {
-          showAdAttribution: true,
-          renderLargerThumbnail: false,
-          title: '🎩 STAFF OFICIAL 🌟',
-          body: global.namebot,
-          mediaType: 1,
-        },
+  await conn.sendMessage(m.chat, {
+    text: staff.trim(),
+    contextInfo: {
+      forwardingScore: 200,
+      isForwarded: false,
+      externalAdReply: {
+        showAdAttribution: true,
+        renderLargerThumbnail: false,
+        title: '🎩 STAFF OFICIAL 🌟',
+        body: global.namebot,
+        mediaType: 1,
       },
     },
-    {
-      mentions: m.sender,
-    }
-  );
+    mentions: [m.sender],
+  });
 
   m.react('💎');
 };
