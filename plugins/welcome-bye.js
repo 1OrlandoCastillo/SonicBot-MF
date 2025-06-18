@@ -19,9 +19,9 @@ export async function before(m, { conn, participants, groupMetadata }) {
     await conn.sendAi(m.chat, namebot, author, bienvenida, img, img, canal);
   }
 
-  if (chat.bienvenida && m.messageStubType == 28 || m.messageStubType == 32) {
+  if (chat.bienvenida && (m.messageStubType == 28 || m.messageStubType == 32)) {
     let nombre = `@${m.messageStubParameters[0].split`@`[0]}`;
-    let despedida = mensajesDespedida[Math.floor(Math.random() * mensajesDespedida.length)].replace("{nombre}", nombre);
+    let despedida = mensajesDespedida[Math.floor(Math.random() * mensajesDespedida.length)].replace(/{nombre}/g, nombre);
     await conn.sendAi(m.chat, namebot, author, despedida, img, img, canal);
   }
 }
