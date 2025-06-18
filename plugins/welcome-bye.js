@@ -6,7 +6,7 @@ const mensajesBienvenida = [
 ┊» 𝗖𝗢𝗡𝗧𝗜𝗚𝗢 𝗦𝗢𝗠𝗢𝗦 𝗢𝗧𝗥𝗢 𝗡𝗜𝗩𝗘𝗟
 ┊» 𝗹𝗲𝗲 𝗹𝗮 𝗶𝗻𝗳𝗼
 
-» Si no lees las reglas, ni llores cuando te saquen.`;
+» Si no lees las reglas, ni llores cuando te saquen.`,
 ];
 
 const mensajesDespedida = [
