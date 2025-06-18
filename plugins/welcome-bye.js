@@ -1,4 +1,4 @@
-// 1. Todas tus frases en un array (puedes agregar/quitar las que quieras)
+// Frases de despedida
 const frasesDespedida = [
 `╭┈┈┈┈┈┈┈┈┈┈┈┈┈≫
 ┊ @${nombre}
@@ -91,19 +91,14 @@ const frasesDespedida = [
 `╭┈┈┈┈┈┈┈┈┈┈┈┈┈≫
 ┊ @${nombre}
 ┊ (-𝟭) 𝗡𝗶 𝗲𝗻 𝗲𝗹 𝗶𝗻𝗳𝗶𝗲𝗿𝗻𝗼 𝗰𝗲𝗹𝗲𝗯𝗿𝗮𝗻 𝘁𝘂 𝗹𝗲𝗴𝗮𝗱𝗼. 🔥
-╰┈┈┈┈┈┈┈┈┈┈┈┈┈≫`,
+╰┈┈┈┈┈┈┈┈┈┈┈┈┈≫`
 ];
 
-// 2. La función para despedir (con foto de perfil):
-async function despedirUsuario(conn, user, chatId) {
-  // Elige una frase aleatoria del array
-  let frase = frasesDespedida[Math.floor(Math.random() * frasesDespedida.length)];
-
-  // El nombre de usuario (número) para mostrar
+// Función para desped {
   const username = user.split('@')[0];
+  let frase = frasesDespedida[Math.floor(Math.random() * frasesDespedida.length)];
   frase = frase.replace(/\$\{nombre\}/gi, username);
 
-  // Intenta obtener la foto de perfil, o una por defecto si falla
   let ppUrl;
   try {
     ppUrl = await conn.profilePictureUrl(user, 'image');
@@ -111,14 +106,16 @@ async function despedirUsuario(conn, user, chatId) {
     ppUrl = 'https://telegra.ph/file/6880771a42bad09dd6087.jpg';
   }
 
-  // Envía la imagen con la frase y la mención
   await conn.sendMessage(chatId, {
     image: { url: ppUrl },
     caption: frase,
     mentions: [user]
-  });
-}
-
-// 3. Llama a despedirUsuario cuando alguien salga del grupo.
-// Ejemplo de uso:
-// despedirUsuario(conn, '521234567890@s.whatsapp.net', '1234567890-123456@g.us');
+expulsar
+conn.ev.on('group-participants.update', async (update) => {
+  const { id, participants, action } = update;
+  if (action === 'remove' || action === 'leave') {
+    for (const user of participants) {
+      await despedirUsuario(conn, user, id);
+    }
+  }
+});
