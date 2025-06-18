@@ -96,6 +96,14 @@ const mensajesDespedida = [
 ╰┈┈┈┈┈┈┈┈┈┈┈┈┈≫`,
 ];
 
+const mensajesBienvenida = [
+  `┊» Se subió el nivel ┊» 𝗡𝗢 𝗦𝗘𝗔𝗦 𝗗𝗘 𝗘𝗦𝗢𝗦 𝗤𝗨𝗘 𝗡𝗢 𝗟𝗘𝗘𝗡 ┊» @${m.messageStubParameters[0].split`@`[0]} ┊» 𝗿𝗲𝘃𝗶𝘀𝗮 𝗹𝗮 𝗱𝗲𝘀𝗰𝗿𝗶𝗽𝗰𝗶𝗼𝗻 » No hagas preguntas tontas, todo está en las reglas.`,
+  `┊» Solo los duros entran ┊» 𝗣𝗢𝗥 𝗙𝗔 𝗡𝗢 𝗛𝗔𝗚𝗔𝗦 𝗘𝗟 𝗣𝗔𝗣𝗘𝗟 𝗗𝗘𝗟 𝗧𝗢𝗡𝗧𝗢 ┊» @${m.messageStubParameters[0].split`@`[0]} ┊» 𝗹𝗲𝗲 𝗹𝗮 𝗶𝗻𝗳𝗼 » Reglas primero, después la mamadera.`,
+  `┊» Llegó el que faltaba ┊» 𝗠𝗔𝗦 𝗩𝗔𝗟𝗘 𝗤𝗨𝗘 𝗡𝗢 𝗟𝗔 𝗖𝗔𝗚𝗨𝗘𝗦 ┊» @${m.messageStubParameters[0].split`@`[0]} ┊» 𝗿𝗲𝘃𝗶𝘀𝗮 𝗹𝗮 𝗱𝗲𝘀𝗰𝗿𝗶𝗽𝗰𝗶𝗼𝗻 » Lee las reglas, no vengas de despistado.`,
+  `┊» 𝗖𝗢𝗡 𝗧𝗜𝗚𝗢 𝗦𝗢𝗠𝗢𝗦 𝗢𝗧𝗥𝗢 𝗡𝗜𝗩𝗘𝗟 ┊» @${m.messageStubParameters[0].split`@`[0]} ┊» 𝗹𝗲𝗲 𝗹𝗮 𝗶𝗻𝗳𝗼 » Si no lees las reglas, ni llores cuando te saquen.`,
+  `┊» 𝗤𝗨𝗘 𝗟𝗨𝗝𝗢 𝗧𝗘𝗡𝗘𝗥𝗧𝗘 ┊» @${m.messageStubParameters[0].split`@`[0]} ┊» 𝗹𝗲𝗲 𝗹𝗮 𝗱𝗲𝘀𝗰𝗿𝗶𝗽𝗰𝗶𝗼𝗻 » No vengas a desordenar, primero lee las reglas, cabrón.`,
+];
+
 export async function before(m, { conn, participants, groupMetadata }) {
   if (!m.messageStubType || !m.isGroup) return !0;
 
@@ -104,7 +112,7 @@ export async function before(m, { conn, participants, groupMetadata }) {
   let chat = global.db.data.chats[m.chat];
 
   if (chat.bienvenida && m.messageStubType == 27) {
-    let bienvenida = `🌟 *¡Hola, velocidad!* 🌟\n\n¡Bienvenido @${m.messageStubParameters[0].split`@`[0]}!\n¡Estás en ${groupMetadata.subject}!\n¡Vamos a correr! 🏃‍♂️`;
+    let bienvenida = mensajesBienvenida[Math.floor(Math.random() * mensajesBienvenida.length)].replace('{nombre}', `@${m.messageStubParameters[0].split`@`[0]}`);
     await conn.sendAi(m.chat, namebot, author, bienvenida, img, img, canal);
   }
 
