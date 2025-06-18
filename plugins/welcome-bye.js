@@ -8,6 +8,7 @@ const mensajesBienvenida = [
 
 » Si no lees las reglas, ni llores cuando te saquen.`;
 ];
+
 const mensajesDespedida = [
   `╭┈┈┈┈┈┈┈┈┈┈┈┈┈≫
 ┊ {nombre}
