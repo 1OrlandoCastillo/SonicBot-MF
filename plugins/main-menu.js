@@ -27,8 +27,8 @@ Hola yo soy ${namebot} y este es mi .*menu*
 
 Crea un *Sub-Bot* con tu número utilizando *.qr* o *.code*
 
-*﹙ ✿ ﹚Akirax Host*
-https://home.akirax.net
+*﹙ ✿ ﹚Cuervo Host*
+https://dash.cuervo-host.xyz
 
 %readmore`.trimStart(),
 
