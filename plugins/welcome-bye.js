@@ -20,7 +20,7 @@ const mensajesBienvenida = [
 »⁩ Lee las reglas, no vengas de despistado.`,
 `┊» {nombre} 😗
 ┊» Solo los duros entran
-┊» 𝗣𝗢𝗥 𝗙𝗔 𝗡𝗢 𝗛𝗔𝗚𝗔𝗦 𝗘𝗟 𝗣𝗔𝗣𝗘𝗟 𝗗𝗘𝗟 𝗧𝗢𝗡𝗧𝗢
+┊» 𝗣𝗢𝗥𝗙𝗔 𝗡𝗢 𝗛𝗔𝗚𝗔𝗦 𝗘𝗟 𝗣𝗔𝗣𝗘𝗟 𝗗𝗘𝗟 𝗧𝗢𝗡𝗧𝗢
 ┊» 𝗹𝗲𝗲 𝗹𝗮 𝗶𝗻𝗳𝗼
 
 » Reglas primero, después la mamadera.`,
@@ -166,7 +166,7 @@ const mensajesDespedida = [
 export async function before(m, { conn, participants, groupMetadata }) {
   if (!m.messageStubType || !m.isGroup) return !0;
 
-  let pp = await conn.profilePictureUrl(m.messageStubParameters[0], 'image').catch(() => 'https://tinyurl.com/ylgu47w3');
+  let pp = await conn.profilePictureUrl(m.messageStubParameters[0], 'image').catch(() => 'https://files.catbox.moe/hjl3b6.jpg');
   let img = await (await fetch(pp)).buffer();
   let chat = global.db.data.chats[m.chat];
 
