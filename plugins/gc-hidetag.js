@@ -52,7 +52,6 @@ const handler = async (m, { conn, text, participants, isOwner, isAdmin }) => {
                 externalAdReply: {
                   title: 'SonicBot',
                   body: 'Notificación de grupo',
-                  thumbnailUrl: 'https:                                             
                   sourceUrl: '//telegra.ph/file/6f1879a92fdb1b3786d3b.jpg',
                   sourceUrl: 'https://whatsapp.com/channel/0029Vb1AFK6HbFV9kaB3b13W'
                 }
