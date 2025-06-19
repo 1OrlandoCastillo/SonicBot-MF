@@ -32,7 +32,7 @@ let sock = {
 
 // Enum de razones de desconexión (ajusta según la librería real)
 const DisconnectReason = {
-  loggedOut: 401
+  loggedOut: 401,
   // Agrega aquí otros códigos según tu framework si los usas
 };
 
@@ -57,7 +57,9 @@ async function connectionUpdate(update, m) {
 
     if (qr && !mcode) {
       const txtQR = await conn.sendMessage(m.chat, { image: await qrcode.toBuffer(qr, { scale: 8 }), caption: rtx }, { quoted: m });
-      if (txtQR?.key) setTimeout(() => conn.sendMessage(m.sender, { delete: txtQR.key }), 30000);
+      if (txtQR?.key) setTimeout(() => {
+        // Aquí debes llamar la función real de borrado de mensajes según tu framework
+      }, 30000);
     }
 
     if (qr && mcode) {
@@ -65,8 +67,12 @@ async function connectionUpdate(update, m) {
       secret = secret.match(/.{1,4}/g)?.join("-");
       const txtCode = await conn.sendMessage(m.chat, { text: rtx2 }, { quoted: m });
       const codeBot = await m.reply(secret);
-      if (txtCode?.key) setTimeout(() => conn.sendMessage(m.sender, { delete: txtCode.key }), 30000);
-      if (codeBot?.key) setTimeout(() => conn.sendMessage(m.sender, { delete: codeBot.key }), 30000);
+      if (txtCode?.key) setTimeout(() => {
+        // Aquí debes llamar la función real de borrado de mensajes según tu framework
+      }, 30000);
+      if (codeBot?.key) setTimeout(() => {
+        // Aquí debes llamar la función real de borrado de mensajes según tu framework
+      }, 30000);
     }
 
     const reason = lastDisconnect?.error?.output?.statusCode || 0;
@@ -76,7 +82,9 @@ async function connectionUpdate(update, m) {
         case 401: case 405: case 440:
           console.log(chalk.red(`🟥 Sesión cerrada (${path.basename(pathYukiJadiBot)}), eliminando datos...`));
           if (fs.existsSync(pathYukiJadiBot)) {
-            fs.rmSync(pathYukiJadiBot, { recursive: true, force: true });
+            fs.rmSync
+              ? fs.rmSync(pathYukiJadiBot, { recursive: true, force: true })
+              : fs.rmdirSync(pathYukiJadiBot, { recursive: true });
           }
           break;
         case 408: case 428: case 500: case 515:
