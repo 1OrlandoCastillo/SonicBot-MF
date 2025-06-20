@@ -169,8 +169,8 @@ loadSubbots().catch(console.error);
 
 // Handler principal
 let handler = async (msg, { conn, args, usedPrefix, command, isOwner }) => {
-  if (!global.db.data.settings[conn.user.jid].jadibotmd) {
-    return conn.reply(msg.chat, "*ðŸŒ¼ Este Comando estÃ¡ deshabilitado por mi creador.*", msg, rcanal);
+  //if (!global.db.data.settings[conn.user.jid].jadibotmd) {
+    //return conn.reply(msg.chat, "*ðŸŒ¼ Este Comando estÃ¡ deshabilitado por mi creador.*", msg, rcanal);
   }
 
   // Verificar lÃ­mite de subbots
