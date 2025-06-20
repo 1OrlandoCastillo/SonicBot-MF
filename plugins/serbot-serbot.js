@@ -4,6 +4,8 @@ import NodeCache from "node-cache"
 import fs from "fs"
 import path from "path"
 import pino from 'pino'
+import fs from 'fs'
+import path from 'path'
 import chalk from 'chalk'
 import util from 'util' 
 import * as ws from 'ws'
@@ -165,8 +167,7 @@ console.error(chalk.bold.yellow(`Error 440 no se pudo enviar mensaje a: +${path.
 if (reason == 405 || reason == 401) {
 console.log(chalk.bold.magentaBright(`\n╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡\n┆ La sesión (+${path.basename(pathYukiJadiBot)}) fue cerrada. Credenciales no válidas o dispositivo desconectado manualmente.\n╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡`))
 try {
-      if (fs.existsSync(pathYukiJadiBot)) {
-        fs.rmdirSync(pathYukiJadiBot, { recursive: true })
+      await fs.rm(pathYukiJadiBot, { recursive: true })
       } else {
         console.log(`Directorio no existe: ${pathYukiJadiBot}`)
       }
