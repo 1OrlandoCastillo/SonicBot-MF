@@ -1,17 +1,10 @@
 const handler = async (m, { conn, args, participants }) => {
-  const message = args.join` `;
-
+  const message = args.join(' ');
   const mentionText = `*! MENCION GENERAL !*\n*PARA ${participants.length} MIEMBROS* 🗣️\n\n*Mensaje:* ${message}\n\n`;
+  const mentions = participants.map((a) => a.id);
+  const text = `${mentionText}${mentions.map((id) => `@${id.split('@')[0]}`).join('\n')}`;
 
-  let text = mentionText;
-  for (const participant of participants) {
-    text += `@${participant.id.split('@')[0]}\n`;
-  }
-
-  conn.sendMessage(m.chat, {
-    text,
-    mentions: participants.map((a) => a.id),
-  });
+  conn.sendMessage(m.chat, { text, mentions });
 };
 
 handler.help = ['todos *<mensaje opcional>*'];
