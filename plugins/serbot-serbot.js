@@ -180,7 +180,14 @@ if (options.fromCommand) m?.chat ? await conn.sendMessage(`${path.basename(pathY
 } catch (error) {
 console.error(chalk.bold.yellow(`Error 405 no se pudo enviar mensaje a: +${path.basename(pathYukiJadiBot)}`))
 }
-fs.rmdirSync(pathYukiJadiBot, { recursive: true })
+try {
+  await fs.rm(pathYukiJadiBot, { recursive: true })
+} catch (error) {
+  if (error.code === 'ENOENT') {
+    console.log(`Directorio no existe: ${pathYukiJadiBot}`)
+  } else {
+    console.error(chalk.bold.yellow(`Error al eliminar directorio: ${error}`))
+  }
 }
 if (reason === 500) {
 console.log(chalk.bold.magentaBright(`\n╭┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡\n┆ Conexión perdida en la sesión (+${path.basename(pathYukiJadiBot)}). Borrando datos...\n╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄ • • • ┄┄┄┄┄┄┄┄┄┄┄┄┄┄⟡`))
