@@ -37,6 +37,8 @@ return m.reply(`No se han encontrado espacios para *Sub-Bots* disponibles.`)
 
 let who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender
 let id = `${who.split`@`[0]}`  //conn.getName(who)
+const path = require('path');
+const pathYukiJadiBot = path.join(__dirname, 'JadiBots', id);
 if (!fs.existsSync(pathYukiJadiBot)){
 fs.mkdirSync(pathYukiJadiBot, { recursive: true })
 }
