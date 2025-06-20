@@ -181,7 +181,7 @@ if (options.fromCommand) m?.chat ? await conn.sendMessage(`${path.basename(pathY
 console.error(chalk.bold.yellow(`Error 405 no se pudo enviar mensaje a: +${path.basename(pathYukiJadiBot)}`))
 }
 try {
-  await fs.rm(pathYukiJadiBot, { recursive: true })
+  await fs.rm(pathYukiJadiBot, { recursive: true, force: true })
 } catch (error) {
   if (error.code === 'ENOENT') {
     console.log(`Directorio no existe: ${pathYukiJadiBot}`)
