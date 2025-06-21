@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 let handler = async (m, { conn, usedPrefix }) => {
+    let who;
     // Verificamos si se menciona a alguien o se cita un mensaje
     if (m.mentionedJid.length > 0) {
         who = m.mentionedJid[0]; // Si hay mención, usamos esa
