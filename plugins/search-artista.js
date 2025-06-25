@@ -1,25 +1,6 @@
 import fetch from "node-fetch"
 
 let isDownloadingArtist = false
-
-async function downloadTrack(youtubeUrl) {
-  try {
-    const encodedUrl = encodeURIComponent(youtubeUrl)
-    const apiUrl = `https://mahiru-shiina.vercel.app/download/ytmp3?url=${encodedUrl}`
-    const response = await fetch(apiUrl)
-    const json = await response.json()
-    if (!json.status || !json.data) throw new Error("API inválida")
-    const downloadUrl = json.data.author?.download || json.data.download
-    const title = json.data.title || "audio"
-    if (!downloadUrl) throw new Error("No se encontró el enlace de descarga")
-    const audioResponse = await fetch(downloadUrl)
-    const audioBuffer = await audioResponse.buffer()
-    return { audioBuffer, title }
-  } catch (error) {
-    throw error
-  }
-}
-
 let handler = async (m, { conn, text, usedPrefix, command }) => {
   if (command.toLowerCase() !== "artista") return
   if (isDownloadingArtist) {
