@@ -12,9 +12,14 @@ global.owner = [
 global.mods = []
 global.prems = []
 
-global.jadi = 'Sesiones/Subbots'
-global.Sesion = 'Sesiones/Principal'
-global.dbname = 'database.json'
+global.libreria = 'Baileys'
+global.baileys = 'V 6.7.16' 
+global.vs = '2.2.0'
+global.nameqr = 'YukiBot-MD'
+global.namebot = '✿◟Yυƙι-Sυσυ-Bσƚ◞✿'
+global.sessions = 'Sessions'
+global.jadi = 'JadiBots' 
+global.yukiJadibts = true
 
 global.packname = 'SonicBot'
 global.namebot = 'SonicBot-MF'
