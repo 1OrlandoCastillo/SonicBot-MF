@@ -1,91 +1,84 @@
-let handler = async (m, { conn }) => {
-  try {
-    const jugador = {
-      nombre: 'Aventurero',
-      salud: 100,
-      fuerza: 10,
-      oro: 0,
-      inventario: []
-    }
+let cooldowns = {}
+let handler = async (m, { conn, text, usedPrefix, command }) => {
+  let poin = 500
+  let tiempoEspera = 5 * 1000
+  let user = global.db.data.users[m.sender]
 
-    const enemigos = [
-      { nombre: 'Goblin', salud: 20, fuerza: 5 },
-      { nombre: 'Orco', salud: 50, fuerza: 10 },
-      { nombre: 'Dragón', salud: 100, fuerza: 20 }
-    ]
-
-    const lugares = [
-      { nombre: 'Bosque', descripcion: 'Un bosque oscuro y misterioso' },
-      { nombre: 'Montaña', descripcion: 'Una montaña alta y peligrosa' },
-      { nombre: 'Cueva', descripcion: 'Una cueva oscura y llena de peligros' }
-    ]
-
-    let juego = true
-    while (juego) {
-      const accion = await conn.waitForMessage(m.chat, m => m.text, { maxAttempts: 1 })
-      const comando = accion.text.toLowerCase()
-
-      if (comando === 'explorar') {
-        const lugar = lugares[Math.floor(Math.random() * lugares.length)]
-        await m.reply(`Estás en ${lugar.nombre}. ${lugar.descripcion}`)
-        const enemigo = enemigos[Math.floor(Math.random() * enemigos.length)]
-        if (Math.random() < 0.5) {
-          await m.reply(`Un ${enemigo.nombre} te ataca!`)
-          const batalla = await batallaJugadorEnemigo(m, conn, jugador, enemigo)
-          if (batalla) {
-            await m.reply(`Ganaste la batalla!`)
-          } else {
-            await m.reply(`Perdiste la batalla...`)
-            juego = false
-          }
-        }
-      } else if (comando === 'inventario') {
-        await m.reply(`Inventario: ${jugador.inventario.join(', ')}`)
-      } else if (comando === 'salud') {
-        await m.reply(`Salud: ${jugador.salud}`)
-      } else if (comando === 'fuerza') {
-        await m.reply(`Fuerza: ${jugador.fuerza}`)
-      } else if (comando === 'oro') {
-        await m.reply(`Oro: ${jugador.oro}`)
-      } else if (comando === 'salir') {
-        juego = false
-      } else {
-        await m.reply(`Comando no reconocido`)
-      }
-    }
-  } catch (error) {
-    console.error(error)
+  if (cooldowns[m.sender] && Date.now() - cooldowns[m.sender] < tiempoEspera) {
+    let tiempoRestante = segundosAHMS(Math.ceil((cooldowns[m.sender] + tiempoEspera - Date.now()) / 1000))
+    return conn.reply(m.chat, `🌺 Ya has iniciado una aventura recientemente, espera *⏱ ${tiempoRestante}* para iniciar otra aventura.`, m)
   }
+
+  cooldowns[m.sender] = Date.now()
+
+  let numeroAleatorio = Math.floor(Math.random() * 10) + 1
+  let opciones = ["suma", "resta", "multiplica"]
+
+  let operacion = opciones[Math.floor(Math.random() * opciones.length)]
+
+  let resultado = 0
+
+  switch (operacion) {
+    case "suma":
+      resultado = numeroAleatorio + 5
+      break
+    case "resta":
+      resultado = numeroAleatorio - 3
+      break
+    case "multiplica":
+      resultado = numeroAleatorio * 2
+      break
+  }
+
+  conn.reply(m.chat, `⭐ Resuelve la siguiente operación: ${numeroAleatorio} ${getOperador(operacion)} ? = ${resultado}`, m)
+
+  let respuesta = await conn.waitForMessage(m.chat, m => m.text, { maxAttempts: 1 })
+  let numero = parseInt(respuesta.text)
+
+  if (isNaN(numero)) {
+    conn.reply(m.chat, `⭐ Ingresa un número válido.`, m)
+    return
+  }
+
+  if (getNumeroOperacion(numeroAleatorio, operacion) === numero) {
+    user.limit += poin
+    conn.reply(m.chat, `🌸 ¡Felicidades! Resolviste la operación correctamente. Ganaste ${poin} estrellas.`, m)
+  } else {
+    user.limit -= poin
+    conn.reply(m.chat, `💎 Lo siento, la respuesta correcta era ${getNumeroOperacion(numeroAleatorio, operacion)}. Perdiste ${poin} estrellas.`, m)
+  }
+
+  delete cooldowns[m.sender]
 }
 
-async function batallaJugadorEnemigo(m, conn, jugador, enemigo) {
-  try {
-    while (jugador.salud > 0 && enemigo.salud > 0) {
-      const accion = await conn.waitForMessage(m.chat, m => m.text, { maxAttempts: 1 })
-      const comando = accion.text.toLowerCase()
-
-      if (comando === 'atacar') {
-        enemigo.salud -= jugador.fuerza
-        await m.reply(`Atacaste al ${enemigo.nombre} por ${jugador.fuerza} de daño`)
-      } else if (comando === 'defender') {
-        jugador.salud += 10
-        await m.reply(`Te defendiste y recuperaste 10 de salud`)
-      }
-
-      if (enemigo.salud > 0) {
-        jugador.salud -= enemigo.fuerza
-        await m.reply(`El ${enemigo.nombre} te atacó por ${enemigo.fuerza} de daño`)
-      }
-    }
-
-    return jugador.salud > 0
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-handler.help = ['aventuras']
+handler.help = ['aventura']
 handler.tags = ['games']
-handler.command = ['aventuras']
+handler.command = ['aventura']
 
 export default handler
+
+function getOperador(operacion) {
+  switch (operacion) {
+    case "suma":
+      return "+"
+    case "resta":
+      return "-"
+    case "multiplica":
+      return "*"
+  }
+}
+
+function getNumeroOperacion(numero, operacion) {
+  switch (operacion) {
+    case "suma":
+      return numero + 5
+    case "resta":
+      return numero - 3
+    case "multiplica":
+      return numero * 2
+  }
+}
+
+function segundosAHMS(segundos) {
+  return `${segundos % 60} segundos`
+}
