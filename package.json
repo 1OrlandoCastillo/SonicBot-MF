@@ -1,5 +1,5 @@
 {
-  "name": "Anya Forger",
+  "name": "Sonic Bot",
   "version": "1.0.0",
   "description": "Multi Device",
   "main": "index.js",
@@ -12,16 +12,16 @@
   "scripts": {
     "start": "node index.js"
   },
-  "homepage": "https://github.com/LOVELLOUD/Anya-Forger",
+  "homepage": "https://github.com/1OrlandoCastillo/SonicBot-MF",
   "author": {
-    "name": "Samsit"
+    "name": "White"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/LOVELLOUD/Anya-Forger.git"
+    "url": "git+https://github.com/1OrlandoCastillo/SonicBot-MF.git"
   },
   "bugs": {
-    "url": "https://github.com/LOVELLOUD/Anya-Forger/issues"
+    "url": "https://github.com/1OrlandoCastillo/SonicBot-MF/issues"
   },
   "license": "GPL-3.0-or-later",
   "dependencies": {
