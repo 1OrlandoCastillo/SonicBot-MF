@@ -48,7 +48,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 };
 
 handler.help = ['adonix <pregunta>'];
-handler.tags = ['ia', 'inteligencia'];
+handler.tags = ['ai', 'adonix'];
 handler.command = ['adonix', 'ai', 'adonixia'];
 
 export default handler;
