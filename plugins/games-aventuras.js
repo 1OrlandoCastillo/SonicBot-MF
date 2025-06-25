@@ -30,7 +30,7 @@ let handler = async (m, { conn }) => {
       const enemigo = enemigos[Math.floor(Math.random() * enemigos.length)]
       if (Math.random() < 0.5) {
         m.reply(`Un ${enemigo.nombre} te ataca!`)
-        const batalla = await batallaJugadorEnemigo(jugador, enemigo)
+        const batalla = await batallaJugadorEnemigo(m, conn, jugador, enemigo)
         if (batalla) {
           m.reply(`Ganaste la batalla!`)
         } else {
@@ -54,7 +54,7 @@ let handler = async (m, { conn }) => {
   }
 }
 
-async function batallaJugadorEnemigo(jugador, enemigo) {
+async function batallaJugadorEnemigo(m, conn, jugador, enemigo) {
   while (jugador.salud > 0 && enemigo.salud > 0) {
     const accion = await conn.waitForMessage(m.chat, m => m.text, { maxAttempts: 1 })
     const comando = accion.text.toLowerCase()
@@ -77,7 +77,7 @@ async function batallaJugadorEnemigo(jugador, enemigo) {
 }
 
 handler.help = ['aventuras']
-handler.tags = ['ganes]
+handler.tags = ['games']
 handler.command = ['aventuras']
 
 export default handler
