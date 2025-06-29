@@ -66,9 +66,6 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       }
     }
 
-    const esPrincipal = botActual === '+522731260569'.replace(/\D/g, '')
-    const tipoBot = esPrincipal ? '*Bot:* Principal' : '*Bot:* Sub Bot'
-
     const menuConfig = conn.menu || defaultMenu
     const _text = [
       tipoBot,
