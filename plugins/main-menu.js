@@ -68,7 +68,6 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
 
     const menuConfig = conn.menu || defaultMenu
     const _text = [
-      tipoBot,
       menuConfig.before,
       ...Object.keys(tags).map(tag => {
         return [
