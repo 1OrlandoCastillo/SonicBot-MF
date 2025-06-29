@@ -52,7 +52,7 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
     }))
 
     let nombreBot = global.namebot || 'Bot'
-    let bannerFinal = './storage/img/menu.jpg'
+    let bannerFinal = 'https://qu.ax/pUhgD.jpg'
 
     const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
     const configPath = join('./JadiBots', botActual, 'config.json')
@@ -66,8 +66,8 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       }
     }
 
-    const esPrincipal = botActual === '+51433359810'.replace(/\D/g, '')
-    const tipoBot = esPrincipal ? '*Bot:* Principal 🅥' : '*☁Bot:* Sub Bot 🅑'
+    const esPrincipal = botActual === '+5212731590195'.replace(/\D/g, '')
+    const tipoBot = esPrincipal ? '*Bot:* Principal' : '*Bot:* Sub Bot'
 
     const menuConfig = conn.menu || defaultMenu
     const _text = [
