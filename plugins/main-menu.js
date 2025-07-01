@@ -22,7 +22,7 @@ const defaultMenu = {
 ╰━━━✦✧✦━━━╯
 ╭──────── ✦ ────────╮
 ┃ 🕹️ *¡Bienvenido a la revolución de los bots!*
-┃ 🌟 *%greeting*
+┃ 🌟 *espero que tengas un buen día*
 ┃ 🙋‍♂️ Usuario: *%name*
 ┃ 👑 Owner: *%owner*
 ┃ 🧁 Diversión y utilidad garantizada.
