@@ -2,23 +2,22 @@ import fs from 'fs'
 import { join } from 'path'
 import { xpRange } from '../lib/levelling.js'
 
-
 const tags = {
-  serbot: 'Subs - Bots',
-  downloader: 'Downloaders',
-  tools: 'Tools',
-  owner: 'Owner',
-  info: 'Información',
-  group: 'Group',
-  search: 'Searchs',
-  sticker: 'Stickers',
-  ia: 'Inteligencia Artificial',
+  serbot: '✦ Subs Bot',
+  downloader: '✦ Downloaders',
+  tools: '✦ Herramientas',
+  owner: '✦ Owner',
+  info: '✦ Info',
+  group: '✦ Grupos',
+  search: '✦ Buscadores',
+  sticker: '✦ Stickers',
+  ia: '✦ Inteligencia Artificial',
 }
 
 const defaultMenu = {
   before: `
 ╭━━━✦✧✦━━━╮
-┃   💠✨ 𝙎𝙊𝙉𝙄𝘾𝘽𝙊𝙏-𝙈𝘿 ✨💠
+┃   💠✨ *%botname* ( *%tipo* ) ✨💠
 ╰━━━✦✧✦━━━╯
 ╭──────── ✦ ────────╮
 ┃ 🕹️ *¡Bienvenido a la revolución de los bots!*
@@ -28,7 +27,7 @@ const defaultMenu = {
 ┃ 🧁 Diversión y utilidad garantizada.
 ╰──────── ✦ ────────╯
 
-╭━━━《 📡ESTADO DEL BOT📡 》━━━╮
+╭━━━《  📡  ESTADO DEL BOT  📡  》━━━╮
 ┃ ⏳  Activo: *%uptime*
 ┃ 💻  Host: *Cuervo-host*
 ┃ 👥  Usuarios: *%totalreg*
@@ -75,26 +74,24 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
 
     const d = new Date(Date.now() + 3600000)
     const locale = 'es'
-    const week = d.toLocaleDateString(locale, { weekday: 'long' })
     const date = d.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
-    const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: 'numeric' })
 
-    const totalreg = Object.keys(global.db.data.users).length
-    const rtotalreg = Object.values(global.db.data.users).filter(user => user.registered).length
+    const help = Object.values(global.plugins)
+      .filter(p => !p.disabled)
+      .map(plugin => ({
+        help: Array.isArray(plugin.help) ? plugin.help : [plugin.help],
+        tags: Array.isArray(plugin.tags) ? plugin.tags : [plugin.tags],
+        prefix: 'customPrefix' in plugin,
+        limit: plugin.limit,
+        premium: plugin.premium,
+      }))
 
-    const help = Object.values(global.plugins).filter(p => !p.disabled).map(plugin => ({
-      help: Array.isArray(plugin.help) ? plugin.help : [plugin.help],
-      tags: Array.isArray(plugin.tags) ? plugin.tags : [plugin.tags],
-      prefix: 'customPrefix' in plugin,
-      limit: plugin.limit,
-      premium: plugin.premium
-    }))
-
-    let nombreBot = global.namebot || 'Bot'
-    let bannerFinal = 'https://qu.ax/pUhgD.jpg'
+    let nombreBot = global.namebot || 'SONICBOT-MD'
+    let bannerFinal = 'https://qu.ax/pUhgD.jpg''
 
     const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
     const configPath = join('./JadiBots', botActual, 'config.json')
+
     if (fs.existsSync(configPath)) {
       try {
         const config = JSON.parse(fs.readFileSync(configPath))
@@ -105,22 +102,27 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       }
     }
 
+    const tipo = botActual === '+522731260569'.replace(/\D/g, '')
+      ? 'Principal'
+      : 'Sub Bot'
+
     const menuConfig = conn.menu || defaultMenu
+
     const _text = [
       menuConfig.before,
       ...Object.keys(tags).map(tag => {
         return [
           menuConfig.header.replace(/%category/g, tags[tag]),
-          help.filter(menu => menu.tags?.includes(tag)).map(menu => {
-            return menu.help.map(helpText => {
-              return menuConfig.body
+          help.filter(menu => menu.tags?.includes(tag)).map(menu =>
+            menu.help.map(helpText =>
+              menuConfig.body
                 .replace(/%cmd/g, menu.prefix ? helpText : `${_p}${helpText}`)
                 .replace(/%islimit/g, menu.limit ? '◜⭐◞' : '')
                 .replace(/%isPremium/g, menu.premium ? '◜🪪◞' : '')
                 .trim()
-            }).join('\n')
-          }).join('\n'),
-          menuConfig.footer
+            ).join('\n')
+          ).join('\n'),
+          menuConfig.footer,
         ].join('\n')
       }),
       menuConfig.after
@@ -138,14 +140,11 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       level,
       limit,
       name,
-      week,
       date,
-      time,
-      totalreg,
-      rtotalreg,
+      uptime: clockString(process.uptime() * 1000),
+      tipo,
       readmore: readMore,
       greeting,
-      uptime: clockString(process.uptime() * 1000),
     }
 
     const text = _text.replace(
@@ -153,29 +152,8 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       (_, name) => String(replace[name])
     )
 
-    const isURL = typeof bannerFinal === 'string' && /^https?:\/\//i.test(bannerFinal)
-    const imageContent = isURL ? { image: { url: bannerFinal } } : { image: fs.readFileSync(bannerFinal) }
-
-    const rcanal = {
-      contextInfo: {
-        isForwarded: true,
-        forwardedNewsletterMessageInfo: {
-          newsletterJid: idcanal,
-          serverMessageId: 100,
-          newsletterName: namecanal
-        }
-      }
-    }
-
-    await conn.sendMessage(m.chat, {
-      ...imageContent,
-      caption: text.trim(),
-      mentionedJid: conn.parseMention(text),
-      ...rcanal
-    }, { quoted: m })
-
-  } catch (e) {
-    console.error('Error en el menú:', e)
+    await conn.sendFile(m.chat, bannerFinal, 'thumbnail.jpg', text.trim(), m, null, rcanal)
+    
     conn.reply(m.chat, '❎ Lo sentimos, el menú tiene un error.', m)
   }
 }
@@ -196,6 +174,7 @@ function clockString(ms) {
 
 const ase = new Date()
 let hour = ase.getHours()
+
 const greetingMap = {
   0: 'una linda noche 🌙', 1: 'una linda noche 💤', 2: 'una linda noche 🦉',
   3: 'una linda mañana ✨', 4: 'una linda mañana 💫', 5: 'una linda mañana 🌅',
