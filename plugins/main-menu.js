@@ -24,7 +24,7 @@ const defaultMenu = {
 ┃ 🕹️ *¡Bienvenido a la revolución de los bots!*
 ┃ 🌟 *espero que tengas un buen día*
 ┃ 🙋‍♂️ Usuario: *%name*
-┃ 👑 Owner: *%owner*
+┃ 👑 Owner: *+5212731590195*
 ┃ 🧁 Diversión y utilidad garantizada.
 ╰──────── ✦ ────────╯
 
@@ -32,7 +32,7 @@ const defaultMenu = {
 ┃ ⏳  Activo: *%uptime*
 ┃ 💻  Host: *Cuervo-host*
 ┃ 👥  Usuarios: *%totalreg*
-┃ 🌎  País: *%country*
+┃ 🌎  País: *No Detectado*
 ┃ 📅  Día: *%week*
 ┃ 🗓️  Fecha: *%date*
 ╰━━━━━━━━━━━━━━━━━━━━━━━╯
