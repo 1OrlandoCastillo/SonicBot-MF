@@ -28,7 +28,7 @@ const defaultMenu = {
 ┃ 🧁 Diversión y utilidad garantizada.
 ╰──────── ✦ ────────╯
 
-╭━━━《 📡 ESTADO DEL BOT 📡 》━━━╮
+╭━━━《 📡ESTADO DEL BOT📡 》━━━╮
 ┃ ⏳  Activo: *%uptime*
 ┃ 💻  Host: *Cuervo-host*
 ┃ 👥  Usuarios: *%totalreg*
