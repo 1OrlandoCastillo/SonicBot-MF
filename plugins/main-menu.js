@@ -30,7 +30,7 @@ const defaultMenu = {
 
 ╭━━━《  📡  ESTADO DEL BOT  📡  》━━━╮
 ┃ ⏳  Activo: *%uptime*
-┃ 💻  Host: *%host*
+┃ 💻  Host: *Cuervo-host*
 ┃ 👥  Usuarios: *%totalreg*
 ┃ 🌎  País: *%country*
 ┃ 📅  Día: *%week*
