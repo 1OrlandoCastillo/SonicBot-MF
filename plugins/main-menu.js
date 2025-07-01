@@ -60,7 +60,7 @@ const defaultMenu = {
 ┃  📢 𝙄𝙉𝙁𝙊 𝙔 𝙎𝙊𝙋𝙊𝙍𝙏𝙀 📢
 ╰━━━━━━━━✦✧✦━━━━━━━━╯
 ┊📬 ¿Tienes dudas, necesitas soporte o quieres sugerir algo?
-┊👤 Usa *.owner* o *.dueño* para hablar DIRECTAMENTE con el creador.
+┊👤 Comunicate con el dueño *+5212731590195* para hablar DIRECTAMENTE.
 ┊⭐ ¡Gracias por confiar y ser parte de la familia SonicBot!
 ┊🪐 Únete a nuestra comunidad y vive la mejor experiencia de WhatsApp.
 ╰━━━━━━━━━━━━━━━━━━━╯
