@@ -20,6 +20,6 @@ let handler = async (m, { conn }) => {
 handler.help = ['meme'];
 handler.tags = ['fun'];
 handler.command = ['meme', 'memes'];
-handler.register = true
+handler.register = false; // <--- Cambiado a false
 
 export default handler;
