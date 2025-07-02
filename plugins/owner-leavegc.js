@@ -14,5 +14,5 @@ let handler = async (m, { conn, text }) => {
 
 handler.command = /^(salir|leavegc|salirdelgrupo|leave)$/i;
 handler.group = true;
-handler.prems = true;
+handler.rowner = true;
 export default handler;
