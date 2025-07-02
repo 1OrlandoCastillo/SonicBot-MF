@@ -1,27 +1,28 @@
-import fetch from 'node-fetch';
+* ig : https://www.instagram.com/fg98._/ */
+import hispamemes from 'hispamemes'
+let handler = async (m, { conn, usedPrefix, command }) => {
+const meme = hispamemes.meme()
+// conn.sendFile(m.chat, meme, '', '', fkontak)
 
-let handler = async (m, { conn }) => {
-  let res = await fetch('https://g-mini-ia.vercel.app/api/meme');
-  let json = await res.json();
+conn.sendMessage(m.chat, { 
+        image: { url: meme }, 
+        caption: '¡Aqui Está Tu Meme!🤣', 
+        footer: dev, 
+        buttons: [
+            {
+                buttonId: `.meme`,
+                buttonText: { displayText: 'Siguiente Meme' }
+            }
+        ],
+        viewOnce: true,
+        headerType: 4
+    }, { quoted: m });
 
-  if (!json?.url) return conn.reply(m.chat, '❌ No se pudo sacar el meme we :c', m);
-
-  await conn.sendMessage(m.chat, {
-    image: { url: json.url },
-    caption: `🤣 *Aca Tienes Un Meme*`,
-    footer: '📸',
-    buttons: [
-      {
-        buttonId: '.meme',
-        buttonText: { displayText: '🌀 Otro meme' },
-        type: 1,
-      }
-    ],
-    headerType: 4
-  }, { quoted: m });
-};
-
-handler.command = ['meme'];
-handler.help = ['meme'];
-handler.tags = ['fun'];
-export default handler;
+m.react(emoji2)
+}
+handler.help = ['meme']
+handler.tags = ['fun']
+handler.command = ['meme', 'memes']
+handler.estrellas = 1
+handler.register = true
+export default handler
