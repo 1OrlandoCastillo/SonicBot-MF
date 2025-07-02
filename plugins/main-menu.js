@@ -145,6 +145,7 @@ const config = JSON.parse(fs.readFileSync(configPath))
       totalreg,
       rtotalreg,
       readmore: readMore,
+      tipo,
       greeting,
       uptime: clockString(process.uptime() * 1000),
     }
