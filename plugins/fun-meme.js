@@ -1,24 +1,20 @@
-* ig : https://www.instagram.com/fg98._/ */
+// ig : https://www.instagram.com/fg98._/
 import hispamemes from 'hispamemes'
 let handler = async (m, { conn, usedPrefix, command }) => {
-const meme = hispamemes.meme()
-// conn.sendFile(m.chat, meme, '', '', fkontak)
+    // Definir el emoji y el dev si no están definidos globalmente
+    const dev = 'Orlando Castillo'
+    const emoji2 = '😂'
 
-conn.sendMessage(m.chat, { 
+    const meme = await hispamemes.meme()
+    if (!meme) return m.reply('No se pudo obtener un meme, intenta de nuevo.')
+
+    await conn.sendMessage(m.chat, { 
         image: { url: meme }, 
-        caption: '¡Aqui Está Tu Meme!🤣', 
-        footer: dev, 
-        buttons: [
-            {
-                buttonId: `.meme`,
-                buttonText: { displayText: 'Siguiente Meme' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m });
+        caption: '¡Aqui Está Tu Meme!🤣',
+        viewOnce: true
+    }, { quoted: m })
 
-m.react(emoji2)
+    await m.react(emoji2)
 }
 handler.help = ['meme']
 handler.tags = ['fun']
