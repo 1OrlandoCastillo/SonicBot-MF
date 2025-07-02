@@ -1,24 +1,25 @@
-// ig : https://www.instagram.com/fg98._/
-import hispamemes from 'hispamemes'
-let handler = async (m, { conn, usedPrefix, command }) => {
-    // Definir el emoji y el dev si no están definidos globalmente
-    const dev = 'Orlando Castillo'
-    const emoji2 = '😂'
+import fetch from 'node-fetch';
 
-    const meme = await hispamemes.meme()
-    if (!meme) return m.reply('No se pudo obtener un meme, intenta de nuevo.')
+let handler = async (m, { conn }) => {
+  try {
+    const res = await fetch('https://g-mini-ia.vercel.app/api/meme');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    await conn.sendMessage(m.chat, { 
-        image: { url: meme }, 
-        caption: '¡Aqui Está Tu Meme!🤣',
-        viewOnce: true
-    }, { quoted: m })
+    const json = await res.json();
+    const meme = json.url;
 
-    await m.react(emoji2)
-}
-handler.help = ['meme']
-handler.tags = ['fun']
-handler.command = ['meme', 'memes']
-handler.estrellas = 1
+    if (!meme) throw new Error('No se encontró la URL del meme');
+
+    await conn.sendFile(m.chat, meme, 'meme.jpg', `Aquí tienes un meme 😄\nDescargado de: ${meme}`, m);
+  } catch (e) {
+    console.error('[ERROR MEME]', e);
+    m.reply('😿 Ocurrió un error al obtener el meme.');
+  }
+};
+
+handler.help = ['meme'];
+handler.tags = ['fun'];
+handler.command = ['meme', 'memes'];
 handler.register = true
-export default handler
+
+export default handler;
