@@ -49,7 +49,7 @@ const defaultMenu = {
 ╭═───────『 🗂 %category 』───────═╮
 `.trim(),
 
-  body: `┃ 🔹 %cmd %isdiamond %isPremium`,
+  body: `┃ 🔹 %cmd %islimit %isPremium`,
 
   footer: '╰══════════════════════╯\n',
 
@@ -144,8 +144,8 @@ const config = JSON.parse(fs.readFileSync(configPath))
       time,
       totalreg,
       rtotalreg,
-      readmore: readMore,
       tipo,
+      readmore: readMore,
       greeting,
       uptime: clockString(process.uptime() * 1000),
     }
