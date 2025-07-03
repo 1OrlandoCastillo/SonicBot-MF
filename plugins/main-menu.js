@@ -163,7 +163,7 @@ const vidurl = 'https://raw.githubusercontent.com/WillZek/Storage-CB/main/images
 }, }, gifPlayback: true, gifAttribution: 0 }, { quoted: null })
 
   } catch (e) {
-    conn.reply(m.chat, '❎ Lo sentimos, el menú tiene un error.', m)
+    conn.reply(m.chat, `❎ Lo sentimos, el menú tiene un error.\n${e.message}`, m)
     throw e
   }
 }
