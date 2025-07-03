@@ -1,43 +1,36 @@
-import { watchFile, unwatchFile } from 'fs' 
+import { watchFile, unwatchFile } from 'fs'
 import chalk from 'chalk'
 import { fileURLToPath } from 'url'
 
-
 global.owner = [
-  ['5212731590195', 'Withe444', true],
-  ['216496785649713@lid'], 
-  ['261770019094711@lid']
+  ['5212731590195', 'Withe444', true]
 ]
-
 
 global.mods = []
 global.prems = []
 
 global.libreria = 'Baileys'
-global.baileys = 'V 6.7.16' 
+global.baileys = 'V 6.7.16'
 global.vs = '2.2.0'
 global.nameqr = 'YukiBot-MD'
-global.namebot = '✿◟Yυƙι-Sυσυ-Bσƚ◞✿'
+global.namebot = 'SonicBot-MF' // Solo una definición
 global.sessions = 'Sessions'
-global.jadi = 'JadiBots' 
+global.jadi = 'JadiBots'
 global.yukiJadibts = true
 
 global.packname = 'SonicBot'
-global.namebot = 'SonicBot-MF'
 global.author = 'Withe444'
-
 
 global.namecanal = 'SonicBot-MF Official'
 global.canal = 'https://whatsapp.com/channel/0029Vb3oShrICVfiTWhDHM13'
 global.idcanal = '120363411154070926@newsletter'
 
 global.ch = {
-ch1: '120363411154070926@newsletter',
+  ch1: '120363411154070926@newsletter',
 }
 
-global.multiplier = 69 
-global.maxwarn = '2'
-
+global.multiplier = 69
+global.maxwarn = 2 // Si debe ser número, cámbialo aquí
 
 let file = fileURLToPath(import.meta.url)
 watchFile(file, () => {
