@@ -6,7 +6,7 @@ import { fileTypeFromBuffer } from "file-type";
 let handler = async (m, { conn }) => {
   let q = m.quoted ? m.quoted : m;
   let mime = (q.msg || q).mimetype || '';
-  if (!mime) return conn.reply(m.chat, `${emojis} Por favor, responde a un archivo válido (imagen, video, etc.).`, m);
+  if (!mime) return conn.reply(m.chat, `Por favor, responde a un archivo válido (imagen, video, etc.).`, m, rcanal);
 
   await m.react(rwait);
 
@@ -21,7 +21,7 @@ let handler = async (m, { conn }) => {
     txt += `*» Expiración* : ${isTele ? 'No expira' : 'Desconocido'}\n\n`;
     txt += `> *${dev}*`;
 
-    await conn.sendFile(m.chat, media, 'thumbnail.jpg', txt, m);
+    await conn.sendFile(m.chat, media, 'thumbnail.jpg', txt, m, rcanal);
 
     await m.react(done);
   } catch {
