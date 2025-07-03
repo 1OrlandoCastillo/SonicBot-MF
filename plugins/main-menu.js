@@ -155,7 +155,12 @@ const config = JSON.parse(fs.readFileSync(configPath))
       (_, name) => String(replace[name])
     )
 
-    await conn.sendFile(m.chat, imgBot, 'thumbnail.jpg', text.trim(), m, null, rcanal)
+// await conn.sendFile(m.chat, imgBot, 'thumbnail.jpg', text.trim(), m, null, rcanal)
+
+const vidurl = 'https://raw.githubusercontent.com/WillZek/Storage-CB/main/images/30f470a28e03.mp4';
+
+ await conn.sendMessage(m.chat, { video: { url: vidurl }, caption: defaultMenu.trim(), contextInfo: { mentionedJid: [m.sender], isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: channelRD.id, newsletterName: channelRD.name, serverMessageId: -1, }, forwardingScore: 999, externalAdReply: { title: textbot, body: dev, thumbnailUrl: icons, sourceUrl: redes, mediaType: 1, renderLargerThumbnail: false,
+}, }, gifPlayback: true, gifAttribution: 0 }, { quoted: null })
 
   } catch (e) {
     conn.reply(m.chat, '❎ Lo sentimos, el menú tiene un error.', m)
