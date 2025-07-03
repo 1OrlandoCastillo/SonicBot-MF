@@ -159,7 +159,7 @@ const config = JSON.parse(fs.readFileSync(configPath))
 
 const vidurl = 'https://raw.githubusercontent.com/WillZek/Storage-CB/main/images/30f470a28e03.mp4';
 
- await conn.sendMessage(m.chat, { video: { url: vidurl }, caption: text.trim(), contextInfo: { mentionedJid: [m.sender], isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: channelRD.id, newsletterName: channelRD.name, serverMessageId: -1, }, forwardingScore: 999, externalAdReply: { title: textbot, body: dev, thumbnailUrl: icons, sourceUrl: redes, mediaType: 1, renderLargerThumbnail: false,
+ await conn.sendMessage(m.chat, { video: { url: vidurl }, caption: text.trim(), contextInfo: { mentionedJid: [m.sender], isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: '120363411154070926@newsletter', newsletterName: 'SonicBot-MF Oficial', serverMessageId: -1, }, forwardingScore: 999, externalAdReply: { title: textbot, body: dev, thumbnailUrl: icons, sourceUrl: redes, mediaType: 1, renderLargerThumbnail: false,
 }, }, gifPlayback: true, gifAttribution: 0 }, { quoted: null })
 
   } catch (e) {
