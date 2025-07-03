@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url'
 
 
 global.owner = [
-  ['5212731590195', 'Withe444', true],
+  ['5212731590195', 'White444', true],
 ]
 
 
@@ -22,7 +22,7 @@ global.yukiJadibts = true
 
 global.packname = 'SonicBot'
 global.namebot = 'SonicBot-MF'
-global.author = 'Withe444'
+global.author = 'White444'
 
 
 global.namecanal = 'SonicBot-MF Official'
