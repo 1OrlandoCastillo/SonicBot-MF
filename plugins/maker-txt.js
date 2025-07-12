@@ -1,5 +1,3 @@
-const wm = global.wm || '💫 𝐒𝐮𝐩𝐞𝐫 𝐁𝐨𝐭 𝐃𝐞 𝐖𝐡𝐚𝐭𝐬𝐚𝐩𝐩 🥳'
-
 let handler = async (m, { conn, text, usedPrefix, command }) => {
     let teks = text ? text : m.quoted && m.quoted.text ? m.quoted.text : ''
 
@@ -20,4 +18,6 @@ handler.help = ['txt', 'brat']
 handler.tags = ['game']
 handler.command = ['txt', 'escribir', 'brat']
 handler.limit = 1
+// handler.register = true // <-- Elimina o comenta esta línea
+
 export default handler
