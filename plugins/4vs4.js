@@ -7,19 +7,14 @@ const handler = async (m, { conn }) => {
     text: generarEmbed(escuadra, suplentes)
   }, { quoted: m })
 
-  // Reaccionar automáticamente con los emojis
-  await conn.sendMessage(m.chat, { react: { text: '❤️', key: listaMsg.key } })
-  await conn.sendMessage(m.chat, { react: { text: '👍', key: listaMsg.key } })
-
   // Función para actualizar la lista en el mismo mensaje
   const actualizarLista = async () => {
     try {
       await conn.sendMessage(m.chat, {
         text: generarEmbed(escuadra, suplentes),
-        edit: listaMsg.key // Evita spam y actualiza el mensaje
+        edit: listaMsg.key // Si soporta edición
       })
     } catch {
-      // Si no soporta edición, manda nuevo mensaje
       await conn.sendMessage(m.chat, { text: generarEmbed(escuadra, suplentes) }, { quoted: m })
     }
   }
@@ -31,22 +26,24 @@ const handler = async (m, { conn }) => {
     let reaccion = msg.message.reactionMessage.text
     let reaccionKey = msg.message.reactionMessage.key
 
-    // Asegurarnos de que es al mensaje original
+    // Filtrar solo reacciones al mensaje original
     if (reaccionKey.id !== listaMsg.key.id) return
     if (reaccionKey.remoteJid !== m.chat) return
 
-    // Obtener JID y nombre del usuario que reaccionó
+    // Ignorar si el que reacciona es el bot
     let participanteJid = reaccionKey.participant ?? reaccionKey.remoteJid
+    if (participanteJid === conn.user.id) return
+
     let nombre = (await conn.getName(participanteJid))?.trim()
 
-    // Eliminar de ambas listas
+    // Eliminar duplicados
     escuadra = escuadra.filter(n => n.toLowerCase() !== nombre.toLowerCase())
     suplentes = suplentes.filter(n => n.toLowerCase() !== nombre.toLowerCase())
 
-    // Añadir según emoji
-    if (reaccion === '❤️') {
+    // Clasificar según el emoji
+    if (reaccion.startsWith('❤️')) {
       escuadra.push(nombre)
-    } else if (reaccion === '👍') {
+    } else if (reaccion.startsWith('👍')) {
       suplentes.push(nombre)
     } else {
       return
