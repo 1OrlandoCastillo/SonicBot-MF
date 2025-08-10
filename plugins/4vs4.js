@@ -6,8 +6,8 @@ const handler = async (m, { conn, usedPrefix }) => {
   await conn.react(message.key, '❤️');
   await conn.react(message.key, '👍');
 
-  const escuadra = [];
-  const suplentes = [];
+  let escuadra = [];
+  let suplentes = [];
 
   conn.on('message', async (msg) => {
     if (msg.type === 'reaction' && msg.key.fromMe) {
@@ -41,19 +41,15 @@ async function actualizarLista(m, conn, escuadra, suplentes) {
 
 function generarEmbed(escuadra, suplentes) {
   return `╭─────────────╮
-┊ MODO: CLK
-┊ 
-┊ ⏱️ HORARIO
-┊ • 5:00am MÉXICO 
-┊ • 6:00am COLOMBIA 
-┊ 
-┊ » ESCUADRA
-┊ ${escuadra.map((nombre) => `┊ ${nombre}`).join('\n')}
-┊ 
-┊ » SUPLENTES
-┊ ${suplentes.map((nombre) => `┊ ${nombre}`).join('\n')}
-┊ 
-╰─────────────╯
+┊ MODO: CLK ┊
+┊ ⏱️ HORARIO ┊
+• 5:00am MÉXICO ┊
+• 6:00am COLOMBIA ┊
+┊ » ESCUADRA ┊
+${escuadra.map((nombre) => `┊ ${nombre}`).join('\n')}
+┊ » SUPLENTES ┊
+${suplentes.map((nombre) => `┊ ${nombre}`).join('\n')}
+┊ ╰─────────────╯
 ❤️ = Participar | 👍 = Suplente
 • Lista Activa Por 5 Minutos`;
 }
@@ -62,4 +58,4 @@ handler.help = ['partido']
 handler.tags = ['partido']
 handler.group = true
 
-export default handler
+export default handler;
