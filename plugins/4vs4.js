@@ -1,28 +1,29 @@
 const handler = async (m, { conn }) => {
-  let escuadra = []
-  let suplentes = []
+  let escuadra = [] // [{ jid, nombre }]
+  let suplentes = [] // [{ jid, nombre }]
   let listaAbierta = true
 
   // Enviar mensaje inicial
   let listaMsg = await conn.sendMessage(m.chat, {
-    text: generarEmbed(escuadra, suplentes)
+    text: generarEmbedConMentions(escuadra, suplentes).text
   }, { quoted: m })
 
-  // Añadir reacciones para que los usuarios puedan usarlas
-  await conn.sendMessage(m.chat, { react: { text: '❤️', key: listaMsg.key } })
-  await conn.sendMessage(m.chat, { react: { text: '👍', key: listaMsg.key } })
+  // No hace falta que el bot reaccione, solo usuarios reaccionan
 
   // Función para actualizar la lista en el mismo mensaje
   const actualizarLista = async () => {
     try {
-      // Intenta editar el mensaje original (si tu API lo soporta)
+      const { text, mentions } = generarEmbedConMentions(escuadra, suplentes)
       await conn.sendMessage(m.chat, {
-        text: generarEmbed(escuadra, suplentes),
-        edit: listaMsg.key
+        text,
+        mentions,
+        // Si tu API soporta editar mensajes, así va el edit:
+        // edit: listaMsg.key 
+        // Si no, comentar y enviar nuevo mensaje abajo:
       })
     } catch {
-      // Si no se puede editar, envía uno nuevo
-      await conn.sendMessage(m.chat, { text: generarEmbed(escuadra, suplentes) }, { quoted: m })
+      const { text, mentions } = generarEmbedConMentions(escuadra, suplentes)
+      await conn.sendMessage(m.chat, { text, mentions }, { quoted: m })
     }
   }
 
@@ -30,7 +31,8 @@ const handler = async (m, { conn }) => {
   const cerrarLista = async () => {
     listaAbierta = false
     await conn.sendMessage(m.chat, {
-      text: `✅ La escuadra está completa y la lista se ha cerrado.\n\n👑 Escuadra: ${escuadra.join(', ') || 'Nadie'}\n🪑 Suplentes: ${suplentes.join(', ') || 'Nadie'}`
+      text: `✅ La escuadra está completa y la lista se ha cerrado.\n\n👑 Escuadra: ${escuadra.map(u => '@' + u.nombre).join(', ') || 'Nadie'}\n🪑 Suplentes: ${suplentes.map(u => '@' + u.nombre).join(', ') || 'Nadie'}`,
+      mentions: [...escuadra.map(u => u.jid), ...suplentes.map(u => u.jid)]
     }, { quoted: m })
   }
 
@@ -53,20 +55,20 @@ const handler = async (m, { conn }) => {
     let nombre = (await conn.getName(participanteJid))?.trim()
     if (!nombre) return
 
-    // Eliminar duplicados
-    escuadra = escuadra.filter(n => n.toLowerCase() !== nombre.toLowerCase())
-    suplentes = suplentes.filter(n => n.toLowerCase() !== nombre.toLowerCase())
+    // Eliminar duplicados por jid
+    escuadra = escuadra.filter(u => u.jid !== participanteJid)
+    suplentes = suplentes.filter(u => u.jid !== participanteJid)
 
     // Clasificar según emoji
     if (reaccion.startsWith('❤️')) {
       if (escuadra.length < 4) {
-        escuadra.push(nombre)
+        escuadra.push({ jid: participanteJid, nombre })
       } else {
         // Escuadra llena, no añadir más
         return
       }
     } else if (reaccion.startsWith('👍')) {
-      suplentes.push(nombre)
+      suplentes.push({ jid: participanteJid, nombre })
     } else {
       return
     }
@@ -93,15 +95,32 @@ const handler = async (m, { conn }) => {
     if (listaAbierta) {
       listaAbierta = false
       await conn.sendMessage(m.chat, {
-        text: `⌛ Tiempo agotado.\n\n👑 Escuadra: ${escuadra.join(', ') || 'Nadie'}\n🪑 Suplentes: ${suplentes.join(', ') || 'Nadie'}`
+        text: `⌛ Tiempo agotado.\n\n👑 Escuadra: ${escuadra.map(u => '@' + u.nombre).join(', ') || 'Nadie'}\n🪑 Suplentes: ${suplentes.map(u => '@' + u.nombre).join(', ') || 'Nadie'}`,
+        mentions: [...escuadra.map(u => u.jid), ...suplentes.map(u => u.jid)]
       }, { quoted: m })
     }
   }, 5 * 60 * 1000)
 }
 
-// Diseño del mensaje
-function generarEmbed(escuadra, suplentes) {
-  return `ㅤ ㅤ4 \`𝗩𝗘𝗥𝗦𝗨𝗦\` 4
+// Diseño del mensaje con menciones
+function generarEmbedConMentions(escuadra, suplentes) {
+  const mentions = []
+
+  function formatUser(u, isLeader = false) {
+    mentions.push(u.jid)
+    const icon = isLeader ? '👑' : '⚜️'
+    return `┊ ${icon} ➤ @${u.nombre}`  // Mostrar @nombre sin JID en texto
+  }
+
+  const escuadraText = escuadra.length
+    ? escuadra.map((u, i) => formatUser(u, i === 0)).join('\n')
+    : `┊ 👑 ➤ \n┊ ⚜️ ➤ \n┊ ⚜️ ➤ \n┊ ⚜️ ➤`
+
+  const suplentesText = suplentes.length
+    ? suplentes.map(u => formatUser(u)).join('\n')
+    : `┊ ⚜️ ➤ \n┊ ⚜️ ➤`
+
+  const text = `ㅤ ㅤ4 \`𝗩𝗘𝗥𝗦𝗨𝗦\` 4
 ╭─────────────╮
 ┊ \`𝗠𝗢𝗗𝗢:\` \`\`\`CLK\`\`\`
 ┊
@@ -110,15 +129,17 @@ function generarEmbed(escuadra, suplentes) {
 ┊ • 6:00am COLOMBIA 🇨🇴
 ┊
 ┊ » \`𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔\`
-${escuadra.length ? escuadra.map((n, i) => i === 0 ? `┊ 👑 ➤ ${n}` : `┊ ⚜️ ➤ ${n}`).join('\n') : `┊ 👑 ➤ \n┊ ⚜️ ➤ \n┊ ⚜️ ➤ \n┊ ⚜️ ➤`}
+${escuadraText}
 ┊
 ┊ » \`𝗦𝗨𝗣𝗟𝗘𝗡𝗧𝗘:\`
-${suplentes.length ? suplentes.map(n => `┊ ⚜️ ➤ ${n}`).join('\n') : `┊ ⚜️ ➤ \n┊ ⚜️ ➤`}
+${suplentesText}
 ╰─────────────╯
 
 ❤️ = Participar | 👍 = Suplente
 
 • Lista Activa Por 5 Minutos`
+
+  return { text, mentions }
 }
 
 handler.help = ['partido']
