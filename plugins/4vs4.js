@@ -1,121 +1,81 @@
-let baseHora = null  // { h: número, m: número }
-let baseZona = null  // 'MX', 'CO', etc.
-
+// Definición de zonas horarias con offset en horas (sin DLS)
 const zonas = {
-  MX: -6,
-  CO: -5,
-  PE: -5,
-  CL: -4,
-  AR: -3
+  MX: -6,  // Ciudad de México UTC-6
+  CO: -5,  // Colombia UTC-5
+  PE: -5,  // Perú UTC-5
+  CL: -4,  // Chile UTC-4
+  AR: -3   // Argentina UTC-3
 }
 
-// Función para parsear hora sencilla, acepta formato "7:30 am", "19:41", "8 am", etc.
-function parseHoraSimple(horaStr) {
+// Variables globales para la hora base UTC y listas (simula tus datos)
+let baseTimeUTC = null
+let escuadra = []  // lista de jugadores activos
+let suplentes = [] // lista de suplentes
+
+function parseHoraUsuario(horaStr) {
   horaStr = horaStr.trim().toLowerCase()
-  let h, m = 0
-  const ampmMatch = horaStr.match(/(am|pm)$/)
-  const tieneAmPm = !!ampmMatch
+  let ampm = null
+  if (horaStr.endsWith('am') || horaStr.endsWith('pm')) {
+    ampm = horaStr.slice(-2)
+    horaStr = horaStr.slice(0, -2).trim()
+  }
+  let parts = horaStr.split(':')
+  let hora = 0
+  let minuto = 0
 
-  // Quitar am/pm para parsear números
-  let horaSolo = horaStr.replace(/(am|pm)$/, '').trim()
-
-  // Partir por ":"
-  const partes = horaSolo.split(':')
-  if (partes.length === 1) {
-    h = parseInt(partes[0])
-    m = 0
-  } else if (partes.length === 2) {
-    h = parseInt(partes[0])
-    m = parseInt(partes[1])
+  if (parts.length === 1) {
+    hora = parseInt(parts[0])
+  } else if (parts.length === 2) {
+    hora = parseInt(parts[0])
+    minuto = parseInt(parts[1])
   } else {
     throw new Error('Formato de hora inválido')
   }
 
-  if (isNaN(h) || isNaN(m)) throw new Error('Hora o minutos inválidos')
+  if (isNaN(hora) || isNaN(minuto)) throw new Error('Hora inválida')
 
-  if (tieneAmPm) {
-    const ampm = ampmMatch[0]
-    if (ampm === 'pm' && h < 12) h += 12
-    if (ampm === 'am' && h === 12) h = 0
+  if (ampm) {
+    if (hora < 1 || hora > 12) throw new Error('Hora inválida en formato 12h')
+    if (ampm === 'pm' && hora !== 12) hora += 12
+    if (ampm === 'am' && hora === 12) hora = 0
+  } else {
+    if (hora < 0 || hora > 23) throw new Error('Hora inválida en formato 24h')
   }
 
-  if (h < 0 || h > 23) throw new Error('Hora fuera de rango')
-  if (m < 0 || m > 59) throw new Error('Minutos fuera de rango')
-
-  return { h, m }
+  return { hora, minuto }
 }
 
-// Función para convertir la hora base a las otras zonas (simple offset en horas)
-function mostrarHorasSimple(h, m, zonaOrigen) {
-  if (!(zonaOrigen in zonas)) throw new Error('Zona horaria inválida')
+function convertirAHoraUTC(hora, minuto, zonaOffset) {
+  let now = new Date()
+  let dateLocal = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hora, minuto))
+  let utcMs = dateLocal.getTime() + (zonaOffset * 60 * 60 * 1000)
+  return new Date(utcMs)
+}
 
-  const offsetOrigen = zonas[zonaOrigen]
-  const lines = []
-
-  for (const [code, offset] of Object.entries(zonas)) {
-    // Diferencia horaria con zona origen
-    let horaZona = h + (offset - offsetOrigen)
-    let minutosZona = m
-
-    // Ajustar horas que pasen 0-23
-    if (horaZona < 0) horaZona += 24
-    if (horaZona >= 24) horaZona -= 24
-
-    // Formatear a 12h con am/pm
-    let ampm = 'am'
-    let displayH = horaZona
-    if (displayH === 0) displayH = 12
-    else if (displayH >= 12) {
-      ampm = 'pm'
-      if (displayH > 12) displayH -= 12
-    }
-    const minStr = minutosZona.toString().padStart(2, '0')
-    const horaFormateada = `${displayH}:${minStr} ${ampm}`
-
-    const paises = {
-      MX: 'MÉXICO 🇲🇽',
-      CO: 'COLOMBIA 🇨🇴',
-      PE: 'PERÚ 🇵🇪',
-      CL: 'CHILE 🇨🇱',
-      AR: 'ARGENTINA 🇦🇷'
-    }
-    lines.push(`• ${horaFormateada} ${paises[code]}`)
+function mostrarHorasDesdeUTC(utcDate) {
+  const paises = {
+    MX: 'MÉXICO 🇲🇽',
+    CO: 'COLOMBIA 🇨🇴',
+    PE: 'PERÚ 🇵🇪',
+    CL: 'CHILE 🇨🇱',
+    AR: 'ARGENTINA 🇦🇷'
   }
+  const lines = []
+  for (const [code, offset] of Object.entries(zonas)) {
+    let localMs = utcDate.getTime() + (offset * 60 * 60 * 1000)
+    let localDate = new Date(localMs)
 
+    let h = localDate.getUTCHours()
+    let m = localDate.getUTCMinutes()
+    let ampm = h >= 12 ? 'pm' : 'am'
+    let hora12 = h % 12
+    if (hora12 === 0) hora12 = 12
+    let minutoStr = m < 10 ? '0' + m : m
+    lines.push(`• ${hora12}:${minutoStr} ${ampm} ${paises[code]}`)
+  }
   return lines.join('\n')
 }
 
-// El handler principal:
-const handler = async (m, { conn, command, args }) => {
-  if (command.toLowerCase() === 'partido') {
-    if (args.length < 2) return m.reply('Uso: .partido <hora> <zona>\nEjemplo: .partido "7:30 am" MX')
-
-    const zonaStr = args[args.length -1].toUpperCase()
-    const horaStr = args.slice(0, args.length -1).join(' ')
-
-    try {
-      baseHora = parseHoraSimple(horaStr)
-      baseZona = zonaStr
-      const mensajeHoras = mostrarHorasSimple(baseHora.h, baseHora.m, baseZona)
-      return m.reply(`✅ Horarios ajustados:\n${mensajeHoras}`)
-    } catch (e) {
-      return m.reply('Error: ' + e.message)
-    }
-  }
-
-  // El resto de tu código que use baseHora y baseZona para mostrar horas dinámicas
-  // Por ejemplo, en generarEmbedConMentions
-
-  // Aquí ejemplo mínimo para mostrar mensaje (añade tu lógica completa):
-  const escuadra = []  // Debes mantener o adaptar según tu código original
-  const suplentes = []
-
-  const listaMsg = await conn.sendMessage(m.chat, {
-    text: generarEmbedConMentions(escuadra, suplentes).text
-  }, { quoted: m })
-}
-
-// Función que genera el mensaje con las horas:
 function generarEmbedConMentions(escuadra, suplentes) {
   const mentions = []
 
@@ -133,9 +93,9 @@ function generarEmbedConMentions(escuadra, suplentes) {
     ? suplentes.map(u => formatUser(u)).join('\n')
     : `┊ ⚜️ ➤ \n┊ ⚜️ ➤`
 
-  let horasTexto = '• 5:00 am MÉXICO 🇲🇽\n• 6:00 am COLOMBIA 🇨🇴\n• 6:00 am PERÚ 🇵🇪\n• 7:00 am CHILE 🇨🇱\n• 8:00 am ARGENTINA 🇦🇷'
-  if (baseHora && baseZona) {
-    horasTexto = mostrarHorasSimple(baseHora.h, baseHora.m, baseZona)
+  let horasTexto = '• 5:00am MÉXICO 🇲🇽\n• 6:00am COLOMBIA 🇨🇴\n• 6:00am PERÚ 🇵🇪\n• 7:00am CHILE 🇨🇱\n• 8:00am ARGENTINA 🇦🇷'
+  if (baseTimeUTC) {
+    horasTexto = mostrarHorasDesdeUTC(baseTimeUTC)
   }
 
   const text = `ㅤ ㅤ4 \`𝗩𝗘𝗥𝗦𝗨𝗦\` 4
@@ -158,3 +118,36 @@ ${suplentesText}
 
   return { text, mentions }
 }
+
+const handler = async (m, { conn, command, args }) => {
+  if (command.toLowerCase() === 'partido') {
+    if (args.length < 2) return m.reply('Uso: .partido <hora> <zona>\nEjemplo: .partido "7:30 am" MX')
+
+    const zonaStr = args[args.length - 1].toUpperCase()
+    const horaStr = args.slice(0, args.length - 1).join(' ')
+
+    if (!zonas[zonaStr]) return m.reply('Zona inválida. Usa: MX, CO, PE, CL, AR')
+
+    try {
+      const { hora, minuto } = parseHoraUsuario(horaStr)
+      baseTimeUTC = convertirAHoraUTC(hora, minuto, zonas[zonaStr])
+
+      const mensajeHoras = mostrarHorasDesdeUTC(baseTimeUTC)
+      await m.reply(`✅ Horarios ajustados:\n${mensajeHoras}`)
+    } catch (e) {
+      return m.reply('Error: ' + e.message)
+    }
+  } else {
+    // Aquí manejas otras acciones de tu bot, por ejemplo mostrar la lista con las horas actualizadas
+    if (!baseTimeUTC) {
+      return m.reply('Primero usa el comando .partido para fijar la hora.')
+    }
+
+    // Envías la lista con las horas usando baseTimeUTC
+    const listaMsg = await conn.sendMessage(m.chat, {
+      text: generarEmbedConMentions(escuadra, suplentes).text
+    }, { quoted: m })
+  }
+}
+
+export default handler
