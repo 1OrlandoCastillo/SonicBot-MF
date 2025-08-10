@@ -1,103 +1,103 @@
-import { DateTime } from 'luxon'
+let baseHora = null; // Guardamos la hora base como { h, m }
+let baseZona = null; // Zona base, ej: "MX"
 
-let baseTimeUTC = null // Guardamos la hora base en UTC
-
-const zonas = {
-  MX: 'America/Mexico_City',
-  CO: 'America/Bogota',
-  PE: 'America/Lima',
-  CL: 'America/Santiago',
-  AR: 'America/Argentina/Buenos_Aires'
+const offsets = {
+  MX: -6, // UTC-6 México
+  CO: -5, // UTC-5 Colombia
+  PE: -5, // UTC-5 Perú
+  CL: -4, // UTC-4 Chile
+  AR: -3  // UTC-3 Argentina
 }
 
-// Función para convertir la hora que da el usuario a UTC
-function parseHoraUsuario(horaStr, zonaStr) {
-  const zona = zonas[zonaStr.toUpperCase()]
-  if (!zona) throw new Error('Zona horaria inválida')
+function parseHoraSimple(horaStr) {
+  // horaStr: "7:30 am" o "19:41"
+  let parts = horaStr.toLowerCase().split(' ');
+  let time = parts[0];
+  let ampm = parts[1]; // puede ser undefined si es 24h
 
-  // Si la hora contiene "am" o "pm" (ignorando mayúsculas), parsear formato 12h
-  if (/am|pm/i.test(horaStr)) {
-    const dt12 = DateTime.fromFormat(horaStr, 'h:mm a', { zone: zona })
-    if (!dt12.isValid) throw new Error('Hora inválida en formato 12h')
-    const now = DateTime.now().setZone(zona)
-    return dt12.set({ year: now.year, month: now.month, day: now.day }).toUTC()
-  } else {
-    // Sino, asumir formato 24h (H:mm)
-    const dt24 = DateTime.fromFormat(horaStr, 'H:mm', { zone: zona })
-    if (!dt24.isValid) throw new Error('Hora inválida en formato 24h')
-    const now = DateTime.now().setZone(zona)
-    return dt24.set({ year: now.year, month: now.month, day: now.day }).toUTC()
-  }
+  let [h, m] = time.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) throw new Error('Hora inválida');
+
+  if (ampm === 'pm' && h < 12) h += 12;
+  if (ampm === 'am' && h === 12) h = 0;
+
+  return { h, m };
 }
 
-// Función para mostrar la hora en cada zona desde base UTC
-function mostrarHorasDesdeUTC(utcTime) {
-  const lines = []
-  for (const [code, zone] of Object.entries(zonas)) {
-    const dt = utcTime.setZone(zone)
-    const horaFormateada = dt.toFormat('h:mm a')
+function mostrarHorasSimple(h, m, zonaBase) {
+  if (!offsets[zonaBase]) throw new Error('Zona base inválida');
+  let baseOffset = offsets[zonaBase];
+
+  let lines = [];
+  for (const [code, offset] of Object.entries(offsets)) {
+    let diff = offset - baseOffset;
+    let hour = h + diff;
+
+    if (hour < 0) hour += 24;
+    if (hour >= 24) hour -= 24;
+
+    let ampm = hour >= 12 ? 'pm' : 'am';
+    let hour12 = hour % 12 || 12;
+    let timeStr = `${hour12}:${m.toString().padStart(2, '0')} ${ampm}`;
+
     const pais = {
       MX: 'MÉXICO 🇲🇽',
       CO: 'COLOMBIA 🇨🇴',
       PE: 'PERÚ 🇵🇪',
       CL: 'CHILE 🇨🇱',
       AR: 'ARGENTINA 🇦🇷'
-    }[code]
-    lines.push(`• ${horaFormateada} ${pais}`)
+    }[code];
+
+    lines.push(`• ${timeStr} ${pais}`);
   }
-  return lines.join('\n')
+  return lines.join('\n');
 }
 
-// En el handler:
+// En tu handler
 const handler = async (m, { conn, command, args }) => {
   if (command.toLowerCase() === 'hora') {
-    if (args.length < 2) return m.reply('Uso: !hora <hora> <zona>\nEjemplo: !hora "7:30 am" MX')
-    
-    // Unimos todos menos el último para la hora (por si ponen "7:30 am")
-    const zonaStr = args[args.length -1]
-    const horaStr = args.slice(0, args.length -1).join(' ')
+    if (args.length < 2) return m.reply('Uso: !hora <hora> <zona>\nEjemplo: !hora "7:30 am" MX');
+
+    const zonaStr = args[args.length -1].toUpperCase();
+    const horaStr = args.slice(0, args.length -1).join(' ');
 
     try {
-      baseTimeUTC = parseHoraUsuario(horaStr, zonaStr)
-      const mensajeHoras = mostrarHorasDesdeUTC(baseTimeUTC)
-      return m.reply(`✅ Horarios ajustados:\n${mensajeHoras}`)
+      baseHora = parseHoraSimple(horaStr);
+      baseZona = zonaStr;
+      const mensajeHoras = mostrarHorasSimple(baseHora.h, baseHora.m, baseZona);
+      return m.reply(`✅ Horarios ajustados:\n${mensajeHoras}`);
     } catch (e) {
-      return m.reply('Error: ' + e.message)
+      return m.reply('Error: ' + e.message);
     }
   }
 
-  // ... resto del código de lista usando baseTimeUTC para mostrar las horas dinámicas
-  
-  // Cuando generes el embed, si baseTimeUTC existe, muestra las horas, si no muestra texto default
+  // Enviar lista usando baseHora y baseZona
   const listaMsg = await conn.sendMessage(m.chat, {
     text: generarEmbedConMentions(escuadra, suplentes).text
-  }, { quoted: m })
-
-  // ...
+  }, { quoted: m });
 }
 
-// En la función que genera el mensaje, usamos baseTimeUTC para armar el texto de horas
-
+// En la función que genera el mensaje
 function generarEmbedConMentions(escuadra, suplentes) {
-  const mentions = []
+  const mentions = [];
 
   function formatUser(u, isLeader = false) {
-    mentions.push(u.jid)
-    const icon = isLeader ? '👑' : '⚜️'
-    return `┊ ${icon} ➤ @${u.nombre}`
+    mentions.push(u.jid);
+    const icon = isLeader ? '👑' : '⚜️';
+    return `┊ ${icon} ➤ @${u.nombre}`;
   }
 
   const escuadraText = escuadra.length
     ? escuadra.map((u, i) => formatUser(u, i === 0)).join('\n')
-    : `┊ 👑 ➤ \n┊ ⚜️ ➤ \n┊ ⚜️ ➤ \n┊ ⚜️ ➤`
+    : `┊ 👑 ➤ \n┊ ⚜️ ➤ \n┊ ⚜️ ➤ \n┊ ⚜️ ➤`;
 
   const suplentesText = suplentes.length
     ? suplentes.map(u => formatUser(u)).join('\n')
-    : `┊ ⚜️ ➤ \n┊ ⚜️ ➤`
+    : `┊ ⚜️ ➤ \n┊ ⚜️ ➤`;
 
-  let horasTexto = '• 5:00am MÉXICO 🇲🇽\n• 6:00am COLOMBIA 🇨🇴\n• 6:00am PERÚ 🇵🇪\n• 7:00am CHILE 🇨🇱\n• 8:00am ARGENTINA 🇦🇷'
-  if (baseTimeUTC) {
-    horasTexto = mostrarHorasDesdeUTC(baseTimeUTC)
+  let horasTexto = '• 5:00am MÉXICO 🇲🇽\n• 6:00am COLOMBIA 🇨🇴\n• 6:00am PERÚ 🇵🇪\n• 7:00am CHILE 🇨🇱\n• 8:00am ARGENTINA 🇦🇷';
+  if (baseHora && baseZona) {
+    horasTexto = mostrarHorasSimple(baseHora.h, baseHora.m, baseZona);
   }
 
   const text = `ㅤ ㅤ4 \`𝗩𝗘𝗥𝗦𝗨𝗦\` 4
@@ -116,7 +116,7 @@ ${suplentesText}
 
 ❤️ = Participar | 👍 = Suplente
 
-• Lista Activa Por 5 Minutos`
+• Lista Activa Por 5 Minutos`;
 
-  return { text, mentions }
+  return { text, mentions };
 }
