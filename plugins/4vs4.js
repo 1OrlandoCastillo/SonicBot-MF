@@ -1,4 +1,15 @@
-const handler = async (m, { conn }) => {
+let horaMexico = '5:00am MÉXICO 🇲🇽'
+let horaColombia = '6:00am COLOMBIA 🇨🇴'
+
+const handler = async (m, { conn, command, args }) => {
+  // Permitir cambiar la hora con comando 'hora' solo dentro del grupo
+  if (command.toLowerCase() === 'hora') {
+    if (!args[0] || !args[1]) return m.reply('Por favor usa: !hora <horaMéxico> <horaColombia>\nEjemplo: !hora 7:00am 8:00am')
+    horaMexico = args[0] + ' MÉXICO 🇲🇽'
+    horaColombia = args[1] + ' COLOMBIA 🇨🇴'
+    return m.reply(`✅ Horarios actualizados:\n• ${horaMexico}\n• ${horaColombia}`)
+  }
+
   let escuadra = [] // [{ jid, nombre }]
   let suplentes = [] // [{ jid, nombre }]
   let listaAbierta = true
@@ -105,7 +116,7 @@ const handler = async (m, { conn }) => {
   }, 5 * 60 * 1000)
 }
 
-// Diseño del mensaje con menciones
+// Diseño del mensaje con menciones y horas dinámicas
 function generarEmbedConMentions(escuadra, suplentes) {
   const mentions = []
 
@@ -128,8 +139,8 @@ function generarEmbedConMentions(escuadra, suplentes) {
 ┊ \`𝗠𝗢𝗗𝗢:\` \`\`\`CLK\`\`\`
 ┊
 ┊ ⏱️ \`𝗛𝗢𝗥𝗔𝗥𝗜𝗢\`
-┊ • 5:00am MÉXICO 🇲🇽
-┊ • 6:00am COLOMBIA 🇨🇴
+┊ • ${horaMexico}
+┊ • ${horaColombia}
 ┊
 ┊ » \`𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔\`
 ${escuadraText}
@@ -145,9 +156,9 @@ ${suplentesText}
   return { text, mentions }
 }
 
-handler.help = ['partido']
+handler.help = ['partido', 'hora']
 handler.tags = ['partido']
-handler.command = /^partido$/i
+handler.command = /^(partido|hora)$/i
 handler.group = true
 
 export default handler
