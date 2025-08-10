@@ -1,4 +1,4 @@
-const { WAConnection, MessageMedia } = require('@whiskeysockets/baileys');
+import { WAConnection, MessageMedia } from '@whiskeysockets/baileys';
 
 const handler = async (m, { conn, usedPrefix }) => {
   const embed = generarEmbed([], []);
@@ -58,4 +58,4 @@ handler.help = ['partido']
 handler.tags = ['partido']
 handler.group = true
 
-export default handler;
+export default handler
