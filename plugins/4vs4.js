@@ -1,122 +1,90 @@
-let horaMexico = '5:00am MÉXICO 🇲🇽'
-let horaColombia = '6:00am COLOMBIA 🇨🇴'
+import { DateTime } from 'luxon'
 
+let baseTimeUTC = null // Guardamos la hora base en UTC
+
+const zonas = {
+  MX: 'America/Mexico_City',
+  CO: 'America/Bogota',
+  PE: 'America/Lima',
+  CL: 'America/Santiago',
+  AR: 'America/Argentina/Buenos_Aires'
+}
+
+// Función para convertir la hora que da el usuario a UTC
+function parseHoraUsuario(horaStr, zonaStr) {
+  // horaStr ejemplo: "7:30 am" o "19:41"
+  // zonaStr ejemplo: "MX", "AR", etc.
+
+  const zona = zonas[zonaStr.toUpperCase()]
+  if (!zona) throw new Error('Zona horaria inválida')
+
+  // Parseamos hora con luxon
+  // Suponemos formato 12h con am/pm o 24h
+  let dt = DateTime.fromFormat(horaStr, 'h:mm a', { zone: zona })
+  if (!dt.isValid) {
+    dt = DateTime.fromFormat(horaStr, 'H:mm', { zone: zona })
+  }
+  if (!dt.isValid) throw new Error('Hora inválida')
+
+  // Ajustamos al día actual en esa zona
+  const now = DateTime.now().setZone(zona)
+  dt = dt.set({
+    year: now.year,
+    month: now.month,
+    day: now.day
+  })
+
+  return dt.toUTC()
+}
+
+// Función para mostrar la hora en cada zona desde base UTC
+function mostrarHorasDesdeUTC(utcTime) {
+  const lines = []
+  for (const [code, zone] of Object.entries(zonas)) {
+    const dt = utcTime.setZone(zone)
+    const horaFormateada = dt.toFormat('h:mm a')
+    const pais = {
+      MX: 'MÉXICO 🇲🇽',
+      CO: 'COLOMBIA 🇨🇴',
+      PE: 'PERÚ 🇵🇪',
+      CL: 'CHILE 🇨🇱',
+      AR: 'ARGENTINA 🇦🇷'
+    }[code]
+    lines.push(`• ${horaFormateada} ${pais}`)
+  }
+  return lines.join('\n')
+}
+
+// En el handler:
 const handler = async (m, { conn, command, args }) => {
-  // Permitir cambiar la hora con comando 'hora' solo dentro del grupo
   if (command.toLowerCase() === 'hora') {
-    if (!args[0] || !args[1]) return m.reply('Por favor usa: !hora <horaMéxico> <horaColombia>\nEjemplo: !hora 7:00am 8:00am')
-    horaMexico = args[0] + ' MÉXICO 🇲🇽'
-    horaColombia = args[1] + ' COLOMBIA 🇨🇴'
-    return m.reply(`✅ Horarios actualizados:\n• ${horaMexico}\n• ${horaColombia}`)
+    if (args.length < 2) return m.reply('Uso: !hora <hora> <zona>\nEjemplo: !hora "7:30 am" MX')
+    
+    // Unimos todos menos el último para la hora (por si ponen "7:30 am")
+    const zonaStr = args[args.length -1]
+    const horaStr = args.slice(0, args.length -1).join(' ')
+
+    try {
+      baseTimeUTC = parseHoraUsuario(horaStr, zonaStr)
+      const mensajeHoras = mostrarHorasDesdeUTC(baseTimeUTC)
+      return m.reply(`✅ Horarios ajustados:\n${mensajeHoras}`)
+    } catch (e) {
+      return m.reply('Error: ' + e.message)
+    }
   }
 
-  let escuadra = [] // [{ jid, nombre }]
-  let suplentes = [] // [{ jid, nombre }]
-  let listaAbierta = true
-
-  // Enviar mensaje inicial sin menciones
-  let listaMsg = await conn.sendMessage(m.chat, {
+  // ... resto del código de lista usando baseTimeUTC para mostrar las horas dinámicas
+  
+  // Cuando generes el embed, si baseTimeUTC existe, muestra las horas, si no muestra texto default
+  const listaMsg = await conn.sendMessage(m.chat, {
     text: generarEmbedConMentions(escuadra, suplentes).text
   }, { quoted: m })
 
-  // Actualizar lista editando el mensaje original SIN menciones para evitar notificaciones masivas
-  const actualizarLista = async () => {
-    try {
-      const { text } = generarEmbedConMentions(escuadra, suplentes)
-      await conn.sendMessage(m.chat, {
-        text,
-        edit: listaMsg.key
-      })
-    } catch {
-      const { text } = generarEmbedConMentions(escuadra, suplentes)
-      await conn.sendMessage(m.chat, { text }, { quoted: m })
-    }
-  }
-
-  // Notificar individualmente al usuario que acaba de anotarse
-  const notificarUsuario = async (usuario) => {
-    const nombreReal = await conn.getName(usuario.jid) || usuario.nombre || 'usuario'
-    const primerNombre = nombreReal.split(' ')[0]
-    const text = `✅ @${primerNombre} ya estás anotado en la lista.`
-    await conn.sendMessage(m.chat, {
-      text,
-      mentions: [usuario.jid]
-    }, { quoted: m })
-  }
-
-  // Cerrar lista y notificar a todos los anotados
-  const cerrarLista = async () => {
-    listaAbierta = false
-    await conn.sendMessage(m.chat, {
-      text: `✅ La escuadra está completa y la lista se ha cerrado.\n\n👑 Escuadra: ${escuadra.map(u => '@' + u.nombre).join(', ') || 'Nadie'}\n🪑 Suplentes: ${suplentes.map(u => '@' + u.nombre).join(', ') || 'Nadie'}`,
-      mentions: [...escuadra.map(u => u.jid), ...suplentes.map(u => u.jid)]
-    }, { quoted: m })
-  }
-
-  // Procesar reacción para añadir usuario a lista
-  const procesarReaccion = async (msg) => {
-    if (!listaAbierta) return
-    if (!msg.message || !msg.message.reactionMessage) return
-
-    let reaccion = msg.message.reactionMessage.text
-    let reaccionKey = msg.message.reactionMessage.key
-
-    if (reaccionKey.id !== listaMsg.key.id) return
-    if (reaccionKey.remoteJid !== m.chat) return
-
-    let participanteJid = msg.key.participant ?? msg.key.remoteJid
-    if (participanteJid === conn.user.id) return
-
-    let nombre = (await conn.getName(participanteJid))?.trim()
-    if (!nombre) return
-
-    // Remover si ya estaba anotado para evitar duplicados
-    escuadra = escuadra.filter(u => u.jid !== participanteJid)
-    suplentes = suplentes.filter(u => u.jid !== participanteJid)
-
-    if (reaccion.startsWith('❤️')) {
-      if (escuadra.length < 4) {
-        escuadra.push({ jid: participanteJid, nombre })
-        await notificarUsuario({ jid: participanteJid, nombre })
-      } else {
-        return
-      }
-    } else if (reaccion.startsWith('👍')) {
-      suplentes.push({ jid: participanteJid, nombre })
-      await notificarUsuario({ jid: participanteJid, nombre })
-    } else {
-      return
-    }
-
-    await actualizarLista()
-
-    if (escuadra.length === 4) {
-      await cerrarLista()
-    }
-  }
-
-  // Escuchar reacciones
-  conn.ev.on('messages.upsert', async ({ messages }) => {
-    for (let msg of messages) await procesarReaccion(msg)
-  })
-
-  conn.ev.on('messages.update', async (updates) => {
-    for (let update of updates) if (update.message) await procesarReaccion(update)
-  })
-
-  // Expira en 5 minutos si no se completa antes
-  setTimeout(async () => {
-    if (listaAbierta) {
-      listaAbierta = false
-      await conn.sendMessage(m.chat, {
-        text: `⌛ Tiempo agotado.\n\n👑 Escuadra: ${escuadra.map(u => '@' + u.nombre).join(', ') || 'Nadie'}\n🪑 Suplentes: ${suplentes.map(u => '@' + u.nombre).join(', ') || 'Nadie'}`,
-        mentions: [...escuadra.map(u => u.jid), ...suplentes.map(u => u.jid)]
-      }, { quoted: m })
-    }
-  }, 5 * 60 * 1000)
+  // ...
 }
 
-// Diseño del mensaje con menciones y horas dinámicas
+// En la función que genera el mensaje, usamos baseTimeUTC para armar el texto de horas
+
 function generarEmbedConMentions(escuadra, suplentes) {
   const mentions = []
 
@@ -134,13 +102,17 @@ function generarEmbedConMentions(escuadra, suplentes) {
     ? suplentes.map(u => formatUser(u)).join('\n')
     : `┊ ⚜️ ➤ \n┊ ⚜️ ➤`
 
+  let horasTexto = '• 5:00am MÉXICO 🇲🇽\n• 6:00am COLOMBIA 🇨🇴\n• 6:00am PERÚ 🇵🇪\n• 7:00am CHILE 🇨🇱\n• 8:00am ARGENTINA 🇦🇷'
+  if (baseTimeUTC) {
+    horasTexto = mostrarHorasDesdeUTC(baseTimeUTC)
+  }
+
   const text = `ㅤ ㅤ4 \`𝗩𝗘𝗥𝗦𝗨𝗦\` 4
 ╭─────────────╮
 ┊ \`𝗠𝗢𝗗𝗢:\` \`\`\`CLK\`\`\`
 ┊
 ┊ ⏱️ \`𝗛𝗢𝗥𝗔𝗥𝗜𝗢\`
-┊ • ${horaMexico}
-┊ • ${horaColombia}
+${horasTexto}
 ┊
 ┊ » \`𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔\`
 ${escuadraText}
@@ -155,10 +127,3 @@ ${suplentesText}
 
   return { text, mentions }
 }
-
-handler.help = ['partido', 'hora']
-handler.tags = ['partido']
-handler.command = /^(partido|hora)$/i
-handler.group = true
-
-export default handler
