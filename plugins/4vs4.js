@@ -8,8 +8,6 @@ const handler = async (m, { conn }) => {
     text: generarEmbedConMentions(escuadra, suplentes).text
   }, { quoted: m })
 
-  // No hace falta que el bot reaccione, solo usuarios reaccionan
-
   // Función para actualizar la lista en el mismo mensaje
   const actualizarLista = async () => {
     try {
@@ -17,9 +15,7 @@ const handler = async (m, { conn }) => {
       await conn.sendMessage(m.chat, {
         text,
         mentions,
-        // Si tu API soporta editar mensajes, así va el edit:
-        // edit: listaMsg.key 
-        // Si no, comentar y enviar nuevo mensaje abajo:
+        edit: listaMsg.key // Editar mensaje original
       })
     } catch {
       const { text, mentions } = generarEmbedConMentions(escuadra, suplentes)
@@ -48,8 +44,8 @@ const handler = async (m, { conn }) => {
     if (reaccionKey.id !== listaMsg.key.id) return
     if (reaccionKey.remoteJid !== m.chat) return
 
-    // Ignorar reacciones del propio bot
-    let participanteJid = reaccionKey.participant ?? reaccionKey.remoteJid
+    // El que reaccionó es msg.key.participant en la reacción o en msg.key.remoteJid
+    let participanteJid = msg.key.participant ?? msg.key.remoteJid
     if (participanteJid === conn.user.id) return
 
     let nombre = (await conn.getName(participanteJid))?.trim()
