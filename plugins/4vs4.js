@@ -12,29 +12,22 @@ const zonas = {
 
 // Función para convertir la hora que da el usuario a UTC
 function parseHoraUsuario(horaStr, zonaStr) {
-  // horaStr ejemplo: "7:30 am" o "19:41"
-  // zonaStr ejemplo: "MX", "AR", etc.
-
   const zona = zonas[zonaStr.toUpperCase()]
   if (!zona) throw new Error('Zona horaria inválida')
 
-  // Parseamos hora con luxon
-  // Suponemos formato 12h con am/pm o 24h
-  let dt = DateTime.fromFormat(horaStr, 'h:mm a', { zone: zona })
-  if (!dt.isValid) {
-    dt = DateTime.fromFormat(horaStr, 'H:mm', { zone: zona })
+  // Si la hora contiene "am" o "pm" (ignorando mayúsculas), parsear formato 12h
+  if (/am|pm/i.test(horaStr)) {
+    const dt12 = DateTime.fromFormat(horaStr, 'h:mm a', { zone: zona })
+    if (!dt12.isValid) throw new Error('Hora inválida en formato 12h')
+    const now = DateTime.now().setZone(zona)
+    return dt12.set({ year: now.year, month: now.month, day: now.day }).toUTC()
+  } else {
+    // Sino, asumir formato 24h (H:mm)
+    const dt24 = DateTime.fromFormat(horaStr, 'H:mm', { zone: zona })
+    if (!dt24.isValid) throw new Error('Hora inválida en formato 24h')
+    const now = DateTime.now().setZone(zona)
+    return dt24.set({ year: now.year, month: now.month, day: now.day }).toUTC()
   }
-  if (!dt.isValid) throw new Error('Hora inválida')
-
-  // Ajustamos al día actual en esa zona
-  const now = DateTime.now().setZone(zona)
-  dt = dt.set({
-    year: now.year,
-    month: now.month,
-    day: now.day
-  })
-
-  return dt.toUTC()
 }
 
 // Función para mostrar la hora en cada zona desde base UTC
