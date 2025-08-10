@@ -8,14 +8,20 @@ const handler = async (m, { conn }) => {
     text: generarEmbed(escuadra, suplentes)
   }, { quoted: m })
 
+  // Añadir reacciones para que los usuarios puedan usarlas
+  await conn.sendMessage(m.chat, { react: { text: '❤️', key: listaMsg.key } })
+  await conn.sendMessage(m.chat, { react: { text: '👍', key: listaMsg.key } })
+
   // Función para actualizar la lista en el mismo mensaje
   const actualizarLista = async () => {
     try {
+      // Intenta editar el mensaje original (si tu API lo soporta)
       await conn.sendMessage(m.chat, {
         text: generarEmbed(escuadra, suplentes),
         edit: listaMsg.key
       })
     } catch {
+      // Si no se puede editar, envía uno nuevo
       await conn.sendMessage(m.chat, { text: generarEmbed(escuadra, suplentes) }, { quoted: m })
     }
   }
