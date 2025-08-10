@@ -11,15 +11,19 @@ const handler = async (m, { conn, usedPrefix }) => {
 
   conn.on('message', async (msg) => {
     if (msg.type === 'reaction' && msg.key.fromMe) {
-      const nombre = await conn.getName(msg.key.from);
-      if (msg.reaction === '❤️') {
-        escuadra.push(nombre);
-        console.log(`¡${nombre} se ha unido a la escuadra!`);
-      } else if (msg.reaction === '👍') {
-        suplentes.push(nombre);
-        console.log(`¡${nombre} se ha convertido en suplente!`);
+      try {
+        const nombre = await conn.getName(msg.key.from);
+        if (msg.reaction === '❤️') {
+          escuadra.push(nombre);
+          console.log(`¡${nombre} se ha unido a la escuadra!`);
+        } else if (msg.reaction === '👍') {
+          suplentes.push(nombre);
+          console.log(`¡${nombre} se ha convertido en suplente!`);
+        }
+        await actualizarLista(m, conn, escuadra, suplentes);
+      } catch (error) {
+        console.error(error);
       }
-      await actualizarLista(m, conn, escuadra, suplentes);
     }
   });
 
@@ -37,16 +41,16 @@ async function actualizarLista(m, conn, escuadra, suplentes) {
 
 function generarEmbed(escuadra, suplentes) {
   return `╭─────────────╮
-┊ `𝗠𝗢𝗗𝗢:` ```CLK```
+┊ MODO: CLK
 ┊ 
-┊ ⏱️ `𝗛𝗢𝗥𝗔𝗥𝗜𝗢`
+┊ ⏱️ HORARIO
 ┊ • 5:00am MÉXICO 
 ┊ • 6:00am COLOMBIA 
 ┊ 
-┊ » `𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔`
+┊ » ESCUADRA
 ┊ ${escuadra.map((nombre) => `┊ ${nombre}`).join('\n')}
 ┊ 
-┊ » `𝗦𝗨𝗣𝗟𝗘𝗡𝗧𝗘:`
+┊ » SUPLENTES
 ┊ ${suplentes.map((nombre) => `┊ ${nombre}`).join('\n')}
 ┊ 
 ╰─────────────╯
