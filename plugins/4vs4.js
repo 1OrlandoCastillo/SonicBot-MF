@@ -24,7 +24,9 @@ const handler = async (m, { conn }) => {
 
   // Notificar individualmente al usuario que acaba de anotarse
   const notificarUsuario = async (usuario) => {
-    const text = `✅ @${usuario.nombre} ya estás anotado en la lista.`
+    const nombreReal = await conn.getName(usuario.jid) || usuario.nombre || 'usuario'
+    const primerNombre = nombreReal.split(' ')[0]
+    const text = `✅ @${primerNombre} ya estás anotado en la lista.`
     await conn.sendMessage(m.chat, {
       text,
       mentions: [usuario.jid]
@@ -57,6 +59,7 @@ const handler = async (m, { conn }) => {
     let nombre = (await conn.getName(participanteJid))?.trim()
     if (!nombre) return
 
+    // Remover si ya estaba anotado para evitar duplicados
     escuadra = escuadra.filter(u => u.jid !== participanteJid)
     suplentes = suplentes.filter(u => u.jid !== participanteJid)
 
@@ -102,7 +105,7 @@ const handler = async (m, { conn }) => {
   }, 5 * 60 * 1000)
 }
 
-// Diseño del mensaje con menciones (igual que tú lo definiste)
+// Diseño del mensaje con menciones
 function generarEmbedConMentions(escuadra, suplentes) {
   const mentions = []
 
