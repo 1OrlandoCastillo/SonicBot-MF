@@ -60,7 +60,7 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
     }))
 
     let nombreBot = global.namebot || 'Anya Forger'
-let imgBot = './storage/img/menu.jpg'
+let imgBot = 'https://cdn.russellxz.click/1dec146c.jpeg'
 
 const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
 const configPath = join('./Serbot', botActual, 'config.json')
@@ -73,9 +73,9 @@ const config = JSON.parse(fs.readFileSync(configPath))
       }
     }
 
-    const tipo = botActual === '+5363172635'.replace(/\D/g, '')
+    const tipo = botActual === '+5491125856641'.replace(/\D/g, '')
       ? 'Principal Bot'
-      : 'Prem Bot'
+      : 'Sub Bot'
 
     const menuConfig = conn.menu || defaultMenu
     const _text = [
