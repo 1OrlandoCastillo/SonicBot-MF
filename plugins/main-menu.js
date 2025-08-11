@@ -7,13 +7,25 @@ import fetch from 'node-fetch'
 import { xpRange } from '../lib/levelling.js'
 
 const tags = {
-  serbot: 'ㅤㅤㅤㅤ꒰ 🪷 ꒱ㅤㅤSubbots',
-  search: 'ㅤㅤㅤㅤ꒰ 🍨 ꒱ㅤㅤSearchs',
-  downloader: 'ㅤㅤㅤㅤ꒰ 🍓 ꒱ㅤㅤDownloaders',
-  group: 'ㅤㅤㅤㅤ꒰ 🍥 ꒱ㅤㅤGroups',
-  tools: 'ㅤㅤㅤㅤ꒰ 🩰 ꒱ㅤㅤTools',
-  sticker: 'ㅤㅤㅤㅤ꒰ 🌸 ꒱ㅤㅤStickers',
-  owner: 'ㅤㅤㅤㅤ꒰ 🍈 ꒱ㅤㅤOwner',
+  'main': 'Information',
+  'search': 'Search',
+  'game': 'Games',
+  'serbot': 'Sub-Bots',
+  'rpg': 'Rpg',
+  'rg': 'Registro',
+  'sticker': 'Sticker',
+  'img': 'Image',
+  'group': 'Groups',
+  'nable': 'On / Off', 
+  'premium': 'Premium',
+  'downloader': 'Download',
+  'tools': 'Tools',
+  'fun': 'Fun',
+  'nsfw': 'Nsfw', 
+  'cmd': 'Database',
+  'owner': 'Creador', 
+  'audio': 'Audios', 
+  'advanced': 'Avanzado',
 }
 
 const defaultMenu = {
@@ -26,7 +38,7 @@ Hola, soy %botname
 ︵‿︵‿୨♡୧‿︵‿︵
 🪷 : Tiempo    :: %uptime  
 ㅤ📚 : Plataforma  :: Baileys MD  
-ㅤ💮 : Modo  :: Privado
+ㅤ💮 : Modo  :: Privado Vip 
 ︶‿︶‿୨♡୧‿︶‿︶
 %readmore`.trimStart(),
 
