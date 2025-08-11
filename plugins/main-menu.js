@@ -7,62 +7,33 @@ import fetch from 'node-fetch'
 import { xpRange } from '../lib/levelling.js'
 
 const tags = {
-  serbot: 'ᗝ̵      ִ       ꯭ ꯭s꯭u꯭bb꯭o꯭t꯭s ꯭ ꯭        ֹ     𓋲',
-  search: 'ᗝ̵      ִ       ꯭ ꯭s꯭ea꯭rc꯭h꯭s ꯭ ꯭        ֹ     𓋲',
-  downloader: 'ᗝ̵      ִ       ꯭ ꯭do꯭w꯭nl꯭o꯭ae꯭r ꯭ ꯭        ֹ     𓋲',
-  group: 'ᗝ̵      ִ       ꯭ ꯭g꯭r꯭ou꯭p꯭ ꯭ ꯭        ֹ     𓋲',
-  tools: 'ᗝ̵      ִ       ꯭ ꯭to꯭ol꯭s꯭ ꯭ ꯭        ֹ     𓋲',
-  sticker: 'ᗝ̵      ִ       ꯭ ꯭s꯭ti꯭ck꯭e꯭rs꯭ ꯭ ꯭        ֹ     𓋲',
-  owner: 'ᗝ̵      ִ       ꯭ ꯭o꯭w꯭ne꯭r꯭ ꯭ ꯭        ֹ     𓋲',
+  serbot: 'ㅤㅤㅤㅤ꒰ 🪷 ꒱ㅤㅤSubbots',
+  search: 'ㅤㅤㅤㅤ꒰ 🍨 ꒱ㅤㅤSearchs',
+  downloader: 'ㅤㅤㅤㅤ꒰ 🍓 ꒱ㅤㅤDownloaders',
+  group: 'ㅤㅤㅤㅤ꒰ 🍥 ꒱ㅤㅤGroups',
+  tools: 'ㅤㅤㅤㅤ꒰ 🩰 ꒱ㅤㅤTools',
+  sticker: 'ㅤㅤㅤㅤ꒰ 🌸 ꒱ㅤㅤStickers',
+  owner: 'ㅤㅤㅤㅤ꒰ 🍈 ꒱ㅤㅤOwner',
 }
 
 const defaultMenu = {
   before: `
-╭━━━✦✧✦━━━╮
-┃   💠✨ *%botname* ( *%tipo* ) ✨💠
-╰━━━✦✧✦━━━╯
-╭──────── ✦ ────────╮
-┃ 🕹️ *¡Bienvenido a la revolución de los bots!*
-┃ 🌟 *espero que tengas un buen día*
-┃ 🙋‍♂️ Usuario: *%name*
-┃ 👑 Owner: *+5212731590195*
-┃ 🧁 Diversión y utilidad garantizada.
-╰──────── ✦ ────────╯
+Hola, soy %botname  
+(%tipo)
 
-╭━━━《  📡  ESTADO DEL BOT  📡  》━━━╮
-┃ ⏳  Activo: *%uptime*
-┃ 💻  Host: *Cuervo-host*
-┃ 👥  Usuarios: *%totalreg*
-╰━━━━━━━━━━━━━━━━━━━━━━━╯
+¿Cómo te encuentras hoy, cielo?
 
-╭━━━✦✧✦━━━╮
-┃  🚀 *¡Explora, juega y domina con SonicBot!* 🚀
-╰━━━✦✧✦━━━╯
-┊✨ “Haz más. Hazlo fácil. Hazlo con SonicBot.”
-┊🎉 “¡Nuevas sorpresas todos los días, no te las pierdas!”
-┊🦊 “Comparte SonicBot y multiplica la diversión.”
-┊💡 “¿Sabías? Puedes personalizar tu experiencia con comandos únicos.”
-%readmore
-`.trim(),
+︵‿︵‿୨♡୧‿︵‿︵
+🪷 : Tiempo    :: %uptime  
+ㅤ📚 : Plataforma  :: Baileys MD  
+ㅤ💮 : Modo  :: Privado
+︶‿︶‿୨♡୧‿︶‿︶
+%readmore`.trimStart(),
 
-  header: `
-╭═───────『 🗂 %category 』───────═╮
-`.trim(),
-
-  body: `┃ 🔹 %cmd %islimit %isPremium`,
-
-  footer: '╰══════════════════════╯\n',
-
-  after: `
-╭━━━━━━━━✦✧✦━━━━━━━━╮
-┃  📢 𝙄𝙉𝙁𝙊 𝙔 𝙎𝙊𝙋𝙊𝙍𝙏𝙀 📢
-╰━━━━━━━━✦✧✦━━━━━━━━╯
-┊📬 ¿Tienes dudas, necesitas soporte o quieres sugerir algo?
-┊👤 Comunicate con el dueño *+5212731590195* para hablar DIRECTAMENTE.
-┊⭐ ¡Gracias por confiar y ser parte de la familia SonicBot!
-┊🪐 Únete a nuestra comunidad y vive la mejor experiencia de WhatsApp.
-╰━━━━━━━━━━━━━━━━━━━╯
-`.trim()
+  header: '%category',
+  body: '𝆬🍄ㅤ◌ㅤ%cmd %islimit %isPremium\n',
+  footer: '',
+  after: '',
 }
 
 const handler = async (m, { conn, usedPrefix: _p }) => {
@@ -88,11 +59,11 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       premium: plugin.premium
     }))
 
-    let nombreBot = global.namebot || 'SONICBOT'
-let imgBot = 'https://qu.ax/pUhgD.jpg'
+    let nombreBot = global.namebot || 'Anya Forger'
+let imgBot = './storage/img/menu.jpg'
 
 const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
-const configPath = join('./JadiBots', botActual, 'config.json')
+const configPath = join('./Serbot', botActual, 'config.json')
     if (fs.existsSync(configPath)) {
       try {
 const config = JSON.parse(fs.readFileSync(configPath))
@@ -102,9 +73,9 @@ const config = JSON.parse(fs.readFileSync(configPath))
       }
     }
 
-    const tipo = botActual === '+522731260569'.replace(/\D/g, '')
-      ? 'Principal'
-      : 'Sub Bot'
+    const tipo = botActual === '+5363172635'.replace(/\D/g, '')
+      ? 'Principal Bot'
+      : 'Prem Bot'
 
     const menuConfig = conn.menu || defaultMenu
     const _text = [
@@ -155,15 +126,10 @@ const config = JSON.parse(fs.readFileSync(configPath))
       (_, name) => String(replace[name])
     )
 
-// await conn.sendFile(m.chat, imgBot, 'thumbnail.jpg', text.trim(), m, null, rcanal)
-
-const vidurl = 'https://raw.githubusercontent.com/WillZek/Storage-CB/main/images/30f470a28e03.mp4';
-
- await conn.sendMessage(m.chat, { video: { url: vidurl }, caption: text.trim(), contextInfo: { mentionedJid: [m.sender], isForwarded: true, forwardedNewsletterMessageInfo: { newsletterJid: '120363411154070926@newsletter', newsletterName: 'SonicBot-MF Oficial', serverMessageId: -1, }, forwardingScore: 999, externalAdReply: { title: 'SonicBot - Menu', body: 'Made By Orlando 💙', thumbnailUrl: imgBot, sourceUrl: 'https://wa.me/50557865603', mediaType: 1, renderLargerThumbnail: false,
-}, }, gifPlayback: true, gifAttribution: 0 }, { quoted: null })
+    await conn.sendFile(m.chat, imgBot, 'thumbnail.jpg', text.trim(), m, null, rcanal)
 
   } catch (e) {
-    conn.reply(m.chat, `❎ Lo sentimos, el menú tiene un error.\n${e.message}`, m)
+    conn.reply(m.chat, '❎ Lo sentimos, el menú tiene un error.', m)
     throw e
   }
 }
