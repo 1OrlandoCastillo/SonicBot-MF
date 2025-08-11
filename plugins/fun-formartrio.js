@@ -10,10 +10,10 @@ async function handler(m, { conn, groupMetadata }) {
   // Enviar mensaje inicial de búsqueda
   await conn.reply(m.chat, `⌛ Buscando personas...`, m)
 
-  // Esperar 4 segundos simulando barra
+  // Esperar 4 segundos simulando búsqueda
   await new Promise(r => setTimeout(r, 4000))
 
-  // Seleccionar personas sin repetir
+  // Seleccionar tres personas distintas
   let a = getRandomFromArray(ps)
   let b
   do {
@@ -25,7 +25,14 @@ async function handler(m, { conn, groupMetadata }) {
     c = getRandomFromArray(ps)
   } while (c === a || c === b)
 
+  // Enviar mensaje final mencionando a las tres personas
   m.reply(`*Hey!!! ${toM(a)}, ${toM(b)} y ${toM(c)} han pensado en hacer un trio? ustedes 3 hacen un buen trio 😳😏*`, null, {
     mentions: [a, b, c],
   })
 }
+
+handler.help = ['formartrio']
+handler.tags = ['fun']
+handler.command = ['formartrio', 'formartrios']
+handler.group = true
+export default handler
