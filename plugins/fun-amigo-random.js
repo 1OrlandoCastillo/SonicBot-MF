@@ -1,4 +1,6 @@
-let toM = a => '@' + a.split('@')[0]
+const emoji = '🤖'
+
+let toM = jid => '@' + jid.split('@')[0]
 
 function getRandom(arr) {
   return arr[Math.floor(Math.random() * arr.length)]
@@ -9,7 +11,15 @@ function delay(ms) {
 }
 
 async function handler(m, { groupMetadata, conn }) {
-  const participants = groupMetadata.participants.map(v => v.id)
+  if (!groupMetadata) {
+    return conn.sendMessage(m.chat, { text: 'Este comando solo funciona en grupos.' }, { quoted: m })
+  }
+
+  const participants = groupMetadata.participants.map(p => p.id)
+  if (participants.length < 2) {
+    return conn.sendMessage(m.chat, { text: 'No hay suficientes participantes para hacer amistades.' }, { quoted: m })
+  }
+
   const userA = getRandom(participants)
   let userB
   do {
@@ -18,11 +28,11 @@ async function handler(m, { groupMetadata, conn }) {
 
   await conn.sendMessage(m.chat, { text: `${emoji} Buscando amistad...` }, { quoted: m })
 
-  await delay(3000)  // Espera 3 segundos simulando la búsqueda
+  await delay(3000)
 
-  await conn.sendMessage(m.chat, { 
-    text: `${emoji} Vamos a hacer algunas amistades.\n\n*Oye ${toM(userA)} hablale al privado a ${toM(userB)} para que jueguen y se haga una amistad 🙆*\n\n*Las mejores amistades empiezan con un juego 😉.*`, 
-    mentions: [userA, userB] 
+  await conn.sendMessage(m.chat, {
+    text: `${emoji} Vamos a hacer algunas amistades.\n\n*Oye ${toM(userA)} hablale al privado a ${toM(userB)} para que jueguen y se haga una amistad 🙆*\n\n*Las mejores amistades empiezan con un juego 😉.*`,
+    mentions: [userA, userB]
   }, { quoted: m })
 }
 
