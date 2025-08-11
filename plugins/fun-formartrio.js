@@ -8,10 +8,17 @@ async function handler(m, { conn, groupMetadata }) {
   let ps = groupMetadata.participants.map(v => v.id)
 
   const steps = 10
+  // Enviar mensaje inicial vacío para barra
+  let sentMsg = await conn.reply(m.chat, `⌛ Buscando persona... [□□□□□□□□□□] 0%`, m)
+
   for (let i = 1; i <= steps; i++) {
     let percent = i * 10
     let progressBar = '■'.repeat(i) + '□'.repeat(steps - i)
-    await conn.reply(m.chat, `⌛ Buscando persona... [${progressBar}] ${percent}%`, m)
+    // Editar el mensaje enviado para actualizar barra y porcentaje
+    await conn.sendMessage(m.chat, { 
+      text: `⌛ Buscando persona... [${progressBar}] ${percent}%`
+    }, { quoted: sentMsg })
+
     await new Promise(r => setTimeout(r, 400))
   }
 
@@ -30,9 +37,3 @@ async function handler(m, { conn, groupMetadata }) {
     mentions: [a, b, c],
   })
 }
-
-handler.help = ['formartrio']
-handler.tags = ['fun']
-handler.command = ['formartrio', 'formartrios']
-handler.group = true
-export default handler
