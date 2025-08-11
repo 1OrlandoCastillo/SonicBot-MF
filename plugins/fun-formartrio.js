@@ -7,21 +7,13 @@ function getRandomFromArray(arr) {
 async function handler(m, { conn, groupMetadata }) {
   let ps = groupMetadata.participants.map(v => v.id)
 
-  const steps = 10
-  // Enviar mensaje inicial vacío para barra
-  let sentMsg = await conn.reply(m.chat, `⌛ Buscando persona... [□□□□□□□□□□] 0%`, m)
+  // Enviar mensaje inicial de búsqueda
+  await conn.reply(m.chat, `⌛ Buscando personas...`, m)
 
-  for (let i = 1; i <= steps; i++) {
-    let percent = i * 10
-    let progressBar = '■'.repeat(i) + '□'.repeat(steps - i)
-    // Editar el mensaje enviado para actualizar barra y porcentaje
-    await conn.sendMessage(m.chat, { 
-      text: `⌛ Buscando persona... [${progressBar}] ${percent}%`
-    }, { quoted: sentMsg })
+  // Esperar 4 segundos simulando barra
+  await new Promise(r => setTimeout(r, 4000))
 
-    await new Promise(r => setTimeout(r, 400))
-  }
-
+  // Seleccionar personas sin repetir
   let a = getRandomFromArray(ps)
   let b
   do {
