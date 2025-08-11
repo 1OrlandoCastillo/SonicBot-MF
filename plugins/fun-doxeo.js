@@ -18,34 +18,32 @@ var handler = async (m, { conn, text }) => {
         who = m.chat;
     }
 
-    if (!who) return conn.reply(m.chat, `${emoji} Por favor, ingrese el tag de algún usuario o responda a un mensaje.`, m);
+    if (!who) return conn.reply(m.chat, `⚠️ Por favor, menciona a un usuario o responde a un mensaje.`, m);
 
     if (!userName) {
         userName = text || 'Usuario desconocido';
     }
 
+    // Mensajes de carga
     let start = `🧑‍💻 *Iniciando doxeo*...`;
-    let boost = `*${pickRandom(['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20'])}%*`;
-    let boost2 = `*${pickRandom(['21','22','23','24','25','26','27','28','29','30','31','32','33','34','35','36','37','38','39','40'])}%*`;
-    let boost3 = `*${pickRandom(['41','42','43','44','45','46','47','48','49','50','51','52','53','54','55','56','57','58','59','60'])}%*`;
-    let boost4 = `*${pickRandom(['61','62','63','64','65','66','67','68','69','70','71','72','73','74','75','76','77','78','79','80'])}%*`;
-    let boost5 = `*${pickRandom(['81','82','83','84','85','86','87','88','89','90','91','92','93','94','95','96','97','98','99','100'])}%*`;
+    let boosts = [
+        pickRandom(['0','1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20']),
+        pickRandom(['21','22','23','24','25','26','27','28','29','30','31','32','33','34','35','36','37','38','39','40']),
+        pickRandom(['41','42','43','44','45','46','47','48','49','50','51','52','53','54','55','56','57','58','59','60']),
+        pickRandom(['61','62','63','64','65','66','67','68','69','70','71','72','73','74','75','76','77','78','79','80']),
+        pickRandom(['81','82','83','84','85','86','87','88','89','90','91','92','93','94','95','96','97','98','99','100'])
+    ];
 
-    const { key } = await conn.sendMessage(m.chat, { text: `${start}` }, { quoted: m });
-    await delay(1000);
-    await conn.sendMessage(m.chat, { text: `${boost}`, edit: key });
-    await delay(1000);
-    await conn.sendMessage(m.chat, { text: `${boost2}`, edit: key });
-    await delay(1000);
-    await conn.sendMessage(m.chat, { text: `${boost3}`, edit: key });
-    await delay(1000);
-    await conn.sendMessage(m.chat, { text: `${boost4}`, edit: key });
-    await delay(1000);
-    await conn.sendMessage(m.chat, { text: `${boost5}`, edit: key });
+    await conn.sendMessage(m.chat, { text: start }, { quoted: m });
+    for (let b of boosts) {
+        await delay(1000);
+        await conn.sendMessage(m.chat, { text: `*${b}%*` }, { quoted: m });
+    }
 
     let old = performance.now();
     let neww = performance.now();
-    let speed = `${neww - old}`;
+    let speed = `${(neww - old).toFixed(2)} ms`;
+
     let doxeo = `👤 *Persona doxeada* 
 
 📅 ${new Date().toLocaleDateString()}
@@ -90,14 +88,15 @@ Sof02s32inf14.1e100.net
 *EXTERNAL MAC:* 6U:77:89:ER:O4
 *MODEM JUMPS:* 64`;
 
-    m.reply(doxeo, null, { mentions: conn.parseMention(doxeo) });
+    await conn.sendMessage(m.chat, { text: doxeo, mentions: conn.parseMention(doxeo) }, { quoted: m });
 }
 
 handler.help = ['doxear'];
 handler.tags = ['fun'];
 handler.command = ['doxear', 'doxxeo', 'doxeo'];
-handler.register = true;
 handler.group = true;
+// Quitamos registro obligatorio
+handler.register = false;
 
 export default handler;
 
