@@ -15,10 +15,10 @@ var handler = async (m, { conn, text }) => {
 handler.help = ['piropo']
 handler.tags = ['fun']
 handler.command = ['piropo']
-handler.fail = null
-handler.exp = 0
-handler.group = true
-handler.register = true
+
+// Quitar o poner false para que no requiera registro ni solo en grupos
+handler.register = false
+handler.group = false
 
 export default handler
 
