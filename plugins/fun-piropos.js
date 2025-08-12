@@ -3,8 +3,6 @@ const { generateWAMessageFromContent, proto } = (await import('@whiskeysockets/b
 const emoji2 = '⌛'  // Emoji que usas en el mensaje
 
 var handler = async (m, { conn, text }) => {
-  conn.reply(m.chat, `${emoji2} Buscando un piropo, espere un momento...`, m)
-
   conn.reply(
     m.chat,
     `*┏━_͜͡-͜͡-͜͡-͜͡-͜͡-͜͡-͜͡⚘-͜͡-͜͡-͜͡-͜͡-͜͡-͜͡-͜͡⚘-͜͡-͜͡-͜͡-͜͡-͜͡-͜͡-͜͡⚘-͜͡-͜͡-͜͡-͜͡-͜͡-͜͡_͜͡━┓*\n\n❥ *"${pickRandom(global.piropo)}"*\n\n*┗━_͜͡-͜͡-͜͡-͜͡-͜͡-͜͡-͜͡⚘-͜͡-͜͡-͜͡-͜͡-͜͡-͜͡-͜͡⚘-͜͡-͜͡-͜͡-͜͡-͜͡-͜͡-͜͡⚘-͜͡-͜͡-͜͡-͜͡-͜͡-͜͡_͜͡━┛*`,
@@ -16,7 +14,6 @@ handler.help = ['piropo']
 handler.tags = ['fun']
 handler.command = ['piropo']
 
-// Quitar o poner false para que no requiera registro ni solo en grupos
 handler.register = false
 handler.group = false
 
