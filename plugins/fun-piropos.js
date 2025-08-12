@@ -1,6 +1,6 @@
 const { generateWAMessageFromContent, proto } = (await import('@whiskeysockets/baileys')).default
 
-const emoji2 = '⌛'
+const emoji2 = '⌛'  // Emoji que usas en el mensaje
 
 var handler = async (m, { conn, text }) => {
   conn.reply(m.chat, `${emoji2} Buscando un piropo, espere un momento...`, m)
