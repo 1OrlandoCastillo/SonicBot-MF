@@ -16,14 +16,24 @@ var handler = async (m, { conn, command, text }) => {
 
     const lovePercent = Math.floor(Math.random() * 100) + 1;
 
-    // Construir barra de progreso de 20 bloques
+    // Barra de progreso con 20 bloques
     const totalBlocks = 20;
     const filledBlocks = Math.round((lovePercent / 100) * totalBlocks);
     const emptyBlocks = totalBlocks - filledBlocks;
 
-    const progressBar = '█'.repeat(filledBlocks) + '░'.repeat(emptyBlocks);
+    // Construir barra con bloques llenos (🟩) y vacíos (⬜)
+    const progressBar = '🟩'.repeat(filledBlocks) + '⬜'.repeat(emptyBlocks);
 
-    let love = `❤️ *${text1}* tu oportunidad de enamorarte de *${text2}* es de ${lovePercent}% 👩🏻‍❤️‍👨🏻\n\n${progressBar}`;
+    // Corazones que reflejan progreso (cada corazón equivale a 20%)
+    const heartsCount = Math.floor(lovePercent / 20);
+    const hearts = '❤️'.repeat(heartsCount) + '🤍'.repeat(5 - heartsCount);
+
+    const love = 
+`💖 *${text1}* tu oportunidad de enamorarte de *${text2}* es de *${lovePercent}%* 👩🏻‍❤️‍👨🏻
+
+${progressBar}  ${lovePercent}%
+
+${hearts}`;
 
     let mentions = [];
     if (typeof conn.parseMention === 'function') {
@@ -42,6 +52,5 @@ handler.help = ['ship', 'love'];
 handler.tags = ['fun'];
 handler.command = ['ship', 'pareja'];
 handler.group = true;
-// handler.register = true;  <--- QUITADA para que no requiera registro
 
 export default handler;
