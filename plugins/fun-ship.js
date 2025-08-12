@@ -16,31 +16,42 @@ var handler = async (m, { conn, command, text }) => {
 
     const lovePercent = Math.floor(Math.random() * 100) + 1;
 
-    // Barra de progreso con 20 bloques
     const totalBlocks = 20;
     const filledBlocks = Math.round((lovePercent / 100) * totalBlocks);
     const emptyBlocks = totalBlocks - filledBlocks;
 
-    // Construir barra con bloques llenos (🟩) y vacíos (⬜)
-    const progressBar = '🟩'.repeat(filledBlocks) + '⬜'.repeat(emptyBlocks);
+    const barFilled = '█'.repeat(filledBlocks);
+    const barEmpty = '░'.repeat(emptyBlocks);
+    const progressBar = `${barFilled}${barEmpty}`;
 
-    // Corazones que reflejan progreso (cada corazón equivale a 20%)
-    const heartsCount = Math.floor(lovePercent / 20);
-    const hearts = '❤️'.repeat(heartsCount) + '🤍'.repeat(5 - heartsCount);
+    let heartsCount = Math.floor(lovePercent / 20);
+    let hearts = '';
+    for (let i = 0; i < 5; i++) {
+      if (i < heartsCount) {
+        if (i < 2) hearts += '❤️';       // rojo intenso
+        else if (i < 4) hearts += '🧡';  // naranja
+        else hearts += '💛';             // amarillo
+      } else {
+        hearts += '🤍';                  // corazón blanco
+      }
+    }
 
-    const love = 
-`💖 *${text1}* tu oportunidad de enamorarte de *${text2}* es de *${lovePercent}%* 👩🏻‍❤️‍👨🏻
+    const love = `
+💞 *Ship Love Calculator* 💞
+
+*${text1}* ❤️ *${text2}*
 
 ${progressBar}  ${lovePercent}%
 
-${hearts}`;
+${hearts}
+`;
 
     let mentions = [];
     if (typeof conn.parseMention === 'function') {
       mentions = conn.parseMention(love);
     }
 
-    await m.reply(love, null, { mentions });
+    await m.reply(love.trim(), null, { mentions });
 
   } catch (error) {
     console.error('Error en handler ship/love:', error);
