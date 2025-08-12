@@ -16,7 +16,14 @@ var handler = async (m, { conn, command, text }) => {
 
     const lovePercent = Math.floor(Math.random() * 100) + 1;
 
-    let love = `❤️ *${text1}* tu oportunidad de enamorarte de *${text2}* es de ${lovePercent}% 👩🏻‍❤️‍👨🏻`;
+    // Construir barra de progreso de 20 bloques
+    const totalBlocks = 20;
+    const filledBlocks = Math.round((lovePercent / 100) * totalBlocks);
+    const emptyBlocks = totalBlocks - filledBlocks;
+
+    const progressBar = '█'.repeat(filledBlocks) + '░'.repeat(emptyBlocks);
+
+    let love = `❤️ *${text1}* tu oportunidad de enamorarte de *${text2}* es de ${lovePercent}% 👩🏻‍❤️‍👨🏻\n\n${progressBar}`;
 
     let mentions = [];
     if (typeof conn.parseMention === 'function') {
