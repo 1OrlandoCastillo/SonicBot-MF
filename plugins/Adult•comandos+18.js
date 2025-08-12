@@ -1,499 +1,117 @@
 import axios from 'axios';
 import fetch from 'node-fetch';
-const handler = async (m, {command, conn,  usedPrefix}) => {
 
-  if (!db.data.chats[m.chat].modohorny && m.isGroup) throw conn.reply(m.chat, '*[❗𝐈𝐍𝐅𝐎❗] 𝙻𝙾𝚂 𝙲𝙾𝙼𝙰𝙽𝙳𝙾𝚂 +𝟷𝟾 𝙴𝚂𝚃𝙰𝙽 𝙳𝙴𝚂𝙰𝙲𝚃𝙸𝚅𝙰𝙳𝙾𝚂 𝙴𝙽 𝙴𝚂𝚃𝙴 𝙶𝚁𝚄𝙿𝙾, 𝚂𝙸 𝙴𝚂 𝙰𝙳𝙼𝙸𝙽 𝚈 𝙳𝙴𝚂𝙴𝙰 𝙰𝙲𝚃𝙸𝚅𝙰𝚁𝙻𝙾𝚂 𝚄𝚂𝙴 𝙴𝙻 𝙲𝙾𝙼𝙰𝙽𝙳𝙾 #enable modohorny*', m, rcanal);
+const handler = async (m, { command, conn, usedPrefix }) => {
+  try {
+    // Lista de comandos NSFW que manejas (para validación si quieres agregar)
+    const nsfwCommands = [
+      'nsfwloli', 'nsfwfoot', 'nsfwass', 'nsfwbdsm', 'nsfwcum', 'nsfwero',
+      'nsfwfemdom', 'nsfwglass', 'nsfworgy', 'yuri', 'yuri2', 'yaoi', 'yaoi2',
+      'panties', 'tetas', 'booty', 'ecchi', 'furro', 'hentai', 'trapito',
+      'imagenlesbians', 'pene', 'porno', 'randomxxx', 'pechos'
+    ];
 
-  if (command == 'nsfwloli') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/nsfwloli.json`)).data;
-    const haha = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: haha}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: haha }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
+    // Validar que el comando sea uno de los permitidos (opcional)
+    if (!nsfwCommands.includes(command)) {
+      return conn.reply(m.chat, `❌ Comando no reconocido: ${command}`, m);
+    }
 
-  if (command == 'nsfwfoot') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/nsfwfoot.json`)).data;
-    const haha = await res[Math.floor(res.length * Math.random())];
-   conn.sendMessage(m.chat, {image: {url: haha}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: haha }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
+    // URLS con JSON para comandos que usan repositorios externos
+    const repoBase = 'https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON';
 
-  if (command == 'nsfwass') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/nsfwass.json`)).data;
-    const haha = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: haha}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: haha }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
+    // Función para obtener una URL random desde JSON
+    async function getRandomUrlFromJson(jsonUrl) {
+      const response = await axios.get(jsonUrl);
+      const data = response.data;
+      return data[Math.floor(Math.random() * data.length)];
+    }
 
-  if (command == 'nsfwbdsm') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/nsfwbdsm.json`)).data;
-    const haha = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: haha}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: haha }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
+    // Manejo específico por comando
+    if (command === 'trapito') {
+      // Usando API externa para este comando
+      const res = await fetch('https://api.waifu.pics/nsfw/trap');
+      const json = await res.json();
+      return conn.sendMessage(m.chat, { image: { url: json.url }, caption: `_${command}_` }, { quoted: m });
+    }
 
-  if (command == 'nsfwcum') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/nsfwcum.json`)).data;
-    const haha = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: haha}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: haha }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
+    if (command === 'yaoi') {
+      const res = await fetch('https://nekobot.xyz/api/image?type=yaoi');
+      const json = await res.json();
+      return conn.sendMessage(m.chat, { image: { url: json.message }, caption: `_${command}_` }, { quoted: m });
+    }
 
-  if (command == 'nsfwero') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/nsfwero.json`)).data;
-    const haha = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: haha}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: haha }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
+    if (command === 'yaoi2') {
+      const res = await fetch('https://purrbot.site/api/img/nsfw/yaoi/gif');
+      const json = await res.json();
+      return conn.sendMessage(m.chat, { image: { url: json.link }, caption: `_${command}_` }, { quoted: m });
+    }
 
-  if (command == 'nsfwfemdom') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/nsfwfemdom.json`)).data;
-    const haha = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: haha}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: haha }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
+    if (command === 'yuri2') {
+      const resError = await axios.get(`${repoBase}/yuri.json`);
+      const res = await fetch('https://purrbot.site/api/img/nsfw/yuri/gif');
+      const json = await res.json();
+      let url = json.link;
+      if (!url) url = resError.data[Math.floor(Math.random() * resError.data.length)];
+      return conn.sendMessage(m.chat, { image: { url }, caption: `_${command}_` }, { quoted: m });
+    }
 
-  if (command == 'nsfwglass') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/nsfwglass.json`)).data;
-    const haha = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: haha}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: haha }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
+    // Para el resto de comandos que usan JSON estático
+    const jsonMap = {
+      nsfwloli: `${repoBase}/nsfwloli.json`,
+      nsfwfoot: `${repoBase}/nsfwfoot.json`,
+      nsfwass: `${repoBase}/nsfwass.json`,
+      nsfwbdsm: `${repoBase}/nsfwbdsm.json`,
+      nsfwcum: `${repoBase}/nsfwcum.json`,
+      nsfwero: `${repoBase}/nsfwero.json`,
+      nsfwfemdom: `${repoBase}/nsfwfemdom.json`,
+      nsfwglass: `${repoBase}/nsfwglass.json`,
+      nsfworgy: `${repoBase}/nsfworgy.json`,
+      hentai: `${repoBase}/hentai.json`,
+      panties: `${repoBase}/panties.json`,
+      porno: `${repoBase}/porno.json`,
+      pechos: `${repoBase}/pechos.json`,
+      yuri: `${repoBase}/yuri.json`,
+      ecchi: `${repoBase}/ecchi.json`,
+      furro: `${repoBase}/furro.json`,
+      imagenlesbians: `${repoBase}/imagenlesbians.json`,
+      tetas: `${repoBase}/tetas.json`,
+      booty: `${repoBase}/booty.json`,
+      // agrega más si quieres
+    };
 
-  if (command == 'hentai') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/hentai.json`)).data;
-    const haha = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: haha}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: haha }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
+    if (jsonMap[command]) {
+      const url = await getRandomUrlFromJson(jsonMap[command]);
+      return conn.sendMessage(m.chat, { image: { url }, caption: `_${command}_` }, { quoted: m });
+    }
 
-  if (command == 'nsfworgy') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/nsfworgy.json`)).data;
-    const haha = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: haha}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: haha }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
+    // Caso randomxxx: elige una JSON random de una lista y envía una imagen random de ahí
+    if (command === 'randomxxx') {
+      const randomJsonList = [
+        `${repoBase}/tetas.json`,
+        `${repoBase}/booty.json`,
+        `${repoBase}/imagenlesbians.json`,
+        `${repoBase}/panties.json`,
+        `${repoBase}/porno.json`,
+      ];
+      const chosenJson = randomJsonList[Math.floor(Math.random() * randomJsonList.length)];
+      const url = await getRandomUrlFromJson(chosenJson);
+      return conn.sendMessage(m.chat, { image: { url }, caption: `_${command}_` }, { quoted: m });
+    }
 
-  if (command == 'tetas') {
-    const resError = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/tetas.json`)).data;
-    let res = await conn.getFile(`https://api-fgmods.ddns.net/api/nsfw/boobs?apikey=fg-dylux`).data;
-    if (res == '' || !res || res == null) res = await resError[Math.floor(resError.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: res}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: res }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
+    // Si el comando no está manejado arriba, enviar un mensaje por defecto
+    return conn.reply(m.chat, `❌ El comando ${command} no está implementado aún.`, m);
 
-  if (command == 'booty') {
-    const resError = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/booty.json`)).data;
-    let res = await conn.getFile(`https://api-fgmods.ddns.net/api/nsfw/ass?apikey=fg-dylux`).data;
-    if (res == '' || !res || res == null) res = await resError[Math.floor(resError.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: res}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: res }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
-
-  if (command == 'ecchi') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/ecchi.json`)).data;
-    const url = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: url}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: url }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
-
-  if (command == 'furro') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/furro.json`)).data;
-    const url = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: url}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: url }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
-
-  if (command == 'trapito') {
-    const res = await fetch(`https://api.waifu.pics/nsfw/trap`);
-    const json = await res.json();
-    const url = json.url;
-    conn.sendMessage(m.chat, {image: {url: url}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: url }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
-
-  if (command == 'imagenlesbians') {
-    const resError = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/imagenlesbians.json`)).data;
-    let res = await conn.getFile(`https://api-fgmods.ddns.net/api/nsfw/lesbian?apikey=fg-dylux`).data;
-    if (res == '' || !res || res == null) res = await resError[Math.floor(resError.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: res}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: res }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
-
-  if (command == 'panties') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/panties.json`)).data;
-    const url = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: url}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: haha }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
-
-  if (command == 'pene') {
-    const resError = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/pene.json`)).data;
-    let res = await conn.getFile(`https://api-fgmods.ddns.net/api/nsfw/penis?apikey=fg-dylux`).data;
-    if (res == '' || !res || res == null) res = await resError[Math.floor(resError.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: res}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: res }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
-
-  if (command == 'porno') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/porno.json`)).data;
-    const url = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: url}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: url }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
-
-  if (command == 'randomxxx') {
-    const rawjsonn = ['https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/tetas.json', 'https://raw.githubusercontent.com//TheMystic-Bot-MD/master/src/JSON/booty.json', 'https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/imagenlesbians.json', 'https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/panties.json', 'https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/porno.json'];
-    const rawjson = await rawjsonn[Math.floor(rawjsonn.length * Math.random())];
-    const res = (await axios.get(rawjson)).data;
-    const url = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: url}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: url }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
-
-  if (command == 'pechos') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/pechos.json`)).data;
-    const url = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: url}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: url }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
-
-  if (command == 'yaoi') {
-    const res = await fetch(`https://nekobot.xyz/api/image?type=yaoi`);
-    const json = await res.json();
-    const url = json.message;
-    /*conn.sendMessage(m.chat, {image: {url: url}, caption: `_${command}_`.trim()}, {quoted: m});
-    await conn.sendMessage(m.chat, { 
-        image: { url: url }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
-
-  if (command == 'yaoi2') {
-    const res = await fetch(`https://purrbot.site/api/img/nsfw/yaoi/gif`);
-    const json = await res.json();
-    const url = json.link;
-    conn.sendMessage(m.chat, {image: {url: url}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: url }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
-
-  if (command == 'yuri') {
-    const res = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/yuri.json`)).data;
-    const url = await res[Math.floor(res.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: url}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: url }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
-  }
-
-  if (command == 'yuri2') {
-    const resError = (await axios.get(`https://raw.githubusercontent.com/Sinombre913/TheMystic-Bot-MD/master/src/JSON/yuri.json`)).data;
-    const res = await fetch(`https://purrbot.site/api/img/nsfw/yuri/gif`);
-    const json = await res.json();
-    let url = json.link;
-    if (url == '' || !url || url == null) url = await resError[Math.floor(resError.length * Math.random())];
-    conn.sendMessage(m.chat, {image: {url: url}, caption: `_${command}_`.trim()}, {quoted: m});
-    /*await conn.sendMessage(m.chat, { 
-        image: { url: url }, 
-        caption: `_*✅️ ${command}*_`, 
-        footer: wm, 
-        buttons: [
-            {
-                buttonId: `${usedPrefix + command}`,
-                buttonText: { displayText: '🔄 𝚂𝙸𝙶𝚄𝙸𝙴𝙽𝚃𝙴 🔄' }
-            }
-        ],
-        viewOnce: true,
-        headerType: 4
-    }, { quoted: m })*/
+  } catch (error) {
+    console.error(error);
+    return conn.reply(m.chat, '❌ Ocurrió un error al procesar tu solicitud.', m);
   }
 };
+
+// Ajustes para que funcione sin registro ni solo grupo:
+handler.register = false;  // No requiere registro
+handler.group = false;     // Funciona en grupos y privados
+handler.tags = ['nsfw'];
 handler.help = ['nsfwloli', 'nsfwfoot', 'nsfwass', 'nsfwbdsm', 'nsfwcum', 'nsfwero', 'nsfwfemdom', 'nsfwfoot', 'nsfwglass', 'nsfworgy', 'yuri', 'yuri2', 'yaoi', 'yaoi2', 'panties', 'tetas', 'booty', 'ecchi', 'furro', 'hentai', 'trapito', 'imagenlesbians', 'pene', 'porno', 'randomxxx', 'pechos'];
 handler.command = ['nsfwloli', 'nsfwfoot', 'nsfwass', 'nsfwbdsm', 'nsfwcum', 'nsfwero', 'nsfwfemdom', 'nsfwfoot', 'nsfwglass', 'nsfworgy', 'yuri', 'yuri2', 'yaoi', 'yaoi2', 'panties', 'tetas', 'booty', 'ecchi', 'furro', 'hentai', 'trapito', 'imagenlesbians', 'pene', 'porno', 'randomxxx', 'pechos'];
-handler.tags = ['nsfw'];
-handler.register = true;
-handler.group = true;
+
 export default handler;
