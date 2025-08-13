@@ -5,7 +5,7 @@ import fs from 'fs';
 const handler = async (m, { conn, text, usedPrefix: prefijo }) => {
     const device = await getDevice(m.key.participant || m.key.remoteJid);
 
-    if (!text) return conn.reply(m.chat, 'Iᴍɢʀᴇsᴀ Eʟ ᴍᴏᴍʙʀᴇ ᴅᴀ ᴍᴜsɪᴄᴀ Qᴜᴇ ǫᴜɪᴇʀᴇs Bᴜsᴄᴀʀ 🎋', m);
+    if (!text) return conn.reply(m.chat, 'Ingresa el nombre de la música que quieres buscar 🎵', m);
 
     if (device !== 'desktop' && device !== 'web') {
         const results = await yts(text);
@@ -64,31 +64,35 @@ const handler = async (m, { conn, text, usedPrefix: prefijo }) => {
         await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id });
 
     } else {
-        // Evitar error si no existe el usuario en la base de datos
-        const idioma = (global.db?.data?.users?.[m.sender] && global.db.data.users[m.sender].language) || 'es';
+        // Idioma seguro, si no existe usa español por defecto
+        const idioma = (global.db?.data?.users?.[m.sender]?.language) || 'es';
         const langFile = `./language/${idioma}.json`;
 
-        let traductor = {};
+        let traductor = {
+            notFound: 'No encontré resultados en YouTube 🎬',
+            listFormat: (v) => `
+° *_${v.title}_*
+↳ 🫐 *_Enlace :_* ${v.url}
+↳ 🕒 *_Duración :_* ${v.timestamp || 'N/D'}
+↳ 📥 *_Subido :_* ${v.ago || 'N/D'}
+↳ 👁 *_Vistas :_* ${v.views || 'N/D'}`
+        };
+
         if (fs.existsSync(langFile)) {
             try {
                 const _translate = JSON.parse(fs.readFileSync(langFile));
-                traductor = _translate.plugins?.buscador_yts || {};
+                traductor = _translate.plugins?.buscador_yts || traductor;
             } catch {
-                traductor = {};
+                // Si el archivo está corrupto o mal formateado, seguimos con el español por defecto
             }
         }
 
         const results = await yts(text);
         const tes = results.videos;
+        if (!tes.length) return conn.reply(m.chat, traductor.notFound, m);
 
-        if (!tes.length) return conn.reply(m.chat, 'No encontré resultados en YouTube 🎬', m);
-
-        const teks = tes.map(v => `
-° *_${v.title}_*
-↳ 🫐 *_Enlace :_* ${v.url}
-↳ 🕒 *_Duración :_* ${v.timestamp || 'N/D'}
-↳ 📥 *_Subido :_* ${v.ago || 'N/D'}
-↳ 👁 *_Vistas :_* ${v.views || 'N/D'}`).join('\n\n◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦\n\n');
+        const teks = tes.map(v => traductor.listFormat(v))
+            .join('\n\n◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦◦\n\n');
 
         await conn.sendFile(m.chat, tes[0].thumbnail, 'video.jpg', teks.trim(), m);
     }
@@ -97,6 +101,6 @@ const handler = async (m, { conn, text, usedPrefix: prefijo }) => {
 handler.help = ['play *<texto>*'];
 handler.tags = ['dl'];
 handler.command = ['play'];
-handler.register = false; // ahora no requiere registro
+handler.register = false; // no requiere registro
 
 export default handler;
