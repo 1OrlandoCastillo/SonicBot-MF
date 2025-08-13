@@ -3,7 +3,6 @@ import yts from 'yt-search';
 import fs from 'fs';
 
 const handler = async (m, { conn, text, usedPrefix: prefijo }) => {
-    // Detectar dispositivo correctamente
     const device = await getDevice(m.key.participant || m.key.remoteJid);
 
     if (!text) return conn.reply(m.chat, 'Iᴍɢʀᴇsᴀ Eʟ ᴍᴏᴍʙʀᴇ ᴅᴀ ᴍᴜsɪᴄᴀ Qᴜᴇ ǫᴜɪᴇʀᴇs Bᴜsᴄᴀʀ 🎋', m);
@@ -65,17 +64,22 @@ const handler = async (m, { conn, text, usedPrefix: prefijo }) => {
         await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id });
 
     } else {
-        // Idioma seguro
-        const idioma = global.db?.data?.users?.[m.sender]?.language || 'es';
+        // Evitar error si no existe el usuario en la base de datos
+        const idioma = (global.db?.data?.users?.[m.sender] && global.db.data.users[m.sender].language) || 'es';
         const langFile = `./language/${idioma}.json`;
 
-        if (!fs.existsSync(langFile)) return conn.reply(m.chat, 'No encontré el archivo de idioma.', m);
-
-        const _translate = JSON.parse(fs.readFileSync(langFile));
-        const traductor = _translate.plugins.buscador_yts;
+        let traductor = {};
+        if (fs.existsSync(langFile)) {
+            try {
+                const _translate = JSON.parse(fs.readFileSync(langFile));
+                traductor = _translate.plugins?.buscador_yts || {};
+            } catch {
+                traductor = {};
+            }
+        }
 
         const results = await yts(text);
-        const tes = results.videos; // Solo videos
+        const tes = results.videos;
 
         if (!tes.length) return conn.reply(m.chat, 'No encontré resultados en YouTube 🎬', m);
 
@@ -93,6 +97,6 @@ const handler = async (m, { conn, text, usedPrefix: prefijo }) => {
 handler.help = ['play *<texto>*'];
 handler.tags = ['dl'];
 handler.command = ['play'];
-handler.register = true;
+handler.register = false; // ahora no requiere registro
 
 export default handler;
