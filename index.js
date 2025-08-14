@@ -1,4 +1,4 @@
-console.log('⧉ Inicializando Anya...')
+console.log('⧉ Inicializando Sonic...')
 
 import { join, dirname } from 'path'
 import { createRequire } from 'module'
@@ -10,13 +10,13 @@ import cfonts from 'cfonts'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const require = createRequire(__dirname)
 
-cfonts.say('Anya\nForger', {
+cfonts.say('SonicBot-ProMax', {
   font: 'block',
   align: 'center',
   gradient: ['cyan', 'blue']
 })
 
-cfonts.say('WhatsApp Multi-Bot Engine', {
+cfonts.say('El mejor bot de WhatsApp', {
   font: 'simple',
   align: 'center',
   gradient: ['blue', 'white']
