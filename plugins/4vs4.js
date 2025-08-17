@@ -1,5 +1,6 @@
-// 4v4-horarios.js — Compatible con Baileys
-// Incluye conversión horaria por país
+// 4v4-multihora.js — Compatible con Baileys
+// Inscripción con reacciones ❤️ 👍 ❌
+// Conversión automática de hora según país
 
 import moment from "moment-timezone";
 
@@ -12,7 +13,10 @@ global.ff4v4 = global.ff4v4 || {};
 const zones = [
   { name: "MÉXICO 🇲🇽", tz: "America/Mexico_City" },
   { name: "COLOMBIA 🇨🇴", tz: "America/Bogota" },
-  { name: "ARGENTINA 🇦🇷", tz: "America/Argentina/Buenos_Aires" }
+  { name: "PERÚ 🇵🇪", tz: "America/Lima" },
+  { name: "CHILE 🇨🇱", tz: "America/Santiago" },
+  { name: "ARGENTINA 🇦🇷", tz: "America/Argentina/Buenos_Aires" },
+  { name: "USA 🇺🇸", tz: "America/New_York" }
 ];
 
 function fmtHour(str) {
@@ -32,7 +36,7 @@ function renderCard(state) {
     `⚜️ ➤ ${s[i] ? `@${s[i].split("@")[0]}` : ""}`
   );
 
-  // Convertir hora base a todas las zonas
+  // Convertir hora base (México) a todas las zonas
   const baseTime = moment.tz(state.hour, "HH:mm", zones[0].tz);
   const hours = zones.map(z => `┊ • ${baseTime.clone().tz(z.tz).format("HH:mm")} ${z.name}`);
 
@@ -71,12 +75,13 @@ async function postOrUpdate(conn, chat, state) {
   state.msgId = sent.key.id;
 }
 
+// Comando para crear lista
 let handler = async (m, { conn, args }) => {
   const chat = m.chat;
   const who = m.sender;
 
   let hour = args && args[0] ? fmtHour(args[0]) : null;
-  if (!hour) hour = "05:00";
+  if (!hour) hour = "21:00"; // default
 
   global.ff4v4[chat] = {
     msgId: null,
@@ -88,6 +93,7 @@ let handler = async (m, { conn, args }) => {
 
   await postOrUpdate(conn, chat, global.ff4v4[chat]);
 
+  // auto borrar en 5 minutos
   setTimeout(() => delete global.ff4v4[chat], 5 * 60 * 1000);
 };
 
