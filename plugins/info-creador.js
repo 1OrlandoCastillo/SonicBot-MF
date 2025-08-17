@@ -1,5 +1,4 @@
 let handler = async (m, { conn }) => {
-  // Barra de carga animada
   let loading = [
     "▰▱▱▱▱▱▱▱▱▱ 10%",
     "▰▰▱▱▱▱▱▱▱▱ 20%",
@@ -16,23 +15,27 @@ let handler = async (m, { conn }) => {
   // Enviamos el mensaje inicial
   let msg = await conn.sendMessage(m.chat, { text: loading[0] }, { quoted: m });
 
-  // Vamos "editando" el mensaje eliminando y reescribiendo
-  for (let i = 1; i < loading.length; i++) {
-    await new Promise(res => setTimeout(res, 500)); // esperar medio segundo
+  // Función para editar el mensaje (compatible con todas las versiones)
+  const editMessage = async (messageKey, newText) => {
     try {
-      // Eliminamos el mensaje anterior
-      await conn.sendMessage(m.chat, { delete: msg.key });
+      await conn.sendMessage(m.chat, { text: newText, edit: messageKey });
     } catch (e) {
-      // Si no se puede borrar, seguimos sin romper el código
+      // fallback: eliminar y enviar de nuevo si no se puede editar
+      try { await conn.sendMessage(m.chat, { delete: messageKey }); } catch {}
+      msg = await conn.sendMessage(m.chat, { text: newText }, { quoted: m });
     }
-    // Enviamos el nuevo mensaje
-    msg = await conn.sendMessage(m.chat, { text: loading[i] }, { quoted: m });
+  };
+
+  // Actualizamos la barra
+  for (let i = 1; i < loading.length; i++) {
+    await new Promise(res => setTimeout(res, 500));
+    await editMessage(msg.key, loading[i]);
   }
 
-  // Mensaje previo al contacto
+  // Mensaje del bot
   await conn.sendMessage(m.chat, { text: "⚡ Hola, soy SonicBot-ProMax ⚡\nAquí está el contacto de mi creador" }, { quoted: m });
 
-  // VCard del owner
+  // VCard
   let vcard = `BEGIN:VCARD\nVERSION:3.0\nN:;White444;;\nFN:White444\nTEL;waid=5212731590195:5212731590195\nEND:VCARD`;
   await conn.sendMessage(
     m.chat,
