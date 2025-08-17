@@ -1,5 +1,8 @@
 import yts from "yt-search";
 import ytdl from "ytdl-core";
+import fs from "fs";
+import { tmpdir } from "os";
+import path from "path";
 
 const ytIdRegex = /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
 
@@ -28,19 +31,25 @@ const formatViews = (views) => {
 const handler = async (m, { conn, text }) => {
   if (!text) return m.reply(toSansSerifPlain("✦ Ingresa el nombre o link de un video."));
 
-  // Reacción mientras busca el video
-  await conn.sendMessage(m.chat, {
-    react: { text: "🕐", key: m.key }
-  });
+  await conn.sendMessage(m.chat, { react: { text: "🕐", key: m.key } });
 
   let video;
   try {
     const ytId = ytIdRegex.exec(text);
     if (ytId) {
-      video = await yts({ videoId: ytId[1] });
+      const info = await ytdl.getInfo(ytId[1]);
+      video = {
+        title: info.videoDetails.title,
+        author: { name: info.videoDetails.author.name },
+        timestamp: new Date(info.videoDetails.lengthSeconds * 1000).toISOString().substr(11, 8),
+        views: parseInt(info.videoDetails.viewCount),
+        url: info.videoDetails.video_url,
+        thumbnail: info.videoDetails.thumbnails?.[0]?.url,
+        ago: info.videoDetails.uploadDate
+      };
     } else {
       const search = await yts(text);
-      video = search.all[0];
+      video = search.videos[0];
     }
   } catch {
     return m.reply(toSansSerifPlain("✦ Error al buscar el video."));
@@ -63,7 +72,6 @@ const handler = async (m, { conn, text }) => {
     "> ✰ Responde con *Audio* o *Video* para descargar ✧"
   ].join("\n");
 
-  // Guardamos el link en memoria temporal del chat
   conn.youtubeData = conn.youtubeData || {};
   conn.youtubeData[m.chat] = { url, title };
 
@@ -73,31 +81,45 @@ const handler = async (m, { conn, text }) => {
   }, { quoted: m });
 };
 
-// Listener para respuestas "Audio" o "Video"
 const responseHandler = async (m, { conn }) => {
   if (!conn.youtubeData || !conn.youtubeData[m.chat]) return;
   const { url, title } = conn.youtubeData[m.chat];
 
   const choice = m.text?.toLowerCase();
+
   if (choice === "audio") {
+    const filePath = path.join(tmpdir(), `${title}.mp3`);
+    const stream = ytdl(url, { filter: "audioonly", quality: "highestaudio" });
+    const writeStream = fs.createWriteStream(filePath);
+    stream.pipe(writeStream);
+    await new Promise(resolve => writeStream.on("finish", resolve));
+
     await conn.sendMessage(m.chat, {
-      document: { url: await ytdl(url, { filter: "audioonly", quality: "highestaudio" }) },
+      document: { url: filePath },
       mimetype: "audio/mpeg",
       fileName: `${title}.mp3`
     }, { quoted: m });
+
     delete conn.youtubeData[m.chat];
   }
 
   if (choice === "video") {
+    const filePath = path.join(tmpdir(), `${title}.mp4`);
+    const stream = ytdl(url, { filter: "audioandvideo", quality: "highest" });
+    const writeStream = fs.createWriteStream(filePath);
+    stream.pipe(writeStream);
+    await new Promise(resolve => writeStream.on("finish", resolve));
+
     await conn.sendMessage(m.chat, {
-      document: { url: await ytdl(url, { filter: "videoandaudio", quality: "highest" }) },
+      document: { url: filePath },
       mimetype: "video/mp4",
       fileName: `${title}.mp4`
     }, { quoted: m });
+
     delete conn.youtubeData[m.chat];
   }
 };
 
 handler.command = ["play"];
-handler.all = responseHandler; // para escuchar todas las respuestas
+handler.all = responseHandler;
 export default handler;
