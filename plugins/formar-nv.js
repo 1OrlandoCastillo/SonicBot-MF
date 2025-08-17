@@ -6,7 +6,7 @@ function handler(m, { groupMetadata }) {
 
   // Si hay menos de 2 participantes, avisa y termina
   if (ps.length < 2) {
-    return m.reply('El grupo no tiene suficientes participantes para formar una pareja.');
+    return m.reply('😏 Ups... se necesitan al menos 2 personas para formar una pareja coqueta 💕');
   }
 
   // Seleccionar un usuario al azar
@@ -19,9 +19,11 @@ function handler(m, { groupMetadata }) {
   } while (b === a);
 
   // Enviar el mensaje de la pareja seleccionada
-  m.reply(`*${toM(a)}, 𝙳𝙴𝙱𝙴𝚁𝙸𝙰𝚂 Hacerte  NV 𝙲𝙾𝙽 ${toM(b)}, 𝙷𝙰𝙲𝙴𝙽 𝚄𝙽𝙰 𝙱𝚄𝙴𝙽𝙰 𝙿𝙰𝚁𝙴𝙹𝙰 💓*`, null, {
-    mentions: [a, b]
-  });
+  m.reply(
+    `💘 *Pareja traviesa del día:* ${toM(a)} 😏 + ${toM(b)} 💖\n\n🔥 ¡Se ven perfectos juntos! Tal vez sea hora de coquetear un poquito 😜💌\n💫 Que la chispa del amor los acompañe ✨`,
+    null,
+    { mentions: [a, b] }
+  );
 }
 
 handler.help = ['formarnv'];
