@@ -2,19 +2,45 @@ import fetch from 'node-fetch';
 
 const cartas = [
   {
-    texto: `💌 *⌈* 𝑪𝑨𝑹𝑻𝑨 𝑫𝑬 𝑨𝑴𝑶𝑹 *⌋* 💌 𝑫𝑬: {remitente} 𝑷𝑨𝑹𝑨: {destinatario} 𝑬𝒔𝒄𝒓𝒊𝒃𝒐 𝒆𝒔𝒕𝒂 𝒄𝒂𝒓𝒕𝒂 𝒅𝒆 𝒂𝒎𝒐𝒓 𝒑𝒐𝒓 𝒔𝒊 𝒂𝒍𝒈𝒖𝒏𝒂 𝒗𝒆𝒛 𝒐𝒍𝒗𝒊𝒅𝒂𝒔 𝒄𝒖𝒂́𝒏𝒕𝒐 𝒕𝒆 𝒒𝒖𝒊𝒆𝒓𝒐 𝒚 𝒄𝒖𝒂́𝒏𝒕𝒐 𝒗𝒂𝒍𝒆𝒔.`
+    texto: `💌 *⌈ Carta de Amor 🌸 ⌋* 💌  
+De: {remitente}  
+Para: {destinatario}  
+
+✨ Solo quería recordarte lo especial que eres para mí y cuánto iluminas mis días. 💖`
   },
   {
-    texto: `💌 *⌈* 𝑪𝑨𝑹𝑻𝑨 𝑫𝑬 𝑨𝑴𝑶𝑹 *⌋* 💌 𝑫𝑬: {remitente} 𝑷𝑨𝑹𝑨: {destinatario} 𝑴𝒆 𝒉𝒆 𝒆𝒏𝒂𝒎𝒐𝒓𝒂𝒅𝒐 𝒅𝒆 𝒕𝒖 𝒃𝒆𝒍𝒍𝒆𝒛𝒂 𝒚 𝒕𝒖 𝒑𝒆𝒓𝒔𝒐𝒏𝒂𝒍𝒊𝒅𝒂𝒅.`
+    texto: `💌 *⌈ Carta de Amor 🌷 ⌋* 💌  
+De: {remitente}  
+Para: {destinatario}  
+
+🌼 Me he enamorado de tu dulzura, tu sonrisa y cada pequeño detalle que te hace único/a. 💕`
   },
   {
-    texto: `💌 *⌈* 𝑪𝑨𝑹𝑻𝑨 𝑫𝑬 𝑨𝑴𝑶𝑹 *⌋* 💌 𝑫𝑬: {remitente} 𝑷𝑨𝑹𝑨: {destinatario} 𝑻𝒆 𝒂𝒎𝒐 𝒎𝒂́𝒔 𝒒𝒖𝒆 𝒂𝒚𝒆𝒓, 𝒑𝒆𝒓𝒐 𝒎𝒆𝒏𝒐𝒔 𝒒𝒖𝒆 𝒎𝒂𝒏̃𝒂𝒏𝒂.`
+    texto: `💌 *⌈ Carta de Amor 🌟 ⌋* 💌  
+De: {remitente}  
+Para: {destinatario}  
+
+🌸 Te quiero más que ayer, y cada día descubro nuevas razones para quererte aún más. 🥰`
+  },
+  {
+    texto: `💌 *⌈ Carta de Amor 🐻 ⌋* 💌  
+De: {remitente}  
+Para: {destinatario}  
+
+💖 Eres mi alegría diaria, mi abrazo en la distancia y mi razón para sonreír siempre. 🌷`
+  },
+  {
+    texto: `💌 *⌈ Carta de Amor 🌈 ⌋* 💌  
+De: {remitente}  
+Para: {destinatario}  
+
+🌹 Gracias por existir y llenar mi mundo de colores y ternura. Siempre pienso en ti. 💕`
   }
 ];
 
 let handler = async (m, { conn }) => {
   try {
-    let _user = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : m.sender;
+    let _user = m.mentionedJid?.[0] || m.quoted?.sender || m.sender;
     let remitente = m.sender.split('@')[0];
     let destinatario = _user.split('@')[0];
 
