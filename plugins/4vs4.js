@@ -1,23 +1,11 @@
-// 4v4-multihora.js — Compatible con Baileys
+// 4v4-manual.js — Compatible con Baileys
 // Inscripción con reacciones ❤️ 👍 ❌
-// Conversión automática de hora según país
-
-import moment from "moment-timezone";
+// Hora manual, editable con .cambiarhora
 
 const MAX_ESC = 4;
 const MAX_SUP = 2;
 
 global.ff4v4 = global.ff4v4 || {};
-
-// Zonas horarias a mostrar
-const zones = [
-  { name: "MÉXICO 🇲🇽", tz: "America/Mexico_City" },
-  { name: "COLOMBIA 🇨🇴", tz: "America/Bogota" },
-  { name: "PERÚ 🇵🇪", tz: "America/Lima" },
-  { name: "CHILE 🇨🇱", tz: "America/Santiago" },
-  { name: "ARGENTINA 🇦🇷", tz: "America/Argentina/Buenos_Aires" },
-  { name: "USA 🇺🇸", tz: "America/New_York" }
-];
 
 function fmtHour(str) {
   if (typeof str !== "string") return null;
@@ -36,17 +24,17 @@ function renderCard(state) {
     `⚜️ ➤ ${s[i] ? `@${s[i].split("@")[0]}` : ""}`
   );
 
-  // Convertir hora base (México) a todas las zonas
-  const baseTime = moment.tz(state.hour, "HH:mm", zones[0].tz);
-  const hours = zones.map(z => `┊ • ${baseTime.clone().tz(z.tz).format("HH:mm")} ${z.name}`);
-
   return [
     "ㅤ ㅤ4 `𝗩𝗘𝗥𝗦𝗨𝗦` 4",
     "╭─────────────╮",
     "┊ `𝗠𝗢𝗗𝗢:` ```CLK```",
     "┊",
     "┊ ⏱️ `𝗛𝗢𝗥𝗔𝗥𝗜𝗢`",
-    ...hours,
+    `┊ • ${state.hour} MÉXICO 🇲🇽`,
+    `┊ • ${state.hour} COLOMBIA 🇨🇴`,
+    `┊ • ${state.hour} ARGENTINA 🇦🇷`,
+    `┊ • ${state.hour} CHILE 🇨🇱`,
+    `┊ • ${state.hour} PERÚ 🇵🇪`,
     "┊",
     "┊ » `𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔`",
     ...escLines.map(l => "┊ " + l),
@@ -75,7 +63,6 @@ async function postOrUpdate(conn, chat, state) {
   state.msgId = sent.key.id;
 }
 
-// Comando para crear lista
 let handler = async (m, { conn, args }) => {
   const chat = m.chat;
   const who = m.sender;
@@ -93,7 +80,6 @@ let handler = async (m, { conn, args }) => {
 
   await postOrUpdate(conn, chat, global.ff4v4[chat]);
 
-  // auto borrar en 5 minutos
   setTimeout(() => delete global.ff4v4[chat], 5 * 60 * 1000);
 };
 
@@ -127,4 +113,28 @@ handler.all = async function (m, { conn }) {
   await postOrUpdate(conn, chat, state);
 };
 
+// Cambiar hora manualmente
+let cambiarHora = async (m, { conn, args, isAdmin: isAdm }) => {
+  const chat = m.chat;
+  const state = global.ff4v4[chat];
+  if (!state) return;
+
+  const newHour = args && args[0] ? fmtHour(args[0]) : null;
+  if (!newHour) return conn.sendMessage(chat, { text: "❗ Usa: *.cambiarhora HH:MM*" }, { quoted: m });
+
+  const isCreator = state.creator === m.sender;
+  if (!isCreator && !isAdm) {
+    return conn.sendMessage(chat, { text: "⛔ Solo el creador o un admin puede cambiar la hora." }, { quoted: m });
+  }
+
+  state.hour = newHour;
+  await postOrUpdate(conn, chat, state);
+};
+
+cambiarHora.help = ["cambiarhora <HH:MM>"];
+cambiarHora.tags = ["games"];
+cambiarHora.command = /^cambiarhora$/i;
+cambiarHora.group = true;
+
 export default handler;
+export { cambiarHora };
