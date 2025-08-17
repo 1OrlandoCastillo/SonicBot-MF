@@ -16,27 +16,36 @@ let handler = async (m, { conn, text }) => {
       return
     }
 
-    // Barra de carga simulada para actualización
-    let loading = ["▰▱▱▱▱ 20%", "▰▰▱▱▱ 40%", "▰▰▰▱▱ 60%", "▰▰▰▰▱ 80%", "▰▰▰▰▰ 100%"]
-    let msg
-    for (let i = 0; i < loading.length; i++) {
-      if (msg) await conn.sendMessage(m.chat, { delete: msg.key })
-      msg = await conn.sendMessage(m.chat, { text: loading[i] }, { quoted: m })
-      await new Promise(res => setTimeout(res, 500))
+    // Barra de carga simulada (un solo mensaje que se edita)
+    let loading = [
+      "▰▱▱▱▱ 20%",
+      "▰▰▱▱▱ 40%",
+      "▰▰▰▱▱ 60%",
+      "▰▰▰▰▱ 80%",
+      "▰▰▰▰▰ 100%"
+    ]
+
+    // Enviar el primer mensaje
+    let msg = await conn.sendMessage(m.chat, { text: loading[0] }, { quoted: m })
+
+    // Editar el mismo mensaje
+    for (let i = 1; i < loading.length; i++) {
+      await new Promise(res => setTimeout(res, 700)) // espera
+      await conn.sendMessage(m.chat, {
+        text: loading[i],
+        edit: msg.key // <- aquí edita el mismo mensaje
+      })
     }
 
-    // Eliminar barra final
-    if (msg) await conn.sendMessage(m.chat, { delete: msg.key })
-
-    // Mensaje final de actualización
-    await conn.reply(m.chat, '✅ Bot actualizado correctamente.', m)
+    // Mensaje final
+    await conn.sendMessage(m.chat, {
+      text: "✅ Bot actualizado correctamente.",
+      edit: msg.key
+    })
     await m.react('✅')
-    
+
   } catch (err) {
-    // Reacción de error
     await m.react('❌')
-    
-    // Mensaje de error
     await conn.reply(m.chat, `⚠️ Error al actualizar:\n\n${err.message}`, m)
   }
 }
