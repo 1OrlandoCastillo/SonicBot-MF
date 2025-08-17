@@ -16,13 +16,17 @@ let handler = async (m, { conn }) => {
   // Enviamos el mensaje inicial
   let msg = await conn.sendMessage(m.chat, { text: loading[0] }, { quoted: m });
 
-  // Vamos editando el mismo mensaje
+  // Vamos "editando" el mensaje eliminando y reescribiendo
   for (let i = 1; i < loading.length; i++) {
     await new Promise(res => setTimeout(res, 500)); // esperar medio segundo
-    await conn.sendMessage(m.chat, { 
-      text: loading[i],
-      edit: msg.key  // <-- aquí se edita el mensaje original
-    });
+    try {
+      // Eliminamos el mensaje anterior
+      await conn.sendMessage(m.chat, { delete: msg.key });
+    } catch (e) {
+      // Si no se puede borrar, seguimos sin romper el código
+    }
+    // Enviamos el nuevo mensaje
+    msg = await conn.sendMessage(m.chat, { text: loading[i] }, { quoted: m });
   }
 
   // Mensaje previo al contacto
@@ -35,7 +39,7 @@ let handler = async (m, { conn }) => {
     { contacts: { displayName: 'White444', contacts: [{ vcard }] } },
     { quoted: m }
   );
-}
+};
 
 handler.help = ['owner'];
 handler.tags = ['main'];
