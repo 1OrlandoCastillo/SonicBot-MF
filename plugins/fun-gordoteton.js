@@ -15,15 +15,15 @@ let handler = async (m, { conn }) => {
         // Generar un porcentaje aleatorio entre 1 y 100
         let porcentaje = Math.floor(Math.random() * 100) + 1;
 
-        // Obtener el nombre del usuario mencionado
-        let nombre = await conn.getName(userMentioned);
+        // Obtener el número de teléfono (sin @s.whatsapp.net)
+        let numero = userMentioned.split('@')[0];
 
         // Mensajes divertidos según el porcentaje
         let comentarios = [
-            `🤣 ${nombre} tiene un ${porcentaje}% de ser gordoteton! 😜 ¡Qué ternurita!`,
-            `💖 Cuidado! ${nombre} es ${porcentaje}% adorable y gordoteton 😍`,
-            `🍩 ¡Wow! ${nombre} tiene un ${porcentaje}% de nivel máximo de gordoteton cute 💕`,
-            `😆 ¡Atención! ${nombre} posee un ${porcentaje}% de ternura gordoteton 🐷✨`
+            `🤣 @${numero} tiene un ${porcentaje}% de ser gordoteton! 😜 ¡Qué ternurita!`,
+            `💖 Cuidado! @${numero} es ${porcentaje}% adorable y gordoteton 😍`,
+            `🍩 ¡Wow! @${numero} tiene un ${porcentaje}% de nivel máximo de gordoteton cute 💕`,
+            `😆 ¡Atención! @${numero} posee un ${porcentaje}% de ternura gordoteton 🐷✨`
         ];
 
         // Seleccionar un mensaje aleatorio
