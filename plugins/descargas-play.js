@@ -17,21 +17,10 @@ const toSansSerifPlain = (text = "") =>
     return map[char] || char;
   }).join("");
 
-const formatViews = (views) => {
-  if (!views) return "Desconocido";
-  if (views >= 1_000_000_000) return `${(views / 1_000_000_000).toFixed(1)}B`;
-  if (views >= 1_000_000) return `${(views / 1_000_000).toFixed(1)}M`;
-  if (views >= 1_000) return `${(views / 1_000).toFixed(1)}k`;
-  return views.toString();
-};
-
 const handler = async (m, { conn, text }) => {
   if (!text) return m.reply(toSansSerifPlain("✦ Ingresa el nombre o link de un video."));
 
-  // Reacción mientras busca el video
-  await conn.sendMessage(m.chat, {
-    react: { text: "🕐", key: m.key }
-  });
+  await conn.sendMessage(m.chat, { react: { text: "🕐", key: m.key } });
 
   let video;
   try {
@@ -44,25 +33,21 @@ const handler = async (m, { conn, text }) => {
 
   if (!video) return m.reply(toSansSerifPlain("✦ No se encontró el video."));
 
-  const { title, timestamp, views, url, thumbnail, author, ago } = video;
+  try {
+    // API de descarga directa en MP3
+    let api = await fetch(`https://api.akuari.my.id/downloader/yt1?link=${video.url}`);
+    let res = await api.json();
 
-  const caption = [
-    "Y O U T U B E",
-    "",
-    `» ✧ « *${title}*`,
-    `> ➩ Canal › *${author.name}*`,
-    `> ➩ Duración › *${timestamp}*`,
-    `> ➩ Vistas › *${formatViews(views)}*`,
-    `> ➩ Publicado › *${ago || "desconocido"}*`,
-    `> ➩ Link › *${url}*`,
-    "",
-    "> ✰ Responde con *Audio* o *Video* para descargar ✧"
-  ].join("\n");
+    await conn.sendMessage(m.chat, {
+      audio: { url: res.mp3.result },
+      mimetype: "audio/mpeg",
+      fileName: video.title + ".mp3",
+      ptt: false // true si quieres que lo mande como nota de voz
+    }, { quoted: m });
 
-  await conn.sendMessage(m.chat, {
-    image: { url: thumbnail },
-    caption
-  }, { quoted: m });
+  } catch {
+    return m.reply(toSansSerifPlain("✦ Error al descargar el audio."));
+  }
 };
 
 handler.command = ["play"];
