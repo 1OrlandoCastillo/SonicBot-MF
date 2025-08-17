@@ -5,27 +5,33 @@ let handler = async (m, { conn, text }) => {
     // Reacción de inicio
     await m.react('🕓')
 
-    // Barra de carga simulada
+    // Ejecutar git pull real
+    let cmd = 'git pull' + (m.fromMe && text ? ' ' + text : '')
+    let output = execSync(cmd, { encoding: 'utf-8' }).trim()
+
+    // Verificar si ya está actualizado
+    if (output.includes('Already up to date.')) {
+      await conn.reply(m.chat, '✅ Tu bot ya está actualizado.', m)
+      await m.react('✅')
+      return
+    }
+
+    // Barra de carga simulada para actualización
     let loading = ["▰▱▱▱▱ 20%", "▰▰▱▱▱ 40%", "▰▰▰▱▱ 60%", "▰▰▰▰▱ 80%", "▰▰▰▰▰ 100%"]
     let msg
     for (let i = 0; i < loading.length; i++) {
       if (msg) await conn.sendMessage(m.chat, { delete: msg.key })
       msg = await conn.sendMessage(m.chat, { text: loading[i] }, { quoted: m })
-      await new Promise(res => setTimeout(res, 500)) // medio segundo por paso
+      await new Promise(res => setTimeout(res, 500))
     }
-
-    // Ejecutar git pull real
-    let cmd = 'git pull' + (m.fromMe && text ? ' ' + text : '')
-    execSync(cmd, { encoding: 'utf-8' })
 
     // Eliminar barra final
     if (msg) await conn.sendMessage(m.chat, { delete: msg.key })
 
-    // Mensaje final limpio
-    await conn.reply(m.chat, '✅ Tu bot ya está actualizado.', m)
-
-    // Reacción de éxito
+    // Mensaje final de actualización
+    await conn.reply(m.chat, '✅ Bot actualizado correctamente.', m)
     await m.react('✅')
+    
   } catch (err) {
     // Reacción de error
     await m.react('❌')
