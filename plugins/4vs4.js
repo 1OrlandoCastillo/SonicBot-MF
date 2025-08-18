@@ -21,7 +21,17 @@ const handler = async (m, { conn, args }) => {
 
 𝗥𝗘𝗔𝗖𝗖𝗜𝗢𝗡𝗔 👇
 ❤️ = Jugador
-👍 = Suplente
+👍🏻 = Suplente
+
+𝗝𝗨𝗚𝗔𝗗𝗢𝗥𝗘𝗦
+Vacante
+Vacante
+Vacante
+Vacante
+
+𝗦𝗨𝗣𝗟𝗘𝗡𝗧𝗘𝗦
+Vacante
+Vacante
 `.trim();
 
     let sentMsg = await conn.sendMessage(m.chat, { text: message }, { quoted: m });
@@ -30,15 +40,13 @@ const handler = async (m, { conn, args }) => {
         chat: m.chat,
         jugadores: [],
         suplentes: [],
-        msgId: sentMsg.key.id
+        msgId: sentMsg.key.id,
+        completa: false
     };
 };
 
 // --- Escuchar actualizaciones de mensajes ---
 export function setupReactions(conn) {
-
-    const corazon = ["❤️", "❤", "🧡"];
-    const pulgar = ["👍", "👍🏻", "👍🏽"];
 
     conn.ev.on("messages.update", async (updates) => {
         for (let update of updates) {
@@ -49,44 +57,70 @@ export function setupReactions(conn) {
             const chatId = reaction.key.remoteJid;
             const user = update.key.participant || update.key.remoteJid;
 
-            // Normalizar emoji
-            const rawEmoji = reaction?.text;
-            if (!rawEmoji) continue;
-            const emoji = rawEmoji.trim();
+            const emoji = reaction?.text?.trim();
+            if (!emoji) continue;
 
             if (!partidas[msgId]) continue;
             let partida = partidas[msgId];
 
+            if (partida.completa) continue; // Bloquear más reacciones si ya completa
+
             const isRemove = reaction.remove || false;
 
             if (isRemove) {
-                // Quitar usuario si elimina su reacción
                 partida.jugadores = partida.jugadores.filter(u => u !== user);
                 partida.suplentes = partida.suplentes.filter(u => u !== user);
+                partida.completa = false; // si se quita alguien, se desbloquea
             } else {
-                // Limpiar duplicados antes de agregar
+                // Limpiar duplicados
                 partida.jugadores = partida.jugadores.filter(u => u !== user);
                 partida.suplentes = partida.suplentes.filter(u => u !== user);
 
-                if (corazon.some(e => emoji.startsWith(e))) {
+                // Solo aceptar ❤️ y 👍🏻
+                if (emoji === "❤️") {
                     if (partida.jugadores.length < 4) partida.jugadores.push(user);
-                } else if (pulgar.some(e => emoji.startsWith(e))) {
+                } else if (emoji === "👍🏻") {
                     if (partida.suplentes.length < 2) partida.suplentes.push(user);
+                } else {
+                    continue; // ignorar otros emojis
                 }
             }
 
-            // Generar lista actualizada
+            // Construir lista con vacantes
+            const jugadoresTexto = [];
+            for (let i = 0; i < 4; i++) {
+                if (partida.jugadores[i]) {
+                    jugadoresTexto.push(i===0?'👑 ┇ @'+partida.jugadores[i].split('@')[0]:'🥷🏻 ┇ @'+partida.jugadores[i].split('@')[0]);
+                } else {
+                    jugadoresTexto.push("Vacante");
+                }
+            }
+
+            const suplentesTexto = [];
+            for (let i = 0; i < 2; i++) {
+                if (partida.suplentes[i]) {
+                    suplentesTexto.push("🥷🏻 ┇ @"+partida.suplentes[i].split('@')[0]);
+                } else {
+                    suplentesTexto.push("Vacante");
+                }
+            }
+
+            // Verificar si la partida está completa
+            if (partida.jugadores.length === 4 && partida.suplentes.length === 2) {
+                partida.completa = true;
+            }
+
             const texto = `
-*4 𝐕𝐄𝐑𝐒𝐔𝐒 4* (Actualizado)
+*4 𝐕𝐄𝐑𝐒𝐔𝐒 4*${partida.completa ? " ✅ Partida completa" : " (Actualizado)"}
 
 𝗝𝗨𝗚𝗔𝗗𝗢𝗥𝗘𝗦
-${partida.jugadores.map((p, i) => `${i===0?'👑':'🥷🏻'} ┇ @${p.split('@')[0]}`).join('\n') || "Vacante"}
+${jugadoresTexto.join('\n')}
 
 𝗦𝗨𝗣𝗟𝗘𝗡𝗧𝗘𝗦
-${partida.suplentes.map(p => `🥷🏻 ┇ @${p.split('@')[0]}`).join('\n') || "Vacante"}
+${suplentesTexto.join('\n')}
             `.trim();
 
-            // Editar el mensaje original en lugar de enviar uno nuevo
+            // Editar el mensaje original
             await conn.sendMessage(chatId, {
                 text: texto,
                 mentions: [...partida.jugadores, ...partida.suplentes],
