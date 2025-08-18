@@ -1,3 +1,4 @@
+// Guardamos partidas activas en memoria
 let partidas = {}
 
 const handler = async (m, { conn, args }) => {
@@ -6,116 +7,125 @@ const handler = async (m, { conn, args }) => {
         return;
     }
 
-    // --- Horas ---
-    let horaUsuario = args[0]
-    const pais = args[1].toUpperCase()
+    const horaUsuario = args[0];
+    const pais = args[1].toUpperCase();
 
-    const diferenciasHorarias = { MX: 0, CO: 1, CL: 2, AR: 3 }
+    const diferenciasHorarias = { MX: 0, CO: 1, CL: 2, AR: 3 };
     if (!(pais in diferenciasHorarias)) {
-        conn.reply(m.chat, 'País no válido. Usa MX, CO, CL o AR.', m)
-        return
+        conn.reply(m.chat, 'País no válido. Usa MX, CO, CL o AR.', m);
+        return;
     }
 
-    const [hora, minutos] = horaUsuario.split(':').map(n => parseInt(n))
-    const diferenciaHoraria = diferenciasHorarias[pais]
-
-    const horasEnPais = []
-    for (let i = 0; i < 2; i++) {
-        const horaActual = new Date()
-        horaActual.setHours(hora + i)
-        horaActual.setMinutes(minutos)
-        horaActual.setSeconds(0)
-
-        const horaEnPais = new Date(horaActual.getTime() + (3600000 * diferenciaHoraria))
-        horasEnPais.push(horaEnPais)
-    }
-
-    const formatTime = (date) => date.toLocaleTimeString('es', { hour12: false, hour: '2-digit', minute: '2-digit' })
-    const hora1 = formatTime(horasEnPais[0])
-    const hora2 = formatTime(horasEnPais[1])
-
-    // --- Mensaje inicial ---
     const message = `
 ㅤㅤ4 \`𝗩𝗘𝗥𝗦𝗨𝗦\` 4
 ╭───────────────╮
 ┊ ⏱️ \`𝗛𝗢𝗥𝗔𝗥𝗜𝗢\`
-┊ • ${hora1}
-┊ • ${hora2}
+┊ • ${horaUsuario}
+┊ • ${pais}
 ┊ » \`𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔\` 👑
-┊ ⚜️ ➤ 
-┊ ⚜️ ➤ 
-┊ ⚜️ ➤ 
-┊ ⚜️ ➤ 
+┊ ⚜️ ➤ Vacante
+┊ ⚜️ ➤ Vacante
+┊ ⚜️ ➤ Vacante
+┊ ⚜️ ➤ Vacante
 ┊
 ┊ » \`𝗦𝗨𝗣𝗟𝗘𝗡𝗧𝗘:\` 
-┊ ⚜️ ➤ 
-┊ ⚜️ ➤ 
+┊ ⚜️ ➤ Vacante
+┊ ⚜️ ➤ Vacante
 ╰───────────────╯
 
-❤️ = Participar | 👍 = Suplente
+❤️ = Participar | 👍🏻 = Suplente
 • Lista activa por 5 minutos
-`.trim()
+`.trim();
 
-    let sentMsg = await conn.sendMessage(m.chat, { text: message }, { quoted: m })
+    let sentMsg = await conn.sendMessage(m.chat, { text: message }, { quoted: m });
 
-    // Guardar partida
     partidas[sentMsg.key.id] = {
         chat: m.chat,
         jugadores: [],
         suplentes: [],
-        timeout: setTimeout(() => {
-            delete partidas[sentMsg.key.id]
-            conn.sendMessage(m.chat, { text: "⏱️ La lista se cerró automáticamente (5 minutos)" })
-        }, 5 * 60 * 1000) // 5 minutos
-    }
-}
+        msgId: sentMsg.key.id,
+        completa: false,
+        horaUsuario,
+        pais
+    };
 
-// --- Reacciones ---
+    setTimeout(() => delete partidas[sentMsg.key.id], 5 * 60 * 1000);
+};
+
+// --- Escuchar reacciones ---
 export function setupReactions(conn) {
-    conn.ev.on("messages.update", async (updates) => {
-        for (let update of updates) {
-            if (!update.update?.reaction) continue
+    conn.ev.on("messages.reaction", async ({ reaction }) => {
+        if (!reaction) return;
 
-            let reaction = update.update.reaction
-            let msgId = reaction.key.id
-            let chatId = reaction.key.remoteJid
-            let user = update.key.participant || update.key.remoteJid
-            let emoji = reaction.text
+        const msgId = reaction.key.id;
+        const chatId = reaction.key.remoteJid;
+        const user = reaction.key.participant || reaction.key.remoteJid;
+        const emoji = reaction.text?.trim();
+        if (!emoji) return;
 
-            if (!partidas[msgId]) continue
-            let partida = partidas[msgId]
+        if (!partidas[msgId]) return;
+        const partida = partidas[msgId];
 
-            // Eliminar duplicados
-            partida.jugadores = partida.jugadores.filter(u => u !== user)
-            partida.suplentes = partida.suplentes.filter(u => u !== user)
+        if (partida.completa) return;
+
+        const isRemove = reaction.remove || false;
+
+        if (isRemove) {
+            partida.jugadores = partida.jugadores.filter(u => u !== user);
+            partida.suplentes = partida.suplentes.filter(u => u !== user);
+            partida.completa = false;
+        } else {
+            partida.jugadores = partida.jugadores.filter(u => u !== user);
+            partida.suplentes = partida.suplentes.filter(u => u !== user);
 
             if (emoji === "❤️") {
-                if (partida.jugadores.length < 4) partida.jugadores.push(user)
-            } else if (emoji === "👍" || emoji === "👍🏻") {
-                if (partida.suplentes.length < 2) partida.suplentes.push(user)
-            }
+                if (partida.jugadores.length < 4) partida.jugadores.push(user);
+            } else if (emoji === "👍🏻") {
+                if (partida.suplentes.length < 2) partida.suplentes.push(user);
+            } else return;
+        }
 
-            // Actualizar mensaje
-            let texto = `
+        // Construir plantilla actualizada con 👑 para el primer jugador
+        const escuadraTexto = ['┊ » `𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔` 👑'];
+        for (let i = 0; i < 4; i++) {
+            if (partida.jugadores[i]) {
+                const icono = i === 0 ? '👑' : '⚜️';
+                escuadraTexto.push(`┊ ${icono} ➤ @${partida.jugadores[i].split('@')[0]}`);
+            } else {
+                escuadraTexto.push('┊ ⚜️ ➤ Vacante');
+            }
+        }
+
+        const suplentesTexto = ['┊ » `𝗦𝗨𝗣𝗟𝗘𝗡𝗧𝗘:`'];
+        for (let i = 0; i < 2; i++) {
+            suplentesTexto.push('┊ ⚜️ ➤ ' + (partida.suplentes[i] ? '@' + partida.suplentes[i].split('@')[0] : 'Vacante'));
+        }
+
+        if (partida.jugadores.length === 4 && partida.suplentes.length === 2) {
+            partida.completa = true;
+        }
+
+        const texto = `
 ㅤㅤ4 \`𝗩𝗘𝗥𝗦𝗨𝗦\` 4
 ╭───────────────╮
 ┊ ⏱️ \`𝗛𝗢𝗥𝗔𝗥𝗜𝗢\`
-┊ • ${new Date().toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit', hour12:false})}
-┊ • ${new Date(Date.now()+3600000).toLocaleTimeString('es', {hour:'2-digit', minute:'2-digit', hour12:false})}
-┊ » \`𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔\` 👑
-${partida.jugadores.map(p => `┊ ⚜️ ➤ @${p.split('@')[0]}`).join('\n') || "┊ ⚜️ ➤ Vacante\n┊ ⚜️ ➤ Vacante\n┊ ⚜️ ➤ Vacante\n┊ ⚜️ ➤ Vacante"}
-┊
-┊ » \`𝗦𝗨𝗣𝗟𝗘𝗡𝗧𝗘:\` 
-${partida.suplentes.map(p => `┊ ⚜️ ➤ @${p.split('@')[0]}`).join('\n') || "┊ ⚜️ ➤ Vacante\n┊ ⚜️ ➤ Vacante"}
+┊ • ${partida.horaUsuario}
+┊ • ${partida.pais}
+${escuadraTexto.join('\n')}
+${suplentesTexto.join('\n')}
 ╰───────────────╯
 
-❤️ = Participar | 👍 = Suplente
+❤️ = Participar | 👍🏻 = Suplente
 • Lista activa por 5 minutos
-            `.trim()
+${partida.completa ? "\n✅ Partida completa" : ""}
+        `.trim();
 
-            await conn.sendMessage(chatId, { text: texto, mentions: [...partida.jugadores, ...partida.suplentes] })
-        }
-    })
+        await conn.sendMessage(chatId, {
+            text: texto,
+            mentions: [...partida.jugadores, ...partida.suplentes],
+            edit: partida.msgId
+        });
+    });
 }
 
 handler.help = ['4vs4']
