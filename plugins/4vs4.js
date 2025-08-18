@@ -48,16 +48,19 @@ export function setupReactions(conn) {
             const msgId = reaction.key.id;
             const chatId = reaction.key.remoteJid;
             const user = update.key.participant || update.key.remoteJid;
-            const emoji = reaction.text;
+
+            // Normalizar emoji
+            const rawEmoji = reaction?.text;
+            if (!rawEmoji) continue;
+            const emoji = rawEmoji.trim();
 
             if (!partidas[msgId]) continue;
             let partida = partidas[msgId];
 
-            // Detectar si es una reacción eliminada
             const isRemove = reaction.remove || false;
 
             if (isRemove) {
-                // Quitar al usuario si elimina su reacción
+                // Quitar usuario si elimina su reacción
                 partida.jugadores = partida.jugadores.filter(u => u !== user);
                 partida.suplentes = partida.suplentes.filter(u => u !== user);
             } else {
@@ -65,9 +68,9 @@ export function setupReactions(conn) {
                 partida.jugadores = partida.jugadores.filter(u => u !== user);
                 partida.suplentes = partida.suplentes.filter(u => u !== user);
 
-                if (corazon.includes(emoji)) {
+                if (corazon.some(e => emoji.startsWith(e))) {
                     if (partida.jugadores.length < 4) partida.jugadores.push(user);
-                } else if (pulgar.includes(emoji)) {
+                } else if (pulgar.some(e => emoji.startsWith(e))) {
                     if (partida.suplentes.length < 2) partida.suplentes.push(user);
                 }
             }
