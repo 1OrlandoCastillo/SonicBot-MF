@@ -1,30 +1,37 @@
-// 🔥 Guardamos partidas activas
+// Guardamos partidas activas
 let partidas = {}
 
 const comando4vs4 = async (m, { conn, args }) => {
-    if (args.length < 2) return conn.sendMessage(m.chat, { text: 'Debes poner la hora y el país. Ej: .4vs4 21 MX' }, { quoted: m })
+    if (args.length < 2) {
+        return conn.sendMessage(m.chat, { text: 'Debes poner la hora y el país. Ej: .4vs4 21 MX' }, { quoted: m })
+    }
 
-    // Validar y formatear hora
+    const horaRegex = /^([01]?\d|2[0-3]):?([0-5]\d)?(hr)?$/i
+    if (!horaRegex.test(args[0])) {
+        return conn.sendMessage(m.chat, { text: 'Formato incorrecto. Usa 21, 21:30 o 21hr.' }, { quoted: m })
+    }
+
     let hora = args[0].replace('hr', ':00')
-    if (!hora.includes(':')) hora += ':00'
-
     const pais = args[1].toUpperCase()
     const diferenciasHorarias = { MX: 0, CO: 1, CL: 2, AR: 3 }
-    if (!(pais in diferenciasHorarias)) return conn.sendMessage(m.chat, { text: 'País no válido. Usa MX, CO, CL o AR.' }, { quoted: m })
+    if (!(pais in diferenciasHorarias)) {
+        return conn.sendMessage(m.chat, { text: 'País no válido. Usa MX, CO, CL o AR.' }, { quoted: m })
+    }
 
     const horaBase = parseInt(hora.split(':')[0])
     const minBase = parseInt(hora.split(':')[1])
+
     const format = (h, m) => `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
-
     let horarios = []
-    for (let i = 0; i < 2; i++) horarios.push(format((horaBase + i) % 24, minBase))
+    for (let i = 0; i < 2; i++) {
+        horarios.push(format((horaBase + i) % 24, minBase))
+    }
 
-    const plantilla = (jugadores = [], suplentes = []) => `
+    const plantilla = (jugadores = [], suplentes = [], horarios = [], pais = '') => `
 ㅤㅤ4 𝗩𝗘𝗥𝗦𝗨𝗦 4
 ╭───────────────╮
 ┊ ⏱️ 𝗛𝗢𝗥𝗔𝗥𝗜𝗢
-┊ • ${horarios[0]} ${pais}
-┊ • ${horarios[1]} ${pais}
+${horarios.map(h => `┊ • ${h} ${pais}`).join('\n')}
 ┊ » 𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔 👑
 ${jugadores.map(j => `┊ ⚜️ ➤ ${j}`).join('\n') || '┊ ⚜️ ➤ '}
 ┊
@@ -36,18 +43,10 @@ ${suplentes.map(s => `┊ ⚜️ ➤ ${s}`).join('\n') || '┊ ⚜️ ➤ '}
 • Lista activa por 5 minutos
 `.trim()
 
-    // Mandamos mensaje inicial
-    let msg = await conn.sendMessage(m.chat, { text: plantilla() }, { quoted: m })
+    let msg = await conn.sendMessage(m.chat, { text: plantilla([], [], horarios, pais) }, { quoted: m })
 
-    // Guardamos en memoria
-    partidas[msg.key.id] = {
-        chat: m.chat,
-        id: msg.key.id,
-        horarios,
-        pais,
-        jugadores: [],
-        suplentes: []
-    }
+    // Guardar en memoria
+    partidas[msg.key.id] = { chat: m.chat, jugadores: [], suplentes: [], horarios, pais }
 
     // Borrar en 5 minutos
     setTimeout(() => delete partidas[msg.key.id], 5 * 60 * 1000)
@@ -58,53 +57,66 @@ comando4vs4.tags = ['freefire']
 comando4vs4.command = /^(4vs4|vs4)$/i
 export default comando4vs4
 
-
-// 📌 Evento de reacciones
+// 📌 EVENTO DE REACCIONES
 export function setupReactions(conn) {
-    conn.ev.on('messages.reaction', async reaction => {
-        try {
-            const id = reaction.key?.id
-            if (!id || !(id in partidas)) return
+    conn.ev.on('messages.update', async updates => {
+        for (let { key, update: upd } of updates) {
+            if (!upd.reactions) continue
 
-            let data = partidas[id]
-            let emoji = reaction.text
+            for (let reaction of upd.reactions) {
+                const msgId = reaction.key?.id
+                if (!msgId || !(msgId in partidas)) continue
 
-            // Identificar usuario que reaccionó
-            let user = `@${reaction.key.participant.split('@')[0]}`
+                const user = `@${reaction.key.participant.split('@')[0]}`
+                const data = partidas[msgId]
 
-            // ❤️ = jugador, 👍 = suplente
-            if (emoji === '❤️') {
-                if (!data.jugadores.includes(user)) data.jugadores.push(user)
-                data.suplentes = data.suplentes.filter(u => u !== user)
-            } else if (emoji === '👍') {
-                if (!data.suplentes.includes(user)) data.suplentes.push(user)
-                data.jugadores = data.jugadores.filter(u => u !== user)
-            } else return
+                // Manejo de reacciones
+                if (reaction.text === '❤️') {
+                    if (data.jugadores.includes(user)) return
+                    if (data.jugadores.length >= 4) {
+                        await conn.sendMessage(data.chat, { text: `${user} ⚠️ Ya hay 4 jugadores titulares.`, mentions: [reaction.key.participant] })
+                        return
+                    }
+                    data.jugadores.push(user)
+                    data.suplentes = data.suplentes.filter(u => u !== user)
+                } else if (reaction.text === '👍🏻' || reaction.text === '👍') {
+                    if (data.suplentes.includes(user)) return
+                    if (data.suplentes.length >= 4) {
+                        await conn.sendMessage(data.chat, { text: `${user} ⚠️ Ya hay 4 suplentes.`, mentions: [reaction.key.participant] })
+                        return
+                    }
+                    data.suplentes.push(user)
+                    data.jugadores = data.jugadores.filter(u => u !== user)
+                } else continue
 
-            // Plantilla actualizada
-            const plantilla = (jugadores = [], suplentes = []) => `
+                // Plantilla actualizada
+                const plantilla = (jugadores = [], suplentes = [], horarios = [], pais = '') => `
 ㅤㅤ4 𝗩𝗘𝗥𝗦𝗨𝗦 4
 ╭───────────────╮
 ┊ ⏱️ 𝗛𝗢𝗥𝗔𝗥𝗜𝗢
-┊ • ${data.horarios[0]} ${data.pais}
-┊ • ${data.horarios[1]} ${data.pais}
+${horarios.map(h => `┊ • ${h} ${pais}`).join('\n')}
 ┊ » 𝗘𝗦𝗖𝗨𝗔𝗗𝗥𝗔 👑
 ${jugadores.map(j => `┊ ⚜️ ➤ ${j}`).join('\n') || '┊ ⚜️ ➤ '}
 ┊
 ┊ » 𝗦𝗨𝗣𝗟𝗘𝗡𝗧𝗘:
 ${suplentes.map(s => `┊ ⚜️ ➤ ${s}`).join('\n') || '┊ ⚜️ ➤ '}
 ╰───────────────╯
+
+❤️ = Participar | 👍 = Suplente
+• Lista activa por 5 minutos
 `.trim()
 
-            // Editamos mensaje y mencionamos a los usuarios
-            await conn.sendMessage(data.chat, {
-                edit: id, // editar mensaje original
-                text: plantilla(data.jugadores, data.suplentes),
-                mentions: [...data.jugadores, ...data.suplentes].map(u => u.replace('@', '') + '@s.whatsapp.net')
-            })
-
-        } catch (e) {
-            console.error('Error en reacción:', e)
+                // Editar mensaje original
+                try {
+                    await conn.sendMessage(data.chat, {
+                        text: plantilla(data.jugadores, data.suplentes, data.horarios, data.pais),
+                        mentions: [...data.jugadores, ...data.suplentes].map(u => u.replace('@', '') + '@s.whatsapp.net'),
+                        edit: msgId
+                    })
+                } catch (err) {
+                    console.error('Error al actualizar mensaje 4vs4:', err)
+                }
+            }
         }
     })
 }
