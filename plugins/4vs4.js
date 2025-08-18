@@ -39,16 +39,14 @@ ${jugadores.map(j => `┊ ⚜️ ➤ ${j}`).join('\n') || '┊ ⚜️ ➤ '}
 ${suplentes.map(s => `┊ ⚜️ ➤ ${s}`).join('\n') || '┊ ⚜️ ➤ '}
 ╰───────────────╯
 
-❤️ = Participar | 👍 = Suplente
+❤️ = Escuadra/Jugador | 👍 = Suplente
 • Lista activa por 5 minutos
 `.trim()
 
     let msg = await conn.sendMessage(m.chat, { text: plantilla([], [], horarios, pais) }, { quoted: m })
 
-    // Guardar en memoria
     partidas[msg.key.id] = { chat: m.chat, jugadores: [], suplentes: [], horarios, pais }
 
-    // Borrar en 5 minutos
     setTimeout(() => delete partidas[msg.key.id], 5 * 60 * 1000)
 }
 
@@ -70,15 +68,17 @@ export function setupReactions(conn) {
                 const user = `@${reaction.key.participant.split('@')[0]}`
                 const data = partidas[msgId]
 
-                // Manejo de reacciones
+                // ❤️ = Jugador / Escuadra
                 if (reaction.text === '❤️') {
                     if (data.jugadores.includes(user)) return
                     if (data.jugadores.length >= 4) {
-                        await conn.sendMessage(data.chat, { text: `${user} ⚠️ Ya hay 4 jugadores titulares.`, mentions: [reaction.key.participant] })
+                        await conn.sendMessage(data.chat, { text: `${user} ⚠️ Ya hay 4 jugadores.`, mentions: [reaction.key.participant] })
                         return
                     }
                     data.jugadores.push(user)
                     data.suplentes = data.suplentes.filter(u => u !== user)
+
+                // 👍 = Suplente
                 } else if (reaction.text === '👍🏻' || reaction.text === '👍') {
                     if (data.suplentes.includes(user)) return
                     if (data.suplentes.length >= 4) {
@@ -87,6 +87,7 @@ export function setupReactions(conn) {
                     }
                     data.suplentes.push(user)
                     data.jugadores = data.jugadores.filter(u => u !== user)
+
                 } else continue
 
                 // Plantilla actualizada
@@ -102,7 +103,7 @@ ${jugadores.map(j => `┊ ⚜️ ➤ ${j}`).join('\n') || '┊ ⚜️ ➤ '}
 ${suplentes.map(s => `┊ ⚜️ ➤ ${s}`).join('\n') || '┊ ⚜️ ➤ '}
 ╰───────────────╯
 
-❤️ = Participar | 👍 = Suplente
+❤️ = Escuadra/Jugador | 👍 = Suplente
 • Lista activa por 5 minutos
 `.trim()
 
