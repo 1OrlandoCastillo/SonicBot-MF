@@ -47,9 +47,7 @@ Vacante
 
 // --- Escuchar reacciones ---
 export function setupReactions(conn) {
-
-    conn.ev.on("messages.reaction", async (reactionUpdate) => {
-        const reaction = reactionUpdate.reaction;
+    conn.ev.on("messages.reaction", async ({ reaction }) => {
         if (!reaction) return;
 
         const msgId = reaction.key.id;
@@ -59,9 +57,9 @@ export function setupReactions(conn) {
         if (!emoji) return;
 
         if (!partidas[msgId]) return;
-        let partida = partidas[msgId];
+        const partida = partidas[msgId];
 
-        if (partida.completa) return; // Bloquear si ya está completa
+        if (partida.completa) return; // Bloquear si ya completa
 
         const isRemove = reaction.remove || false;
 
