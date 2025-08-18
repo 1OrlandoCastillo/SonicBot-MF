@@ -12,10 +12,12 @@ function handler(m, { groupMetadata, conn, text }) {
   // Tomar los primeros 10 (o menos si no hay tantos miembros)
   let top10 = shuffled.slice(0, 10)
 
+  // Elegir un emoji y un sonido aleatorio
   let k = Math.floor(Math.random() * 70)
   let x = pickRandom(['🤓','😅','😂','😳','😎','🥵','😱','🤑','🙄','💩','🍑','🤨','🥴','🔥','👇🏻','😔','👀','🌚'])
   let vn = `https://hansxd.nasihosting.com/sound/sound${k}.mp3`
 
+  // Construir mensaje
   let top = `*${x} Top 10 ${text} ${x}*\n\n` +
     top10.map((u, i) => `*${i + 1}. ${user(u)}*`).join('\n')
 
@@ -26,7 +28,7 @@ handler.help = ['top *<texto>*']
 handler.command = ['top']
 handler.tags = ['fun']
 handler.group = true
-handler.register = true
+handler.register = false // <- ahora NO requiere registro
 
 export default handler
 
