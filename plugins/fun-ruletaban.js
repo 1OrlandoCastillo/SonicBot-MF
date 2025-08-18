@@ -9,7 +9,7 @@ let handler = async (m, { conn, participants }) => {
         const botId = conn.user.jid
         const botInGroup = participants.find(p => p.id === botId)
 
-        // Verificar si el bot es administrador real
+        // Validar que el bot sea admin
         if (!botInGroup?.admin) {
             return m.reply('✤ Hola, el bot debe ser *Administrador* para ejecutar este Comando.')
         }
@@ -54,7 +54,7 @@ let handler = async (m, { conn, participants }) => {
 handler.help = ['ruletaban']
 handler.tags = ['grupo']
 handler.command = /^(kickrandom|ruletaban|rban)$/i
-handler.admin = true     // Solo admins pueden usarlo
-handler.botAdmin = true  // El bot debe ser admin
+handler.admin = true     // Solo administradores pueden usarlo
+// ❌ handler.botAdmin eliminado
 
 export default handler
