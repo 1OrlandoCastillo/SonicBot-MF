@@ -22,7 +22,7 @@ let tags = {
   'logos': '「EDICION LOGOS」🍨', 
 }
 
-const vid = 'https://www.kapwing.com/videos/683d075e7682af689ea410a5';
+const vid = 'https://qu.ax/xUtor.mp4';
 
 const defaultMenu = {
   before: `*•:•:•:•:•:•:•:•:•:•☾☼☽•:•.•:•.•:•:•:•:•:•*
@@ -31,7 +31,7 @@ const defaultMenu = {
 
 ╔━━━━━ *⊱𝐈𝐍𝐅𝐎 - 𝐁𝐎𝐓⊰*
 ✦  👤 *Cliente:* %name
-✦  🔱 *Modo:* Público
+✦  🔱 *Modo:* Privado VIP
 ✧  ✨ *Baileys:* Multi Device
 ✦  🪐 *Tiempo Activo:* %muptime
 ✧  💫 *Usuarios:* %totalreg 
