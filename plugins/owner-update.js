@@ -1,11 +1,6 @@
 import { execSync } from 'child_process'
 
 let handler = async (m, { conn, text }) => {
-  // Verificar si el remitente es el dueño
-  if (m.sender !== global.ownerNumber) {
-    return conn.reply(m.chat, '⚠️ Este comando solo puede ser utilizado por el creador.', m)
-  }
-
   try {
     // Reacción de inicio
     await m.react('🕓')
@@ -38,7 +33,7 @@ let handler = async (m, { conn, text }) => {
       await new Promise(res => setTimeout(res, 700)) // espera
       await conn.sendMessage(m.chat, {
         text: loading[i],
-        edit: msg.key
+        edit: msg.key // <- aquí edita el mismo mensaje
       })
     }
 
@@ -55,9 +50,9 @@ let handler = async (m, { conn, text }) => {
   }
 }
 
-// Configuración del handler
 handler.help = ['update']
 handler.tags = ['owner']
 handler.command = ['update', 'actualizar', 'fix', 'fixed']
+handler.rowner = true
 
 export default handler
