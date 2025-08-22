@@ -119,7 +119,7 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
         const pluginCommands = help
           .filter(menu => menu.tags?.includes(tag))
           .map(menu => menu.help.map(helpText => ({
-            cmd: menu.prefix ? helpText : `${_p}${helpText}`,
+            cmd: menu.prefix ? helpText : `${_p}${helpText.startsWith('.') ? helpText.slice(1) : helpText}`,
             limit: menu.limit ? '⭐' : '',
             premium: menu.premium ? '💎' : ''
           })))
@@ -128,8 +128,11 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
 
         // Comandos default que no existen aún
         const defaultCmds = (defaultCommands[tag] || [])
-          .filter(defCmd => !pluginCommands.some(c => c.cmd === `${_p}${defCmd}`))
-          .map(defCmd => ({ cmd: `${_p}${defCmd}`, limit: '', premium: '' }));
+          .filter(defCmd => !pluginCommands.some(c => c.cmd === (_p + (defCmd.startsWith('.') ? defCmd.slice(1) : defCmd))))
+          .map(defCmd => {
+            let cmd = defCmd.startsWith('.') ? _p + defCmd.slice(1) : _p + defCmd;
+            return { cmd, limit: '', premium: '' };
+          });
 
         const allCommands = [...pluginCommands, ...defaultCmds];
 
