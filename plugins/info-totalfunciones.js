@@ -1,11 +1,35 @@
 let handler = async (m, { conn }) => {
-let totalf = Object.values(global.plugins).filter(
-    (v) => v.help && v.tags
-  ).length;
-conn.reply(m.chat, `*🎩 Total de Funciones* : ${totalf}`,m)
-}
+  // Filtra plugins que tengan 'help' y 'tags'
+  let plugins = Object.values(global.plugins).filter(v => v.help && v.tags);
 
-handler.help = ['totalfunciones']
-handler.tags = ['main']
-handler.command = ['totalfunciones', 'comandos', 'funciones']
-export default handler
+  // Total de funciones
+  let totalf = plugins.length;
+
+  // Agrupar funciones por categoría (tags)
+  let categorias = {};
+  plugins.forEach(p => {
+    p.tags.forEach(tag => {
+      if (!categorias[tag]) categorias[tag] = [];
+      categorias[tag].push(p.help[0]); // Tomamos el primer nombre de help
+    });
+  });
+
+  // Construir mensaje bonito
+  let mensaje = `*🎩 Total de Funciones*: ${totalf}\n\n`;
+  for (let tag in categorias) {
+    mensaje += `*📂 ${tag.toUpperCase()}*\n`;
+    categorias[tag].forEach(cmd => {
+      mensaje += `  ✨ ${cmd}\n`;
+    });
+    mensaje += `\n`;
+  }
+
+  // Enviar mensaje
+  conn.reply(m.chat, mensaje.trim(), m);
+};
+
+handler.help = ['totalfunciones'];
+handler.tags = ['main'];
+handler.command = ['totalfunciones', 'comandos', 'funciones'];
+
+export default handler;
