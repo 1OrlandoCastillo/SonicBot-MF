@@ -27,12 +27,9 @@ const tags = {
 const defaultMenu = {
   before: `
 ╭───「 %botname 」───╮
-│ Tipo: %tipo
+│ %tipo
 │ Fecha: %date
 │ Hora: %time
-│ Nivel: %level
-│ Experiencia: %exp/%maxexp
-│ Usuarios: %totalreg
 ╰─────────────────╯
 %readmore`.trimStart(),
 
@@ -44,17 +41,12 @@ const defaultMenu = {
 
 const handler = async (m, { conn, usedPrefix: _p }) => {
   try {
-    const { exp, limit, level } = global.db.data.users[m.sender];
-    const { min, xp, max } = xpRange(level, global.multiplier);
     const name = await conn.getName(m.sender);
 
     const d = new Date(Date.now() + 3600000);
     const locale = 'es';
-    const week = d.toLocaleDateString(locale, { weekday: 'long' });
     const date = d.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
     const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: 'numeric' });
-
-    const totalreg = Object.keys(global.db.data.users).length;
 
     const help = Object.values(global.plugins).filter(p => !p.disabled).map(plugin => ({
       help: Array.isArray(plugin.help) ? plugin.help : [plugin.help],
@@ -86,11 +78,16 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       } catch (err) {}
     }
 
-    const tipo = botActual === '+5491125856641'.replace(/\D/g, '') ? 'Principal Bot' : 'Sub Bot';
+    const tipo = botActual === '+5491125856641'.replace(/\D/g, '') ? '🤖 Principal Bot' : '🛠️ Sub Bot';
     const menuConfig = conn.menu || defaultMenu;
 
     const _text = [
-      menuConfig.before,
+      menuConfig.before
+        .replace(/%botname/g, nombreBot)
+        .replace(/%tipo/g, tipo)
+        .replace(/%date/g, date)
+        .replace(/%time/g, time)
+        .replace(/%readmore/g, readMore),
       ...sortedTags.map(tag => {
         const comandos = help
           .filter(menu => menu.tags?.includes(tag))
@@ -104,6 +101,8 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
           .flat()
           .sort((a, b) => a.cmd.localeCompare(b.cmd));
 
+        if (!comandos.length) return ''; // evitar secciones vacías
+
         return [
           menuConfig.header.replace(/%category/g, dynamicTags[tag]),
           comandos.map(c => menuConfig.body
@@ -113,37 +112,11 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
           ).join('\n'),
           menuConfig.footer
         ].join('\n');
-      }),
-      menuConfig.after
+      }).filter(Boolean),
+      menuConfig.after.replace(/%botname/g, nombreBot)
     ].join('\n');
 
-    const replace = {
-      '%': '%',
-      p: _p,
-      botname: nombreBot,
-      taguser: '@' + m.sender.split('@')[0],
-      exp: exp - min,
-      maxexp: xp,
-      totalexp: exp,
-      xp4levelup: max - exp,
-      level,
-      limit,
-      name,
-      week,
-      date,
-      time,
-      totalreg,
-      tipo,
-      readmore: readMore,
-      uptime: clockString(process.uptime() * 1000),
-    };
-
-    const text = _text.replace(
-      new RegExp(`%(${Object.keys(replace).sort((a, b) => b.length - a.length).join('|')})`, 'g'),
-      (_, name) => String(replace[name])
-    );
-
-    await conn.sendFile(m.chat, imgBot, 'thumbnail.jpg', text.trim(), m, null);
+    await conn.sendFile(m.chat, imgBot, 'thumbnail.jpg', _text.trim(), m, null);
 
   } catch (e) {
     conn.reply(m.chat, '❎ Lo sentimos, el menú tiene un error.', m);
@@ -157,10 +130,3 @@ export default handler;
 // Utilidades
 const more = String.fromCharCode(8206);
 const readMore = more.repeat(4001);
-
-function clockString(ms) {
-  let h = isNaN(ms) ? '--' : Math.floor(ms / 3600000);
-  let m = isNaN(ms) ? '--' : Math.floor(ms / 60000) % 60;
-  let s = isNaN(ms) ? '--' : Math.floor(ms / 1000) % 60;
-  return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
-}
