@@ -26,22 +26,20 @@ const tags = {
 
 const defaultMenu = {
   before: `
-Hola, soy %botname  
-(%tipo)
-
-¿Cómo te encuentras hoy, cielo?
-
-︵‿︵‿୨♡୧‿︵‿︵
-🪷 : Tiempo    :: %uptime  
-ㅤ📚 : Plataforma  :: Baileys MD  
-ㅤ💮 : Modo  :: Privado Vip 
-︶‿︶‿୨♡୧‿︶‿︶
+╭───「 %botname 」───╮
+│ Tipo: %tipo
+│ Fecha: %date
+│ Hora: %time
+│ Nivel: %level
+│ Experiencia: %exp/%maxexp
+│ Usuarios registrados: %totalreg
+╰─────────────────╯
 %readmore`.trimStart(),
 
-  header: '%category',
-  body: '𝆬🍄ㅤ◌ㅤ%cmd %islimit %isPremium\n',
-  footer: '',
-  after: '',
+  header: '┌─「 %category 」─',
+  body: '│ 𝆬 %cmd %islimit %isPremium',
+  footer: '└─────────────',
+  after: '✨ ¡Disfruta tu experiencia!',
 };
 
 const handler = async (m, { conn, usedPrefix: _p }) => {
@@ -61,13 +59,13 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
 
     const help = Object.values(global.plugins).filter(p => !p.disabled).map(plugin => ({
       help: Array.isArray(plugin.help) ? plugin.help : [plugin.help],
-      tags: Array.isArray(plugin.tags) ? plugin.tags : ['otros'], // Tag por defecto
+      tags: Array.isArray(plugin.tags) ? plugin.tags : ['otros'],
       prefix: 'customPrefix' in plugin,
       limit: plugin.limit,
       premium: plugin.premium
     }));
 
-    // Generar dinámicamente los tags y ordenarlos alfabéticamente
+    // Generar dinámicamente los tags y ordenarlos
     let dynamicTags = {};
     for (let plugin of help) {
       for (let t of plugin.tags) {
@@ -95,16 +93,25 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
     const _text = [
       menuConfig.before,
       ...sortedTags.map(tag => {
-        // Ordenar los comandos dentro de cada tag alfabéticamente
         const comandos = help
           .filter(menu => menu.tags?.includes(tag))
-          .map(menu => menu.help.map(helpText => menu.prefix ? helpText : `${_p}${helpText}`))
+          .map(menu => menu.help.map(helpText => {
+            return {
+              cmd: menu.prefix ? helpText : `${_p}${helpText}`,
+              limit: menu.limit ? '⭐' : '',
+              premium: menu.premium ? '🪪' : ''
+            };
+          }))
           .flat()
-          .sort((a, b) => a.localeCompare(b));
+          .sort((a, b) => a.cmd.localeCompare(b.cmd));
 
         return [
           menuConfig.header.replace(/%category/g, dynamicTags[tag]),
-          comandos.map(cmd => menuConfig.body.replace(/%cmd/g, cmd).replace(/%islimit/g, '').replace(/%isPremium/g, '')).join('\n'),
+          comandos.map(c => menuConfig.body
+            .replace(/%cmd/g, c.cmd)
+            .replace(/%islimit/g, c.limit)
+            .replace(/%isPremium/g, c.premium)
+          ).join('\n'),
           menuConfig.footer
         ].join('\n');
       }),
