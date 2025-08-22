@@ -48,18 +48,21 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
     const date = d.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
     const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: 'numeric' });
 
-    const help = Object.values(global.plugins).filter(p => !p.disabled).map(plugin => ({
-      help: Array.isArray(plugin.help) ? plugin.help : [plugin.help],
-      tags: Array.isArray(plugin.tags) ? plugin.tags : ['otros'],
-      prefix: 'customPrefix' in plugin,
-      limit: plugin.limit,
-      premium: plugin.premium
-    }));
+    const help = Object.values(global.plugins)
+      .filter(p => !p.disabled)
+      .map(plugin => ({
+        help: Array.isArray(plugin.help) ? plugin.help.filter(Boolean) : [plugin.help].filter(Boolean),
+        tags: Array.isArray(plugin.tags) ? plugin.tags.filter(Boolean) : ['otros'],
+        prefix: 'customPrefix' in plugin,
+        limit: plugin.limit,
+        premium: plugin.premium
+      }));
 
     // Generar dinámicamente los tags y ordenarlos
     let dynamicTags = {};
     for (let plugin of help) {
       for (let t of plugin.tags) {
+        if (!t || t === 'undefined') continue; // ignorar tags vacíos
         dynamicTags[t] = tags[t] || t.charAt(0).toUpperCase() + t.slice(1);
       }
     }
@@ -91,14 +94,13 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       ...sortedTags.map(tag => {
         const comandos = help
           .filter(menu => menu.tags?.includes(tag))
-          .map(menu => menu.help.map(helpText => {
-            return {
-              cmd: menu.prefix ? helpText : `${_p}${helpText}`,
-              limit: menu.limit ? '⭐' : '',
-              premium: menu.premium ? '💎' : ''
-            };
-          }))
+          .map(menu => menu.help.map(helpText => ({
+            cmd: menu.prefix ? helpText : `${_p}${helpText}`,
+            limit: menu.limit ? '⭐' : '',
+            premium: menu.premium ? '💎' : ''
+          })))
           .flat()
+          .filter(Boolean)
           .sort((a, b) => a.cmd.localeCompare(b.cmd));
 
         if (!comandos.length) return ''; // evitar secciones vacías
