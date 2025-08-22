@@ -1,14 +1,14 @@
 const handler = async (m, { conn, command, text }) => {
-  // Obtener el usuario mencionado o al remitente si no se menciona a nadie
+  // Obtener el usuario mencionado o al remitente
   let userId;
   let displayName;
 
   if (m.mentionedJid && m.mentionedJid.length > 0) {
-    userId = m.mentionedJid[0];
-    displayName = conn.getName(userId); // Nombre del usuario mencionado
+    userId = m.mentionedJid[0]; // ID real del usuario
+    displayName = conn.getName(userId); // Nombre visible
   } else {
     userId = m.sender;
-    displayName = conn.getName(m.sender); // Nombre del remitente
+    displayName = conn.getName(m.sender);
   }
 
   const percentages = Math.floor(Math.random() * 501); // 0 - 500
@@ -93,10 +93,10 @@ const handler = async (m, { conn, command, text }) => {
       await conn.sendMessage(m.chat, { text: hawemod[i], edit: key });
     }
 
-    // Mensaje final con mención real
+    // Mensaje final con mención usando el número real
     await conn.sendMessage(m.chat, {
       text: cal,
-      mentions: [userId] // Etiqueta al usuario correctamente
+      mentions: [userId] // Etiqueta con el número real de WhatsApp
     });
   }
 
