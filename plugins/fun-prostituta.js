@@ -131,7 +131,6 @@ let comentariosTotales = [
 "Nivel bestia activado 😎",
 "Demasiado para este mundo 🤯",
 "Arrasando sin compasión 💪"
-];
 
 // Dividimos comentarios en rangos para porcentaje
 let insultos = comentariosTotales.slice(0, 40);
