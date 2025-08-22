@@ -3,25 +3,25 @@ import { join } from 'path';
 import { xpRange } from '../lib/levelling.js';
 
 const tags = {
-  'main': 'Information',
-  'search': 'Search',
-  'game': 'Games',
-  'serbot': 'Sub-Bots',
-  'rpg': 'Rpg',
-  'rg': 'Registro',
-  'sticker': 'Sticker',
-  'img': 'Image',
-  'group': 'Groups',
-  'nable': 'On / Off',
-  'premium': 'Premium',
-  'downloader': 'Download',
-  'tools': 'Tools',
-  'fun': 'Fun',
-  'nsfw': 'Nsfw',
-  'cmd': 'Database',
-  'owner': 'Creador',
-  'audio': 'Audios',
-  'advanced': 'Avanzado',
+  'main': '💡 Información',
+  'search': '🔍 Búsqueda',
+  'game': '🎮 Juegos',
+  'serbot': '🤖 Sub-Bots',
+  'rpg': '⚔️ RPG',
+  'rg': '📝 Registro',
+  'sticker': '🏷️ Stickers',
+  'img': '🖼️ Imágenes',
+  'group': '👥 Grupos',
+  'nable': '🔧 On/Off',
+  'premium': '💎 Premium',
+  'downloader': '⬇️ Descargas',
+  'tools': '🛠️ Herramientas',
+  'fun': '🎉 Diversión',
+  'nsfw': '🔞 NSFW',
+  'cmd': '📂 Base de Datos',
+  'owner': '👑 Creador',
+  'audio': '🎵 Audios',
+  'advanced': '🚀 Avanzado',
 };
 
 const defaultMenu = {
@@ -32,14 +32,14 @@ const defaultMenu = {
 │ Hora: %time
 │ Nivel: %level
 │ Experiencia: %exp/%maxexp
-│ Usuarios registrados: %totalreg
+│ Usuarios: %totalreg
 ╰─────────────────╯
 %readmore`.trimStart(),
 
-  header: '┌─「 %category 」─',
-  body: '│ 𝆬 %cmd %islimit %isPremium',
-  footer: '└─────────────',
-  after: '✨ ¡Disfruta tu experiencia!',
+  header: '🌟 %category',
+  body: '│ 🎯 %cmd %islimit %isPremium',
+  footer: '─────────────────',
+  after: '✨ ¡Diviértete usando %botname!',
 };
 
 const handler = async (m, { conn, usedPrefix: _p }) => {
@@ -55,7 +55,6 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
     const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: 'numeric' });
 
     const totalreg = Object.keys(global.db.data.users).length;
-    const rtotalreg = Object.values(global.db.data.users).filter(user => user.registered).length;
 
     const help = Object.values(global.plugins).filter(p => !p.disabled).map(plugin => ({
       help: Array.isArray(plugin.help) ? plugin.help : [plugin.help],
@@ -99,7 +98,7 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
             return {
               cmd: menu.prefix ? helpText : `${_p}${helpText}`,
               limit: menu.limit ? '⭐' : '',
-              premium: menu.premium ? '🪪' : ''
+              premium: menu.premium ? '💎' : ''
             };
           }))
           .flat()
@@ -134,11 +133,9 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       date,
       time,
       totalreg,
-      rtotalreg,
       tipo,
       readmore: readMore,
       uptime: clockString(process.uptime() * 1000),
-      greeting
     };
 
     const text = _text.replace(
@@ -167,15 +164,3 @@ function clockString(ms) {
   let s = isNaN(ms) ? '--' : Math.floor(ms / 1000) % 60;
   return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
 }
-
-const ase = new Date();
-let hour = ase.getHours();
-const greetingMap = {
-  0: 'una linda noche 🌙', 1: 'una linda noche 💤', 2: 'una linda noche 🦉', 3: 'una linda mañana ✨',
-  4: 'una linda mañana 💫', 5: 'una linda mañana 🌅', 6: 'una linda mañana 🌄', 7: 'una linda mañana 🌅',
-  8: 'una linda mañana 💫', 9: 'una linda mañana ✨', 10: 'un lindo día 🌞', 11: 'un lindo día 🌨',
-  12: 'un lindo día ❄', 13: 'un lindo día 🌤', 14: 'una linda tarde 🌇', 15: 'una linda tarde 🥀',
-  16: 'una linda tarde 🌹', 17: 'una linda tarde 🌆', 18: 'una linda noche 🌙', 19: 'una linda noche 🌃',
-  20: 'una linda noche 🌌', 21: 'una linda noche 🌃', 22: 'una linda noche 🌙', 23: 'una linda noche 🌃',
-};
-var greeting = 'espero que tengas ' + (greetingMap[hour] || 'un buen día');
