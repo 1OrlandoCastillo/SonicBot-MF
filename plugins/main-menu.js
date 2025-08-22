@@ -1,170 +1,183 @@
-import fs from 'fs';
-import { join } from 'path';
-import { xpRange } from '../lib/levelling.js';
+import { promises as fs } from 'fs'
+import { join } from 'path'
+import { xpRange } from '../lib/levelling.js'
 
-const tags = {
-  'main': '💡 Información',
-  'search': '🔍 Búsqueda',
-  'game': '🎮 Juegos',
-  'serbot': '🤖 Sub-Bots',
-  'rpg': '⚔️ RPG',
-  'rg': '📝 Registro',
-  'sticker': '🏷️ Stickers',
-  'img': '🖼️ Imágenes',
-  'group': '👥 Grupos',
-  'nable': '🔧 On/Off',
-  'premium': '💎 Premium',
-  'downloader': '⬇️ Descargas',
-  'tools': '🛠️ Herramientas',
-  'fun': '🎉 Diversión',
-  'nsfw': '🔞 NSFW',
-  'cmd': '📂 Base de Datos',
-  'owner': '👑 Creador',
-  'audio': '🎵 Audios',
-  'advanced': '🚀 Avanzado',
-};
+let tags = {
+  'ADRIPENUDO': '👑「 *`MENUS ADRIBOT`* 」👑',
+  'main': '「INFO」🍨',
+  'buscador': '「BUSQUEDAS」🍨',
+  'fun': '「JUEGOS」🍨',
+  'serbot': '「SUB BOTS」🍨',
+  'rpg': '「RPG」🍨',
+  'rg': '「REGISTRO」🍨',
+  'sticker': '「STICKERS」🍨',
+  'emox': '「ANIMES」🍨',
+  'database': '「DATABASE」🍨',
+  'grupo': '「GRUPOS」🍨',
+  'nable': '「ON / OFF」', 
+  'descargas': '「DESCARGAS」🍨',
+  'tools': '「HERRAMIENTAS」🍨',
+  'info': '「INFORMACIÓN」🍨',
+  'owner': '「CREADOR」🍨',
+  'logos': '「EDICION LOGOS」🍨', 
+}
 
-// Comandos default que siempre se muestran si no existen en plugins
-const defaultCommands = {
-  fun: ['.manco', '.juego', '.chiste'],
-  main: [],
-  search: [],
-  game: [],
-  serbot: [],
-  rpg: [],
-  rg: [],
-  sticker: [],
-  img: [],
-  group: [],
-  nable: [],
-  premium: [],
-  downloader: [],
-  tools: [],
-  nsfw: [],
-  cmd: [],
-  owner: [],
-  audio: [],
-  advanced: []
-};
+const vid = 'https://www.kapwing.com/videos/683d075e7682af689ea410a5';
 
 const defaultMenu = {
-  before: `
-╭───「 %botname 」───╮
-│ %tipo
-│ Fecha: %date
-│ Hora: %time
-╰─────────────────╯
-%readmore`.trimStart(),
+  before: `*•:•:•:•:•:•:•:•:•:•☾☼☽•:•.•:•.•:•:•:•:•:•*
 
-  header: '🌟 %category',
-  body: '│ %cmd',
-  footer: '─────────────────',
-  after: '✨ ¡Diviértete usando %botname!',
-};
+"「💛」 ¡Hola! *%name* %greeting, Para Ver Tu Perfil Usa *#perfil* ❒"
 
-const handler = async (m, { conn, usedPrefix: _p }) => {
+╔━━━━━ *⊱𝐈𝐍𝐅𝐎 - 𝐁𝐎𝐓⊰*
+✦  👤 *Cliente:* %name
+✦  🔱 *Modo:* Público
+✧  ✨ *Baileys:* Multi Device
+✦  🪐 *Tiempo Activo:* %muptime
+✧  💫 *Usuarios:* %totalreg 
+╚━━━━━━━━━━━━━━
+%readmore
+*✧⋄⋆⋅⋆⋄✧⋄⋆⋅⋆⋄✧⋄⋆⋅⋆⋄✧⋄⋆⋅⋆⋄✧*\n\n> Para Ser Un Sub Bots Usa #code para codigo de 8 dígitos y #qr para codigo qr.
+
+\t*(✰◠‿◠) 𝐂 𝐨 𝐦 𝐚 𝐧 𝐝 𝐨 𝐬*   
+`.trimStart(),
+  header: '┊➳ %category\n',
+  body: '*┃⏤͟͟͞͞🍭➤›* %cmd',
+  footer: '*┗━*\n',
+  after: '> ¡Gracias por usar el bot!',
+}
+
+let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
   try {
-    const name = await conn.getName(m.sender);
+    // Cargar package.json
+    let _package = JSON.parse(await fs.readFile(join(__dirname, '../package.json')).catch(_ => '{}')) || {}
 
-    const d = new Date(Date.now() + 3600000);
-    const locale = 'es';
-    const date = d.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
-    const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: 'numeric' });
+    // Datos de usuario
+    let user = global.db.data.users[m.sender] || {}
+    let exp = user.exp || 0
+    let estrellas = user.estrellas || 0
+    let level = user.level || 1
+    let role = user.role || 'Aldeano'
+    let { min, xp, max } = xpRange(level, global.multiplier || 1)
+    let name = await conn.getName(m.sender)
 
-    // Obtener plugins activos
-    const help = Object.values(global.plugins)
-      .filter(p => !p.disabled)
-      .map(plugin => ({
-        help: Array.isArray(plugin.help) ? plugin.help.filter(Boolean) : [plugin.help].filter(Boolean),
-        tags: Array.isArray(plugin.tags) ? plugin.tags.filter(Boolean) : ['otros'],
-        prefix: 'customPrefix' in plugin,
-        limit: plugin.limit,
-        premium: plugin.premium
-      }));
+    // Fecha y hora
+    let d = new Date(Date.now() + 3600000)
+    let locale = 'es'
+    let weton = ['Pahing', 'Pon', 'Wage', 'Kliwon', 'Legi'][Math.floor(d / 84600000) % 5]
+    let week = d.toLocaleDateString(locale, { weekday: 'long' })
+    let date = d.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
+    let dateIslamic = new Intl.DateTimeFormat(locale + '-TN-u-ca-islamic', { day: 'numeric', month: 'long', year: 'numeric' }).format(d)
+    let time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: 'numeric', second: 'numeric' })
 
-    // Todos los tags (plugins + defaults)
-    const allTags = new Set([...Object.keys(defaultCommands), ...help.flatMap(p => p.tags)]);
-    let dynamicTags = {};
-    for (let t of allTags) {
-      if (!t || t === 'undefined') continue;
-      dynamicTags[t] = tags[t] || t.charAt(0).toUpperCase() + t.slice(1);
+    // Greeting
+    let hour = d.getHours()
+    let greeting = (hour >= 0 && hour < 6) ? 'Bᴜᴇɴᴀs Nᴏᴄʜᴇs 🌙'
+                 : (hour < 12) ? 'Bᴜᴇɴᴏs Dɪᴀs 🌞'
+                 : (hour < 18) ? 'Bᴜᴇɴᴀs Tᴀʀᴅᴇs 🌇'
+                 : 'Bᴜᴇɴᴀs Nᴏᴄʜᴇs 🌙'
+
+    // Uptime
+    let _uptime = process.uptime() * 1000
+    let _muptime = 0
+    if (process.send) {
+      process.send('uptime')
+      _muptime = await new Promise(resolve => {
+        process.once('message', resolve)
+        setTimeout(resolve, 1000)
+      }) * 1000
     }
-    const sortedTags = Object.keys(dynamicTags).sort((a, b) => dynamicTags[a].localeCompare(dynamicTags[b]));
+    let muptime = clockString(_muptime)
+    let uptime = clockString(_uptime)
 
-    // Configuración del bot
-    let nombreBot = global.namebot || 'Anya Forger';
-    let imgBot = 'https://cdn.russellxz.click/1dec146c.jpeg';
-    const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '');
-    const configPath = join('./Serbot', botActual, 'config.json');
-    if (fs.existsSync(configPath)) {
-      try {
-        const config = JSON.parse(fs.readFileSync(configPath));
-        if (config.name) nombreBot = config.name;
-        if (config.img) imgBot = config.img;
-      } catch (err) {}
+    // Registro de usuarios
+    let totalreg = Object.keys(global.db.data.users).length
+    let rtotalreg = Object.values(global.db.data.users).filter(u => u.registered).length
+
+    // Plugins
+    let help = Object.values(global.plugins).filter(p => !p.disabled).map(plugin => ({
+      help: Array.isArray(plugin.help) ? plugin.help : [plugin.help],
+      tags: Array.isArray(plugin.tags) ? plugin.tags : [plugin.tags],
+      prefix: 'customPrefix' in plugin,
+      premium: plugin.premium || false,
+      enabled: !plugin.disabled
+    }))
+
+    for (let plugin of help)
+      for (let tag of plugin.tags)
+        if (!(tag in tags) && tag) tags[tag] = tag
+
+    // Construir menú
+    let _text = [
+      defaultMenu.before,
+      ...Object.keys(tags).map(tag => {
+        let categoryHeader = defaultMenu.header.replace(/%category/g, tags[tag])
+        let commands = help
+          .filter(p => p.tags.includes(tag) && p.help)
+          .map(p => p.help.map(cmd => defaultMenu.body.replace(/%cmd/g, p.prefix ? cmd : _p + cmd)).join('\n'))
+          .join('\n')
+        return `${categoryHeader}\n${commands}\n${defaultMenu.footer}`
+      }),
+      defaultMenu.after
+    ].join('\n')
+
+    let replace = {
+      '%': '%',
+      p: _p,
+      uptime, muptime,
+      me: await conn.getName(conn.user.jid),
+      taguser: '@' + m.sender.split('@')[0],
+      npmname: _package.name || '',
+      npmdesc: _package.description || '',
+      version: _package.version || '',
+      exp: exp - min,
+      maxexp: xp,
+      totalexp: exp,
+      xp4levelup: max - exp,
+      level, estrellas, name, weton, week, date, dateIslamic, time, totalreg, rtotalreg, role,
+      greeting,
+      readmore: readMore
     }
 
-    const tipo = botActual === '+5491125856641'.replace(/\D/g, '') ? '🤖 Principal Bot' : '🛠️ Sub Bot';
-    const menuConfig = conn.menu || defaultMenu;
+    let text = _text.replace(new RegExp(`%(${Object.keys(replace).sort((a,b)=>b.length-a.length).join('|')})`, 'g'), (_, name) => replace[name] || '')
 
-    const _text = [
-      menuConfig.before
-        .replace(/%botname/g, nombreBot)
-        .replace(/%tipo/g, tipo)
-        .replace(/%date/g, date)
-        .replace(/%time/g, time)
-        .replace(/%readmore/g, readMore),
-      ...sortedTags.map(tag => {
-        // Comandos de plugin
-        const pluginCommands = help
-          .filter(menu => menu.tags?.includes(tag))
-          .map(menu => menu.help.map(helpText => ({
-            cmd: menu.prefix ? helpText : `${_p}${helpText.startsWith('.') ? helpText.slice(1) : helpText}`,
-            limit: menu.limit ? '⭐' : '',
-            premium: menu.premium ? '💎' : ''
-          })))
-          .flat()
-          .filter(Boolean);
+    // Reacción al mensaje
+    await m.react('✨')
 
-        // Comandos default que no existen aún
-        const defaultCmds = (defaultCommands[tag] || [])
-          .filter(defCmd => !pluginCommands.some(c => c.cmd === (_p + (defCmd.startsWith('.') ? defCmd.slice(1) : defCmd))))
-          .map(defCmd => {
-            let cmd = defCmd.startsWith('.') ? _p + defCmd.slice(1) : _p + defCmd;
-            return { cmd, limit: '', premium: '' };
-          });
-
-        const allCommands = [...pluginCommands, ...defaultCmds];
-
-        if (!allCommands.length) return '';
-
-        // Separar comandos normales, limit y premium para mejor visual
-        const normal = allCommands.filter(c => !c.limit && !c.premium).map(c => `│ ${c.cmd}`);
-        const limited = allCommands.filter(c => c.limit).map(c => `│ ${c.cmd} ${c.limit}`);
-        const premium = allCommands.filter(c => c.premium).map(c => `│ ${c.cmd} ${c.premium}`);
-
-        return [
-          menuConfig.header.replace(/%category/g, dynamicTags[tag]),
-          ...normal,
-          ...limited,
-          ...premium,
-          menuConfig.footer
-        ].join('\n');
-      }).filter(Boolean),
-      menuConfig.after.replace(/%botname/g, nombreBot)
-    ].join('\n');
-
-    await conn.sendFile(m.chat, imgBot, 'thumbnail.jpg', _text.trim(), m, null);
+    // Enviar menú
+    await conn.sendMessage(m.chat, {
+      video: { url: vid },
+      caption: text,
+      contextInfo: {
+        mentionedJid: [m.sender],
+        externalAdReply: {
+          title: 'ADRI-BOT',
+          body: 'Bot Oficial',
+          thumbnailUrl: 'https://qu.ax/kJBTp.jpg',
+          sourceUrl: 'https://t.me/adri_bot'
+        }
+      }
+    })
 
   } catch (e) {
-    conn.reply(m.chat, '❎ Lo sentimos, el menú tiene un error.', m);
-    throw e;
+    console.error(e)
+    await conn.reply(m.chat, `❌ Error al enviar el menú:\n${e.message}`, m)
   }
-};
+}
 
-handler.command = ['menu', 'help', 'menú'];
-export default handler;
+handler.help = ['menu']
+handler.tags = ['main']
+handler.command = ['menu', 'help', 'menuall', 'allmenú', 'allmenu', 'menucompleto']
+handler.register = false
 
-// Utilidades
-const more = String.fromCharCode(8206);
-const readMore = more.repeat(4001);
+export default handler
+
+const more = String.fromCharCode(8206)
+const readMore = more.repeat(4001)
+
+function clockString(ms) {
+  let h = isNaN(ms) ? '--' : Math.floor(ms / 3600000)
+  let m = isNaN(ms) ? '--' : Math.floor(ms / 60000) % 60
+  let s = isNaN(ms) ? '--' : Math.floor(ms / 1000) % 60
+  return [h,m,s].map(v => v.toString().padStart(2,'0')).join(':')
+}
