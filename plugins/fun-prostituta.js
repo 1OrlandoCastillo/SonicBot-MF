@@ -1,11 +1,11 @@
 const handler = async (m, { conn, command, text }) => {
-  // Obtener el usuario mencionado o, si no hay, al remitente
+  // Obtener el usuario mencionado o al remitente si no se menciona a nadie
   let userId;
   let displayName;
 
-  if (text && m.mentionedJid && m.mentionedJid.length > 0) {
+  if (m.mentionedJid && m.mentionedJid.length > 0) {
     userId = m.mentionedJid[0];
-    displayName = text.split('@')[1] ? text.split('@')[1] : 'Usuario';
+    displayName = conn.getName(userId); // Nombre del usuario mencionado
   } else {
     userId = m.sender;
     displayName = conn.getName(m.sender); // Nombre del remitente
@@ -96,7 +96,7 @@ const handler = async (m, { conn, command, text }) => {
     // Mensaje final con mención real
     await conn.sendMessage(m.chat, {
       text: cal,
-      mentions: [userId] // Etiqueta al usuario
+      mentions: [userId] // Etiqueta al usuario correctamente
     });
   }
 
