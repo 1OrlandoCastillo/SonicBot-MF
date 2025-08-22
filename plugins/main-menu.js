@@ -24,6 +24,29 @@ const tags = {
   'advanced': '🚀 Avanzado',
 };
 
+// Comandos default que siempre se muestran si no existen en plugins
+const defaultCommands = {
+  fun: ['.manco', '.juego', '.chiste'],
+  main: [],
+  search: [],
+  game: [],
+  serbot: [],
+  rpg: [],
+  rg: [],
+  sticker: [],
+  img: [],
+  group: [],
+  nable: [],
+  premium: [],
+  downloader: [],
+  tools: [],
+  nsfw: [],
+  cmd: [],
+  owner: [],
+  audio: [],
+  advanced: []
+};
+
 const defaultMenu = {
   before: `
 ╭───「 %botname 」───╮
@@ -34,7 +57,7 @@ const defaultMenu = {
 %readmore`.trimStart(),
 
   header: '🌟 %category',
-  body: '│ 🎯 %cmd %islimit %isPremium',
+  body: '│ %cmd',
   footer: '─────────────────',
   after: '✨ ¡Diviértete usando %botname!',
 };
@@ -48,6 +71,7 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
     const date = d.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
     const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: 'numeric' });
 
+    // Obtener plugins activos
     const help = Object.values(global.plugins)
       .filter(p => !p.disabled)
       .map(plugin => ({
@@ -58,13 +82,12 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
         premium: plugin.premium
       }));
 
-    // Generar dinámicamente los tags y ordenarlos
+    // Todos los tags (plugins + defaults)
+    const allTags = new Set([...Object.keys(defaultCommands), ...help.flatMap(p => p.tags)]);
     let dynamicTags = {};
-    for (let plugin of help) {
-      for (let t of plugin.tags) {
-        if (!t || t === 'undefined') continue; // ignorar tags vacíos
-        dynamicTags[t] = tags[t] || t.charAt(0).toUpperCase() + t.slice(1);
-      }
+    for (let t of allTags) {
+      if (!t || t === 'undefined') continue;
+      dynamicTags[t] = tags[t] || t.charAt(0).toUpperCase() + t.slice(1);
     }
     const sortedTags = Object.keys(dynamicTags).sort((a, b) => dynamicTags[a].localeCompare(dynamicTags[b]));
 
@@ -92,7 +115,8 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
         .replace(/%time/g, time)
         .replace(/%readmore/g, readMore),
       ...sortedTags.map(tag => {
-        const comandos = help
+        // Comandos de plugin
+        const pluginCommands = help
           .filter(menu => menu.tags?.includes(tag))
           .map(menu => menu.help.map(helpText => ({
             cmd: menu.prefix ? helpText : `${_p}${helpText}`,
@@ -100,18 +124,27 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
             premium: menu.premium ? '💎' : ''
           })))
           .flat()
-          .filter(Boolean)
-          .sort((a, b) => a.cmd.localeCompare(b.cmd));
+          .filter(Boolean);
 
-        if (!comandos.length) return ''; // evitar secciones vacías
+        // Comandos default que no existen aún
+        const defaultCmds = (defaultCommands[tag] || [])
+          .filter(defCmd => !pluginCommands.some(c => c.cmd === `${_p}${defCmd}`))
+          .map(defCmd => ({ cmd: `${_p}${defCmd}`, limit: '', premium: '' }));
+
+        const allCommands = [...pluginCommands, ...defaultCmds];
+
+        if (!allCommands.length) return '';
+
+        // Separar comandos normales, limit y premium para mejor visual
+        const normal = allCommands.filter(c => !c.limit && !c.premium).map(c => `│ ${c.cmd}`);
+        const limited = allCommands.filter(c => c.limit).map(c => `│ ${c.cmd} ${c.limit}`);
+        const premium = allCommands.filter(c => c.premium).map(c => `│ ${c.cmd} ${c.premium}`);
 
         return [
           menuConfig.header.replace(/%category/g, dynamicTags[tag]),
-          comandos.map(c => menuConfig.body
-            .replace(/%cmd/g, c.cmd)
-            .replace(/%islimit/g, c.limit)
-            .replace(/%isPremium/g, c.premium)
-          ).join('\n'),
+          ...normal,
+          ...limited,
+          ...premium,
           menuConfig.footer
         ].join('\n');
       }).filter(Boolean),
