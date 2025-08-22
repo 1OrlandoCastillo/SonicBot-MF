@@ -113,8 +113,7 @@ const handler = async (m, { conn, command, text }) => {
 
 handler.help = ['gay <@tag>', 'lesbiana <@tag>', 'pajero <@tag>', 'pajera <@tag>', 'puto <@tag>', 'puta <@tag>', 'manco <@tag>', 'manca <@tag>', 'rata <@tag>', 'prostituta <@tag>', 'prostituto <@tag>'];
 handler.tags = ['fun'];
-handler.register = true;
-handler.group = true;
+handler.group = true; // opcional, si quieres que funcione solo en grupos
 handler.command = ['gay', 'lesbiana', 'pajero', 'pajera', 'puto', 'puta', 'manco', 'manca', 'rata', 'prostituta', 'prostituto'];
 handler.estrellas = 5;
 
