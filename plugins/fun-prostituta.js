@@ -1,13 +1,10 @@
 const handler = async (m, { conn, command, text }) => {
-  // Tomar el usuario mencionado o, si no hay, al remitente
+  // Obtener el usuario mencionado o, si no hay, al remitente
   let userId;
   let displayName;
 
-  if (text) {
-    // Si mencionan a alguien con @, obtener ID del mensaje
-    // Esto depende de cómo tu bot recibe el ID real del usuario mencionado
-    // Para WhatsApp, normalmente se envía como m.mentionedJid[0]
-    userId = m.mentionedJid && m.mentionedJid.length > 0 ? m.mentionedJid[0] : m.sender;
+  if (text && m.mentionedJid && m.mentionedJid.length > 0) {
+    userId = m.mentionedJid[0];
     displayName = text.split('@')[1] ? text.split('@')[1] : 'Usuario';
   } else {
     userId = m.sender;
@@ -19,19 +16,59 @@ const handler = async (m, { conn, command, text }) => {
   let description = '';
 
   switch (command) {
+    case 'gay':
+      emoji = '🏳️‍🌈';
+      if (percentages < 50) description = `💙 ${displayName} es *${percentages}%* Gay ${emoji}\n> ✰ Eso es bajo.`;
+      else if (percentages > 100) description = `💜 ${displayName} es *${percentages}%* Gay ${emoji}\n> ✰ ¡Más gay de lo esperado!`;
+      else description = `🖤 ${displayName} es *${percentages}%* Gay ${emoji}\n> ✰ Eres Gay.`;
+      break;
+
+    case 'lesbiana':
+      emoji = '🏳️‍🌈';
+      if (percentages < 50) description = `👻 ${displayName} es *${percentages}%* Lesbiana ${emoji}\n✰ Quizás más películas románticas.`;
+      else if (percentages > 100) description = `❣️ ${displayName} es *${percentages}%* Lesbiana ${emoji}\n> ✰ ¡Amor extremo!`;
+      else description = `💗 ${displayName} es *${percentages}%* Lesbiana ${emoji}\n> ✰ Mantén el amor floreciendo!`;
+      break;
+
+    case 'pajero':
+    case 'pajera':
+      emoji = '😏💦';
+      if (percentages < 50) description = `🧡 ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ Tal vez más hobbies!`;
+      else if (percentages > 100) description = `💕 ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ Resistencia admirable!`;
+      else description = `💞 ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ Buen trabajo en solitario.`;
+      break;
+
+    case 'puto':
+    case 'puta':
+      emoji = '🔥🥵';
+      if (percentages < 50) description = `😼 ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✧ ¡Más suerte!`;
+      else if (percentages > 100) description = `😻 ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ ¡Estás en llamas!`;
+      else description = `😺 ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ Encanto ardiente!`;
+      break;
+
+    case 'manco':
+    case 'manca':
+      emoji = '💩';
+      if (percentages < 50) description = `🌟 ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ ¡No eres el único!`;
+      else if (percentages > 100) description = `💌 ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ ¡Talento especial!`;
+      else description = `🥷 ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ Mantén esa actitud valiente!`;
+      break;
+
+    case 'rata':
+      emoji = '🐁';
+      if (percentages < 50) description = `💥 ${displayName} es *${percentages}%* Rata ${emoji}\n> ✰ Nada de malo en disfrutar del queso!`;
+      else if (percentages > 100) description = `💖 ${displayName} es *${percentages}%* Rata ${emoji}\n> ✰ Un auténtico ratón de lujo!`;
+      else description = `👑 ${displayName} es *${percentages}%* Rata ${emoji}\n> ✰ Come queso con responsabilidad!`;
+      break;
+
     case 'prostituto':
     case 'prostituta':
       emoji = '🫦👅';
-      if (percentages < 50) {
-        description = `❀ ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ El mercado está en auge!`;
-      } else if (percentages > 100) {
-        description = `💖 ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ Profesional!`;
-      } else {
-        description = `✨️ ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ Hora de negocios!`;
-      }
+      if (percentages < 50) description = `❀ ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ El mercado está en auge!`;
+      else if (percentages > 100) description = `💖 ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ Profesional!`;
+      else description = `✨️ ${displayName} es *${percentages}%* ${command} ${emoji}\n> ✰ Hora de negocios!`;
       break;
 
-    // Aquí agregas los demás casos como gay, lesbiana, etc.
     default:
       return conn.reply(m.chat, `☁️ Comando inválido.`, m);
   }
@@ -59,16 +96,22 @@ const handler = async (m, { conn, command, text }) => {
     // Mensaje final con mención real
     await conn.sendMessage(m.chat, {
       text: cal,
-      mentions: [userId] // Aquí se etiqueta al usuario correctamente
+      mentions: [userId] // Etiqueta al usuario
     });
   }
 
   loading();
 };
 
-handler.help = ['prostituta <@usuario>', 'prostituto <@usuario>'];
+handler.help = [
+  'gay <@usuario>', 'lesbiana <@usuario>', 'pajero <@usuario>', 'pajera <@usuario>',
+  'puto <@usuario>', 'puta <@usuario>', 'manco <@usuario>', 'manca <@usuario>',
+  'rata <@usuario>', 'prostituta <@usuario>', 'prostituto <@usuario>'
+];
 handler.tags = ['fun'];
 handler.group = true;
-handler.command = ['prostituta', 'prostituto'];
+handler.command = [
+  'gay','lesbiana','pajero','pajera','puto','puta','manco','manca','rata','prostituta','prostituto'
+];
 
 export default handler;
