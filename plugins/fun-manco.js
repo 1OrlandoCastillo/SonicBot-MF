@@ -1,6 +1,10 @@
 let handler = async (m, { conn, command, text }) => {
   if (!text) 
-    throw `⚡ Ingresa el @ o el nombre de la persona para calcular su porcentaje de *${command.toUpperCase()}*`
+    return conn.reply(
+      m.chat,
+      `⚡ Ingresa el @ o el nombre de la persona para calcular su porcentaje de *${command.toUpperCase()}*`,
+      m
+    )
 
   // Genera un porcentaje entre 0 y 700
   let porcentaje = Math.floor(Math.random() * 701)
@@ -22,15 +26,12 @@ let handler = async (m, { conn, command, text }) => {
 ━━━━━━━━━━━━━━━
 `.trim()
 
-  // Envía el mensaje
-  await conn.reply(
-    m.chat,
-    msg,
-    m,
-    m.mentionedJid && m.mentionedJid.length > 0 
-      ? { contextInfo: { mentionedJid: m.mentionedJid } } 
-      : {}
-  )
+  // Envía el mensaje, mencionando solo si hay menciones válidas
+  const context = Array.isArray(m.mentionedJid) && m.mentionedJid.length > 0 
+    ? { contextInfo: { mentionedJid: m.mentionedJid } } 
+    : {}
+
+  await conn.reply(m.chat, msg, m, context)
 }
 
 // Comandos que activan esta función
