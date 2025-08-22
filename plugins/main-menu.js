@@ -3,7 +3,7 @@ import { join } from 'path'
 import { xpRange } from '../lib/levelling.js'
 
 let tags = {
-  'ADRIPENUDO': '👑「 *`MENUS ADRIBOT`* 」👑',
+  'ADRIPENUDO': '👑「 *`MENUS SONIBOT-MF`* 」👑',
   'main': '「INFO」🍨',
   'buscador': '「BUSQUEDAS」🍨',
   'fun': '「JUEGOS」🍨',
