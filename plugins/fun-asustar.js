@@ -2,10 +2,11 @@ let handler = async (m, { usedPrefix, command, text, conn }) => {
     let mentionedJid = m.mentionedJid[0] || text;
     if (!mentionedJid) return conn.reply(m.chat, `⚠️ Menciona a alguien para asustarlo.\nEjemplo: ${usedPrefix + command} @usuario`, m);
 
+    let user = `@${mentionedJid.replace(/@s.whatsapp.net/g, '')}`;
     let hacker = m.pushName || "Anónimo";
 
     const progreso = [
-        "*🕒 Iniciando hackeo a la cuenta objetivo...*",
+        "*🕒 Iniciando hackeo a la cuenta de " + user + "...*",
         "■□□□□□ 10% [Escaneando vulnerabilidades...]",
         "■■□□□□ 25% [Conectando con el servidor secreto...]",
         "■■■□□□ 40% [Accediendo a la base de datos de WhatsApp...]",
@@ -22,23 +23,23 @@ let handler = async (m, { usedPrefix, command, text, conn }) => {
         "✅ *Hackeo completado con éxito por " + hacker + ".*"
     ];
 
-    // Primer mensaje
+    // Envía el primer mensaje
     let { key } = await conn.sendMessage(m.chat, { text: progreso[0], mentions: [mentionedJid] }, { quoted: m });
 
-    // Ediciones progresivas
+    // Edita el mensaje original con los siguientes pasos
     for (let i = 1; i < progreso.length; i++) {
-        await delay(1800);
+        await delay(1800); // tiempo entre ediciones
         try {
             await conn.sendMessage(m.chat, { text: progreso[i], edit: key, mentions: [mentionedJid] });
         } catch (e) {
             console.error("Error editando mensaje:", e);
-            break;
+            break; // si falla la edición, sale del bucle
         }
     }
 
     await delay(2000);
     await conn.sendMessage(m.chat, { 
-        text: `⚠️ *ATENCIÓN* ⚠️\n\nTus datos han sido enviados a un servidor remoto. Contacta a ${hacker} para recuperar el control... o dile adiós a tu privacidad 😈`,
+        text: `⚠️ *ATENCIÓN ${user}* ⚠️\n\nTus datos han sido enviados a un servidor remoto. Contacta a ${hacker} para recuperar el control... o dile adiós a tu privacidad 😈`,
         mentions: [mentionedJid], 
         edit: key
     });
