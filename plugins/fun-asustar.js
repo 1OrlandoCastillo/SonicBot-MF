@@ -23,11 +23,18 @@ let handler = async (m, { usedPrefix, command, text, conn }) => {
         "✅ *Hackeo completado con éxito por " + hacker + ".*"
     ];
 
-    const { key } = await conn.sendMessage(m.chat, { text: progreso[0], mentions: [mentionedJid] }, { quoted: m });
+    // Envía el primer mensaje
+    let { key } = await conn.sendMessage(m.chat, { text: progreso[0], mentions: [mentionedJid] }, { quoted: m });
 
+    // Edita el mensaje original con los siguientes pasos
     for (let i = 1; i < progreso.length; i++) {
-        await delay(1700); // Más realista que 1500ms
-        await conn.sendMessage(m.chat, { text: progreso[i], edit: key, mentions: [mentionedJid] });
+        await delay(1800); // tiempo entre ediciones
+        try {
+            await conn.sendMessage(m.chat, { text: progreso[i], edit: key, mentions: [mentionedJid] });
+        } catch (e) {
+            console.error("Error editando mensaje:", e);
+            break; // si falla la edición, sale del bucle
+        }
     }
 
     await delay(2000);
