@@ -22,11 +22,13 @@ let handler = async (m, { conn, text, command, usedPrefix }) => {
   for (let i = 0; i < 10; i++) {
     await new Promise(resolve => setTimeout(resolve, 500))
     mensaje = `🌸 La ruleta está girando... ${ruleta[Math.floor(Math.random() * ruleta.length)]}`
-    await conn.editMessage(m.chat, msg.key, mensaje)
+    await conn.sendMessage(m.chat, { text: mensaje }, { edit: msg.key })
   }
 
   await new Promise(resolve => setTimeout(resolve, 1000))
   mensaje = `🌺 La ruleta se detuvo en... ${resultado}`
+
+  if (!global.db.data.users[m.sender]) global.db.data.users[m.sender] = { limit: 0 }
 
   if ((text.toLowerCase() === 'rojo' && resultado === '🔴') || (text.toLowerCase() === 'negro' && resultado === '⚫️')) {
     global.db.data.users[m.sender].limit += 1000
@@ -36,7 +38,7 @@ let handler = async (m, { conn, text, command, usedPrefix }) => {
     mensaje += `\n\n🌺 Acabas de perder *500 Coins*`
   }
 
-  await conn.editMessage(m.chat, msg.key, mensaje)
+  await conn.sendMessage(m.chat, { text: mensaje }, { edit: msg.key })
 }
 
 handler.help = ['ruleta']
@@ -46,5 +48,5 @@ handler.command = ['ruleta']
 export default handler
 
 function segundosAHMS(segundos) {
-  return `${segundos % 60} segundos`
+  return `${segundos} segundos`
 }
