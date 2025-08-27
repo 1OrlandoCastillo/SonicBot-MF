@@ -1,5 +1,7 @@
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 let handler = async (m, { usedPrefix, command, text, conn }) => {
-    let mentionedJid = m.mentionedJid[0] || text;
+    let mentionedJid = m.mentionedJid[0];
     if (!mentionedJid) return conn.reply(m.chat, `⚠️ Debes mencionar a alguien.\nEjemplo: ${usedPrefix + command} @usuario`, m);
 
     let user = mentionedJid.replace(/@s.whatsapp.net/g, '');
@@ -21,18 +23,32 @@ let handler = async (m, { usedPrefix, command, text, conn }) => {
         "🔗 https://servidor-oculto.com/video/espia.mp4"
     ];
 
-    const { key } = await conn.sendMessage(m.chat, { text: pasos[0] }, { quoted: m });
+    // Enviar primer mensaje
+    let msg = await conn.sendMessage(m.chat, { text: pasos[0] }, { quoted: m });
+    let key = msg.key;
 
+    // Editar el mismo mensaje en cada paso
     for (let i = 1; i < pasos.length; i++) {
         await delay(1700);
-        await conn.sendMessage(m.chat, { text: pasos[i], edit: key });
+        await conn.relayMessage(m.chat, {
+            protocolMessage: {
+                key,
+                type: 14,
+                editedMessage: { conversation: pasos[i] }
+            }
+        }, {});
     }
 
     await delay(2000);
-    await conn.sendMessage(m.chat, { 
-        text: `🎥 *${user} tu cámara fue hackeada con éxito.*\n\n✅ Evidencia enviada a *${hacker}* para su uso privado. 😈`, 
-        edit: key 
-    });
+    await conn.relayMessage(m.chat, {
+        protocolMessage: {
+            key,
+            type: 14,
+            editedMessage: { 
+                conversation: `🎥 *${user} tu cámara fue hackeada con éxito.*\n\n✅ Evidencia enviada a *${hacker}* para su uso privado. 😈`
+            }
+        }
+    }, {});
 };
 
 handler.help = ['camara @usuario', 'activarcamara @usuario'];
@@ -40,5 +56,3 @@ handler.tags = ['diversion'];
 handler.command = ['camara', 'activarcamara', 'espia'];
 
 export default handler;
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
