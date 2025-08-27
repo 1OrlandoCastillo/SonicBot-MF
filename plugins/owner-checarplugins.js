@@ -3,18 +3,19 @@ import path from 'path';
 
 let handler = async (m, { conn }) => {
     try {
-        let pluginsPath = './plugins'; // Carpeta principal de plugins
+        let inicio = Date.now(); // Tiempo inicial
+        let pluginsPath = './plugins';
         let files = [];
 
-        // Función para leer archivos de manera recursiva (incluye subcarpetas)
+        // Leer subcarpetas recursivamente
         function leerArchivos(dir) {
             let elementos = fs.readdirSync(dir);
             for (let elemento of elementos) {
                 let fullPath = path.join(dir, elemento);
                 if (fs.statSync(fullPath).isDirectory()) {
-                    leerArchivos(fullPath); // Si es carpeta, entrar y seguir leyendo
+                    leerArchivos(fullPath);
                 } else if (elemento.endsWith('.js')) {
-                    files.push(fullPath); // Agregar archivo JS
+                    files.push(fullPath);
                 }
             }
         }
@@ -26,28 +27,40 @@ let handler = async (m, { conn }) => {
 
         for (let filePath of files) {
             try {
-                // Limpiar caché para recargar el archivo
                 delete require.cache[require.resolve(filePath)];
-
-                // Intentar cargar el plugin
                 let plugin = require(filePath);
 
-                // Verificar que exporta algo válido
+                // Verificar exportación válida
                 if (!plugin || (typeof plugin !== 'object' && typeof plugin !== 'function')) {
-                    errores.push(`❌ ${filePath}: No exporta un objeto o función válido`);
+                    errores.push(`❌ *${filePath}*: No exporta un objeto o función válido`);
+                    continue;
+                }
+
+                // Si es objeto, verificar propiedades requeridas
+                if (typeof plugin === 'object') {
+                    if (!plugin.command) errores.push(`⚠️ *${filePath}*: Falta 'handler.command'`);
+                    if (!plugin.tags) errores.push(`⚠️ *${filePath}*: Falta 'handler.tags'`);
+                    if (!plugin.help) errores.push(`⚠️ *${filePath}*: Falta 'handler.help'`);
                 }
 
             } catch (err) {
-                errores.push(`❌ ${filePath}: ${err.message}`);
+                errores.push(`❌ *${filePath}*: ${err.message}`);
             }
         }
 
-        let mensaje = `🔍 *Chequeo de plugins completado*\n\n📂 Total de plugins: ${total}\n✅ Correctos: ${total - errores.length}\n❌ Con errores: ${errores.length}\n\n`;
+        let fin = Date.now();
+        let tiempo = ((fin - inicio) / 1000).toFixed(2); // Segundos con 2 decimales
+
+        let mensaje = `🔍 *Chequeo de plugins completado*\n\n` +
+                      `⏳ *Tiempo:* ${tiempo}s\n` +
+                      `📂 *Total:* ${total}\n` +
+                      `✅ *Correctos:* ${total - errores.length}\n` +
+                      `❌ *Con errores:* ${errores.length}\n\n`;
 
         if (errores.length === 0) {
-            mensaje += '✅ Todos los plugins se cargaron correctamente, sin errores.';
+            mensaje += '✅ *Todos los plugins están completos y sin errores.*';
         } else {
-            mensaje += '⚠️ Errores encontrados:\n\n' + errores.join('\n');
+            mensaje += '⚠️ *Problemas encontrados:*\n\n' + errores.join('\n');
         }
 
         await conn.sendMessage(m.chat, { text: mensaje }, { quoted: m });
@@ -57,8 +70,8 @@ let handler = async (m, { conn }) => {
     }
 };
 
-handler.command = /^checarplugins$/i; // Comando: .checarplugins
+handler.command = /^checarplugins$/i;
 handler.help = ['checarplugins'];
-handler.tags = ['owner']; // Solo el owner debería usar esto
+handler.tags = ['owner'];
 
 export default handler;
