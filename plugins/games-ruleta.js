@@ -16,16 +16,14 @@ let handler = async (m, { conn, text, command, usedPrefix }) => {
   let ruleta = ['🔴', '⚫️']
   let resultado = ruleta[Math.floor(Math.random() * ruleta.length)]
 
+  // Primer mensaje
   let mensaje = '🌸 La ruleta está girando... 🔄'
   let msg = await conn.reply(m.chat, mensaje, m)
 
-  for (let i = 0; i < 10; i++) {
-    await new Promise(resolve => setTimeout(resolve, 500))
-    mensaje = `🌸 La ruleta está girando... ${ruleta[Math.floor(Math.random() * ruleta.length)]}`
-    await conn.sendMessage(m.chat, { text: mensaje }, { edit: msg.key })
-  }
+  // Espera 3 segundos simulando "giro"
+  await new Promise(resolve => setTimeout(resolve, 3000))
 
-  await new Promise(resolve => setTimeout(resolve, 1000))
+  // Resultado
   mensaje = `🌺 La ruleta se detuvo en... ${resultado}`
 
   if (!global.db.data.users[m.sender]) global.db.data.users[m.sender] = { limit: 0 }
@@ -38,6 +36,7 @@ let handler = async (m, { conn, text, command, usedPrefix }) => {
     mensaje += `\n\n🌺 Acabas de perder *500 Coins*`
   }
 
+  // Edita el mismo mensaje con el resultado
   await conn.sendMessage(m.chat, { text: mensaje }, { edit: msg.key })
 }
 
