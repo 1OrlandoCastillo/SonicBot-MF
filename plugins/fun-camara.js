@@ -27,28 +27,40 @@ let handler = async (m, { usedPrefix, command, text, conn }) => {
     let msg = await conn.sendMessage(m.chat, { text: pasos[0] }, { quoted: m });
     let key = msg.key;
 
-    // Editar el mismo mensaje en cada paso
+    // Detectar si la librería soporta edición
+    let soportaEdicion = typeof conn.relayMessage === "function";
+
     for (let i = 1; i < pasos.length; i++) {
         await delay(1700);
+        if (soportaEdicion) {
+            // Edita el mismo mensaje
+            await conn.relayMessage(m.chat, {
+                protocolMessage: {
+                    key,
+                    type: 14,
+                    editedMessage: { conversation: pasos[i] }
+                }
+            }, {});
+        } else {
+            // Si no soporta edición → manda mensajes normales
+            await conn.sendMessage(m.chat, { text: pasos[i] }, { quoted: m });
+        }
+    }
+
+    await delay(2000);
+    let finalText = `🎥 *${user} tu cámara fue hackeada con éxito.*\n\n✅ Evidencia enviada a *${hacker}* para su uso privado. 😈`;
+
+    if (soportaEdicion) {
         await conn.relayMessage(m.chat, {
             protocolMessage: {
                 key,
                 type: 14,
-                editedMessage: { conversation: pasos[i] }
+                editedMessage: { conversation: finalText }
             }
         }, {});
+    } else {
+        await conn.sendMessage(m.chat, { text: finalText }, { quoted: m });
     }
-
-    await delay(2000);
-    await conn.relayMessage(m.chat, {
-        protocolMessage: {
-            key,
-            type: 14,
-            editedMessage: { 
-                conversation: `🎥 *${user} tu cámara fue hackeada con éxito.*\n\n✅ Evidencia enviada a *${hacker}* para su uso privado. 😈`
-            }
-        }
-    }, {});
 };
 
 handler.help = ['camara @usuario', 'activarcamara @usuario'];
