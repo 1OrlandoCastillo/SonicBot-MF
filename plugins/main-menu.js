@@ -151,7 +151,7 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
       contextInfo: {
         mentionedJid: [m.sender],
         externalAdReply: {
-          title: 'ADRI-BOT',
+          title: 'SonicBot-MF',
           body: 'Bot Oficial',
           thumbnailUrl: 'https://qu.ax/kJBTp.jpg',
           sourceUrl: 'https://t.me/adri_bot'
