@@ -153,7 +153,7 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
           title: 'SonicBot-MF',
           body: 'Bot Oficial',
           thumbnailUrl: 'https://qu.ax/kJBTp.jpg',
-          sourceUrl: 'https://t.me/adri_bot'
+          sourceUrl: 'https://qu.ax/GEUuj.jpg'
         }
       }
     })
