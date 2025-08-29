@@ -1,80 +1,57 @@
-const handler = async (m, { conn }) => {
+// 📌 Comando: kick / expulsar
+let handler = async (m, { conn, usedPrefix, command }) => {
   try {
-    const usedPrefix = "."; // ✅ Prefijo fijo para bot principal
-
     // ✅ Verificar que el comando se use en grupos
-    if (!m.key.remoteJid.includes("@g.us")) {
-      return await conn.sendMessage(m.chat, {
-        text: "❌ *Este comando solo funciona en grupos.*"
-      }, { quoted: m });
+    if (!m.isGroup) {
+      return conn.reply(m.chat, "❌ *Este comando solo funciona en grupos.*", m);
     }
 
     // ✅ Obtener info del grupo
-    const groupMetadata = await conn.groupMetadata(m.chat);
-    const participants = groupMetadata.participants || [];
-    const sender = m.key.participant;
+    let groupMetadata = await conn.groupMetadata(m.chat);
+    let participants = groupMetadata.participants || [];
+    let sender = m.sender;
 
     // ✅ Detectar admins
-    const admins = participants.filter(p => p.admin === "admin" || p.admin === "superadmin");
-    const isAdmin = admins.some(admin => admin.id === sender);
+    let admins = participants.filter(p => p.admin === "admin" || p.admin === "superadmin").map(p => p.id);
+    let isAdmin = admins.includes(sender);
 
-    // ✅ Verificar Owner del BOT (desde config.js)
-    let isOwner = false;
-    try {
-      const config = require("../../../config.js");
-      if (config.owner) {
-        isOwner = config.owner.some(o => o[0] === sender.replace("@s.whatsapp.net", ""));
-      }
-    } catch (err) {
-      console.error("Error verificando owner:", err);
-    }
+    // ✅ Verificar Owner del BOT (desde global.owner en config.js)
+    let isOwner = global.owner && global.owner.some(o => o[0] === sender.replace("@s.whatsapp.net", ""));
 
     // ✅ Bloquear si no es Admin ni Owner
     if (!isAdmin && !isOwner) {
-      return await conn.sendMessage(m.chat, {
-        text: "🚫 *No tienes permisos para expulsar miembros.*\n⚠️ *Solo administradores o el dueño del bot pueden usar este comando.*"
-      }, { quoted: m });
+      return conn.reply(m.chat, "🚫 *No tienes permisos para expulsar miembros.*\n⚠️ *Solo administradores o el dueño del bot pueden usar este comando.*", m);
     }
 
     // ✅ Detectar usuario objetivo (mención o respuesta)
-    let target = null;
-    const mention = m.message?.extendedTextMessage?.contextInfo?.mentionedJid;
-    if (mention?.length > 0) {
-      target = mention[0];
-    } else if (m.message?.extendedTextMessage?.contextInfo?.participant) {
-      target = m.message.extendedTextMessage.contextInfo.participant;
-    }
+    let target = m.mentionedJid[0] || (m.quoted ? m.quoted.sender : null);
 
     if (!target) {
-      return await conn.sendMessage(m.chat, {
-        text: `⚠️ *Debes mencionar o responder a un usuario para expulsarlo.*\nEjemplo: ${usedPrefix}kick @usuario`
-      }, { quoted: m });
+      return conn.reply(m.chat, `⚠️ *Debes mencionar o responder a un usuario para expulsarlo.*\n\nEjemplo: ${usedPrefix + command} @usuario`, m);
     }
 
     // ✅ No expulsar admins
-    const isTargetAdmin = admins.some(admin => admin.id === target);
-    if (isTargetAdmin) {
-      return await conn.sendMessage(m.chat, {
-        text: "❌ *No puedes expulsar a un administrador del grupo.*"
-      }, { quoted: m });
+    if (admins.includes(target)) {
+      return conn.reply(m.chat, "❌ *No puedes expulsar a un administrador del grupo.*", m);
     }
 
     // ✅ Expulsar al usuario
     await conn.groupParticipantsUpdate(m.chat, [target], "remove");
 
-    return await conn.sendMessage(m.chat, {
-      text: `🚷 *El usuario @${target.split("@")[0]} ha sido expulsado del grupo.*`,
-      mentions: [target]
-    }, { quoted: m });
+    return conn.reply(m.chat, `🚷 *El usuario @${target.split("@")[0]} ha sido expulsado del grupo.*`, m, { mentions: [target] });
 
   } catch (err) {
-    console.error("Error en el comando kick:", err);
-    await conn.sendMessage(m.chat, {
-      text: "❌ *Ocurrió un error al intentar expulsar al usuario.*"
-    }, { quoted: m });
+    console.error("❌ Error en el comando kick:", err);
+    conn.reply(m.chat, "⚠️ *Ocurrió un error al intentar expulsar al usuario.*", m);
   }
 };
 
-// ✅ Nombre del comando
+// ✅ Nombre y opciones del comando
+handler.help = ["kick", "expulsar"];
+handler.tags = ["group"];
 handler.command = ["kick", "expulsar"];
-module.exports = handler;
+handler.group = true;
+handler.admin = false; // Se maneja dentro del código
+handler.botAdmin = true; // El bot debe ser admin
+
+export default handler;
