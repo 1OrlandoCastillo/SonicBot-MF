@@ -1,4 +1,11 @@
 let handler = async (m, { conn, command }) => {
+  const grupoAutorizado = "120363417503488301@g.us"; // 🔹 ID de tu grupo
+  const botNumber = "5212731590195@s.whatsapp.net";   // 🔹 Tu JID de bot
+
+  // 🔹 Verificar que el comando se use solo en el grupo autorizado
+  if (m.chat !== grupoAutorizado) 
+    return m.reply("⚠️ Este comando solo funciona en el grupo autorizado.");
+
   if (!m.isGroup) return m.reply("⚠️ Este comando solo funciona en grupos.");
 
   // Usuario a kickear (mencionado o respondido)
@@ -16,7 +23,6 @@ let handler = async (m, { conn, command }) => {
     return m.reply("⚠️ Solo los administradores pueden usar este comando.");
 
   // 🔹 Verificar que el bot también sea admin
-  let botNumber = "5212731590195@s.whatsapp.net"; // 🔹 Tu JID de bot
   if (!admins.includes(botNumber)) 
     return m.reply("⚠️ Necesito ser administrador para poder eliminar.");
 
