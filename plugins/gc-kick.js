@@ -1,6 +1,6 @@
 let handler = async (m, { conn, command }) => {
-  const grupoAutorizado = "120363417503488301@g.us"; // 🔹 ID de tu grupo
-  const botNumber = "5212731590195@s.whatsapp.net";   // 🔹 Tu JID de bot
+  const grupoAutorizado = "120363417503488301@g.us"; // 🔹 Tu grupo
+  const botNumber = "5491125856641@s.whatsapp.net";   // 🔹 Tu JID de bot
 
   // 🔹 Verificar que el comando se use solo en el grupo autorizado
   if (m.chat !== grupoAutorizado) 
