@@ -1,4 +1,3 @@
-// 📌 Comando: kick / expulsar
 let handler = async (m, { conn, usedPrefix, command }) => {
   try {
     // ✅ Verificar que el comando se use en grupos
@@ -11,8 +10,8 @@ let handler = async (m, { conn, usedPrefix, command }) => {
     let participants = groupMetadata.participants || [];
     let sender = m.sender;
 
-    // ✅ Detectar admins
-    let admins = participants.filter(p => p.admin === "admin" || p.admin === "superadmin").map(p => p.id);
+    // ✅ Detectar admins del grupo
+    let admins = participants.filter(p => p.admin !== null).map(p => p.id);
     let isAdmin = admins.includes(sender);
 
     // ✅ Verificar Owner del BOT (desde global.owner en config.js)
@@ -38,7 +37,12 @@ let handler = async (m, { conn, usedPrefix, command }) => {
     // ✅ Expulsar al usuario
     await conn.groupParticipantsUpdate(m.chat, [target], "remove");
 
-    return conn.reply(m.chat, `🚷 *El usuario @${target.split("@")[0]} ha sido expulsado del grupo.*`, m, { mentions: [target] });
+    return conn.reply(
+      m.chat,
+      `🚷 *El usuario @${target.split("@")[0]} ha sido expulsado del grupo.*`,
+      m,
+      { mentions: [target] }
+    );
 
   } catch (err) {
     console.error("❌ Error en el comando kick:", err);
@@ -51,7 +55,7 @@ handler.help = ["kick", "expulsar"];
 handler.tags = ["group"];
 handler.command = ["kick", "expulsar"];
 handler.group = true;
-handler.admin = false; // Se maneja dentro del código
-handler.botAdmin = true; // El bot debe ser admin
+handler.admin = false; // lo controlamos en el código
+handler.botAdmin = true; // el bot debe ser admin
 
 export default handler;
