@@ -1,9 +1,11 @@
-let handler = async (m, { conn, participants, command, text }) => {
+let handler = async (m, { conn, command }) => {
   if (!m.isGroup) return m.reply("⚠️ Este comando solo funciona en grupos.");
 
-  let who = m.mentionedJid[0] || m.quoted?.sender;
+  // Usuario a kickear (mencionado o respondido)
+  let who = m.mentionedJid?.[0] || m.quoted?.sender;
   if (!who) return m.reply(`⚠️ Debes mencionar a alguien para usar *${command}*`);
 
+  // Metadata del grupo
   let groupMetadata = await conn.groupMetadata(m.chat);
   let admins = groupMetadata.participants
     .filter(p => p.admin)
@@ -14,7 +16,8 @@ let handler = async (m, { conn, participants, command, text }) => {
     return m.reply("⚠️ Solo los administradores pueden usar este comando.");
 
   // 🔹 Verificar que el bot también sea admin
-  if (!admins.includes(conn.user.jid)) 
+  let botNumber = "5212731590195@s.whatsapp.net"; // 🔹 Tu JID de bot
+  if (!admins.includes(botNumber)) 
     return m.reply("⚠️ Necesito ser administrador para poder eliminar.");
 
   try {
