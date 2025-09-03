@@ -6,8 +6,8 @@ import { unwatchFile, watchFile } from 'fs'
 import chalk from 'chalk'
 import fetch from 'node-fetch'
 
-// ✅ Importación corregida
-const { proto } = await import('@whiskeysockets/baileys')
+// Ya no necesitas esto porque smsg lo maneja correctamente
+// const { proto } = await import('@whiskeysockets/baileys')
 
 const isNumber = x => typeof x === 'number' && !isNaN(x)
 const delay = ms => isNumber(ms) && new Promise(resolve => setTimeout(function () {
@@ -295,8 +295,7 @@ export async function handler(chatUpdate) {
         premium: `✤ Hola, este comando solo puede ser utilizado por Usuarios *Premium*.`,
         group: `✤ Hola, este comando solo puede ser utilizado en *Grupos*.`,
         private: `✤ Hola, este comando solo puede ser utilizado en mi Chat *Privado*.`,
-        admin: `✤ Hola, este comando solo puede ser utilizado por los *Administradores* del Grupo.`,
-        botAdmin: `✤ Hola, la bot debe ser *Administradora* para ejecutar este Comando.`,
+        admin: `✤ Hola, la bot debe ser *Administradora* para ejecutar este Comando.`,
         unreg: `✤ Hola, para usar este comando debes estar *Registrado.*`,
         restrict: `✤ Hola, esta característica está *deshabilitada.*`
       }[type]
@@ -326,12 +325,12 @@ export async function handler(chatUpdate) {
           if (!isNumber(stat.total)) stat.total = 1
           if (!isNumber(stat.success)) stat.success = m.error != null ? 0 : 1
           if (!isNumber(stat.last)) stat.last = now
-          if (!isNumber(stat.lastSuccess)) stat.lastSuccess = m.error != null ? 0 : now
+          if (!isNumber(stat.lastSuccess)) stat.lastSuccess = now
         } else stat = stats[m.plugin] = {
           total: 1,
           success: m.error != null ? 0 : 1,
           last: now,
-          lastSuccess: m.error != null ? 0 : now
+          lastSuccess: now
         }
         stat.total += 1
         stat.last = now
