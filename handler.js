@@ -6,7 +6,9 @@ import { unwatchFile, watchFile } from 'fs'
 import chalk from 'chalk'
 import fetch from 'node-fetch'
 
-const { proto } = (await import('@whiskeysockets/baileys')).default
+// ✅ Importación corregida
+const { proto } = await import('@whiskeysockets/baileys')
+
 const isNumber = x => typeof x === 'number' && !isNaN(x)
 const delay = ms => isNumber(ms) && new Promise(resolve => setTimeout(function () {
   clearTimeout(this)
