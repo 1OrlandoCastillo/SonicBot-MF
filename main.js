@@ -16,7 +16,7 @@ import pino from 'pino'
 import { Boom } from '@hapi/boom'
 import { makeWASocket, protoType, serialize } from './lib/simple.js'
 import { Low, JSONFile } from 'lowdb'
-import lodash from 'lodash' // ✅ Usamos lodash directamente
+import lodash from 'lodash' 
 import readline from 'readline'
 import NodeCache from 'node-cache'
 import qrcode from 'qrcode-terminal'
@@ -94,9 +94,11 @@ global.loadDatabase = async function loadDatabase() {
     msgs: {},
     sticker: {},
     settings: {},
+    botGroups: {},
+    antiImg: {},
     ...(global.db.data || {}),
   }
-  global.db.chain = lodash.chain(global.db.data) // ✅ Usamos lodash directamente
+  global.db.chain = lodash.chain(global.db.data) 
 }
 
 global.authFile = `sessions`
@@ -158,7 +160,7 @@ async function handleLogin() {
     let phoneNumber = await question(chalk.blue('Ingresa el número de WhatsApp donde estará el bot (incluye código país, ej: 521XXXXXXXXXX):\n'))
     phoneNumber = phoneNumber.replace(/\D/g, '') // Solo números
 
-    // Ajustes básicos para México (52)
+
     if (phoneNumber.startsWith('52') && phoneNumber.length === 12) {
       phoneNumber = `521${phoneNumber.slice(2)}`
     } else if (phoneNumber.startsWith('52')) {
@@ -169,7 +171,7 @@ async function handleLogin() {
 
     if (typeof conn.requestPairingCode === 'function') {
       try {
-        // Validar que la conexión esté abierta antes de solicitar código
+
         if (conn.ws.readyState === ws.OPEN) {
           let code = await conn.requestPairingCode(phoneNumber)
           code = code?.match(/.{1,4}/g)?.join('-') || code
@@ -240,6 +242,9 @@ async function connectionUpdate(update) {
   if (global.db.data == null) await loadDatabase()
   if (connection === 'open') {
     console.log(chalk.yellow('Conectado correctamente.'))
+    if (!conn.startTime) {
+      conn.startTime = Date.now()
+    }
   }
   const reason = new Boom(lastDisconnect?.error)?.output?.statusCode
   if (reason === 405) {
@@ -299,7 +304,17 @@ global.reloadHandler = async function (restartConn) {
       if (global.conn.ws) global.conn.ws.close()
     } catch {}
     global.conn.ev.removeAllListeners()
+
+
+    const preservedStartTime = global.conn.startTime
+
     global.conn = makeWASocket(connectionOptions)
+
+
+    if (preservedStartTime) {
+      global.conn.startTime = preservedStartTime
+    }
+
     isInit = true
   }
 
@@ -330,9 +345,31 @@ async function filesInit() {
     try {
       const file = global.__filename(join(pluginFolder, filename))
       const module = await import(file)
-      global.plugins[filename] = module.default || module
+
+
+      let plugin = module.default || module
+
+
+      if (typeof plugin === 'function') {
+
+        plugin = {
+          handler: plugin,
+          command: plugin.command || [],
+          tags: plugin.tags || [],
+          help: plugin.help || [],
+          disabled: false
+        }
+      }
+
+
+      if (plugin.command && typeof plugin.command === 'string') {
+        plugin.command = [plugin.command]
+      }
+
+      global.plugins[filename] = plugin
+
     } catch (e) {
-      conn.logger.error(e)
+      conn.logger.error(`Error cargando plugin ${filename}:`, e)
       delete global.plugins[filename]
     }
   }
@@ -371,3 +408,100 @@ Object.freeze(global.reload)
 
 watch(pluginFolder, global.reload)
 await global.reloadHandler()
+
+
+global.reconnectSubBots = async function() {
+  if (!global.conns || !Array.isArray(global.conns)) {
+    global.conns = []
+  }
+
+  const serbotDir = './Serbot'
+  if (!existsSync(serbotDir)) {
+    console.log(chalk.yellow('No se encontró la carpeta Serbot'))
+    return
+  }
+
+  const subBotFolders = readdirSync(serbotDir).filter(folder => {
+    const folderPath = join(serbotDir, folder)
+    return statSync(folderPath).isDirectory() && existsSync(join(folderPath, 'creds.json'))
+  })
+
+  if (subBotFolders.length === 0) {
+    console.log(chalk.yellow('No se encontraron sub-bots para reconectar'))
+    return
+  }
+
+  console.log(chalk.cyan(`\n🔄 Reconectando ${subBotFolders.length} sub-bots...`))
+
+  for (const folder of subBotFolders) {
+    try {
+      const botPath = join(serbotDir, folder)
+      const credsPath = join(botPath, 'creds.json')
+
+      if (!existsSync(credsPath)) {
+        console.log(chalk.red(`❌ No se encontró creds.json en ${folder}`))
+        continue
+      }
+
+
+      const isAlreadyConnected = global.conns.some(conn => 
+        conn.user && conn.user.jid && conn.user.jid.includes(folder)
+      )
+
+      if (isAlreadyConnected) {
+        console.log(chalk.green(`✅ Sub-bot ${folder} ya está conectado`))
+        continue
+      }
+
+
+      const serbotModule = await import('./plugins/serbot-serbot.js')
+      if (serbotModule.AYBot) {
+        await serbotModule.AYBot({
+          pathAYBot: botPath,
+          m: null,
+          conn: global.conn,
+          args: [],
+          usedPrefix: '.',
+          command: 'qr',
+          fromCommand: false
+        })
+        console.log(chalk.green(`✅ Sub-bot ${folder} reconectado exitosamente`))
+      } else {
+        console.log(chalk.red(`❌ No se pudo importar AYBot para ${folder}`))
+      }
+
+
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+    } catch (error) {
+      console.log(chalk.red(`❌ Error reconectando sub-bot ${folder}:`, error.message))
+    }
+  }
+
+  console.log(chalk.cyan(`\n🎉 Proceso de reconexión de sub-bots completado`))
+}
+
+
+const originalConnectionUpdate = connectionUpdate
+connectionUpdate = async function(update) {
+  await originalConnectionUpdate.call(this, update)
+
+
+  if (update.connection === 'open' && !this.subBotsReconnected) {
+    this.subBotsReconnected = true
+    console.log(chalk.cyan('\nBot principal conectado, iniciando reconexión de sub-bots...'))
+    setTimeout(() => {
+      global.reloadHandler().then(() => {
+        global.reconnectSubBots().catch(console.error)
+      })
+    }, 5000) 
+  }
+}
+
+
+setTimeout(() => {
+  if (global.conn && global.conn.user) {
+    console.log(chalk.cyan('\nIniciando reconexión automática de sub-bots..'))
+    global.reconnectSubBots().catch(console.error)
+  }
+}, 10000) 
