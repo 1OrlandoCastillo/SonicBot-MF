@@ -30,86 +30,50 @@ import makeWASocket, {
 
 import { protoType, serialize } from './lib/simple.js'
 
-// --- Variables y setup inicial ---
-const PORT = process.env.PORT || process.env.SERVER_PORT || 3000
-
+// --- Inicialización global ---
 protoType()
 serialize()
 
-global.__filename = function filename(pathURL = import.meta.url, rmPrefix = platform !== 'win32') {
-  return rmPrefix ? /file:\/\/\//.test(pathURL) ? fileURLToPath(pathURL) : pathURL : pathToFileURL(pathURL).toString();
-};
-global.__dirname = function dirname(pathURL) {
-  return path.dirname(global.__filename(pathURL, true))
-};
-global.__require = function require(dir = import.meta.url) {
-  return createRequire(dir)
-}
+global.__filename = (pathURL = import.meta.url, rmPrefix = platform !== 'win32') =>
+  rmPrefix ? (/file:\/\/\//.test(pathURL) ? fileURLToPath(pathURL) : pathURL) : pathToFileURL(pathURL).toString()
+global.__dirname = (pathURL) => path.dirname(global.__filename(pathURL, true))
+global.__require = (dir = import.meta.url) => createRequire(dir)
 
-// --- API Helper ---
-global.API = (name, path = '/', query = {}, apikeyqueryname) =>
-  (name in global.APIs ? global.APIs[name] : name) +
-  path +
-  (query || apikeyqueryname
-    ? '?' +
-      new URLSearchParams(
-        Object.entries({
-          ...query,
-          ...(apikeyqueryname ? { [apikeyqueryname]: global.APIKeys[name in global.APIs ? global.APIs[name] : name] } : {}),
-        })
-      )
-    : '')
-
+// --- Variables y setup ---
+global.opts = new Object(yargs(process.argv.slice(2)).exitProcess(false).parse())
+global.prefix = new RegExp('^[' + (opts['prefix'] || '‎z/#$%.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') + ']')
 global.timestamp = { start: new Date() }
 
-const __dirname = global.__dirname(import.meta.url)
-
-// --- Yargs y Prefijo ---
-global.opts = new Object(yargs(process.argv.slice(2)).exitProcess(false).parse())
-global.prefix = new RegExp(
-  '^[' +
-    (opts['prefix'] || '‎z/#$%.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') +
-    ']'
-)
-
 // --- Base de datos ---
-global.db = new Low(new JSONFile(`storage/databases/database.json`))
-global.DATABASE = global.db
+const dbPath = join(global.__dirname(import.meta.url), 'storage/databases')
+if (!existsSync(dbPath)) mkdirSync(dbPath, { recursive: true })
+global.db = new Low(new JSONFile(join(dbPath, 'database.json')))
 global.loadDatabase = async function loadDatabase() {
-  if (global.db.READ) {
-    return new Promise(resolve =>
-      setInterval(async function () {
-        if (!global.db.READ) {
-          clearInterval(this)
-          resolve(global.db.data == null ? global.loadDatabase() : global.db.data)
-        }
-      }, 1000)
-    )
+  try {
+    await global.db.read()
+    global.db.data = global.db.data || {
+      users: {},
+      chats: {},
+      stats: {},
+      msgs: {},
+      sticker: {},
+      settings: {},
+      botGroups: {},
+      antiImg: {}
+    }
+    global.db.chain = lodash.chain(global.db.data)
+  } catch (e) {
+    console.error('❌ Error cargando DB:', e)
   }
-  if (global.db.data !== null) return
-  global.db.READ = true
-  await global.db.read().catch(console.error)
-  global.db.READ = null
-  global.db.data = {
-    users: {},
-    chats: {},
-    stats: {},
-    msgs: {},
-    sticker: {},
-    settings: {},
-    botGroups: {},
-    antiImg: {},
-    ...(global.db.data || {}),
-  }
-  global.db.chain = lodash.chain(global.db.data)
 }
+await global.loadDatabase()
 
 // --- Autenticación ---
-global.authFile = `sessions`
+global.authFile = join(global.__dirname(import.meta.url), 'sessions')
 const { state, saveCreds } = await useMultiFileAuthState(global.authFile)
 const { version } = await fetchLatestBaileysVersion()
 
-// --- Readline Helper ---
+// --- Readline helper ---
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
 const question = (texto) => new Promise(resolve => rl.question(texto, resolve))
 
@@ -117,7 +81,7 @@ const question = (texto) => new Promise(resolve => rl.question(texto, resolve))
 const logger = pino({ timestamp: () => `,"time":"${new Date().toJSON()}"` }).child({ class: 'client' })
 logger.level = 'fatal'
 
-// --- Opciones de conexión ---
+// --- Conexión Baileys ---
 const connectionOptions = {
   version,
   logger,
@@ -138,24 +102,40 @@ const connectionOptions = {
     return msg?.message || ''
   },
 }
-
-// --- Conexión principal ---
 global.conn = makeWASocket(connectionOptions)
 
-// --- Función para limpiar archivos temporales ---
+// --- Eventos Baileys ---
+conn.ev.on('connection.update', update => {
+  const { connection, lastDisconnect, qr } = update
+  if (connection === 'close') {
+    console.log(chalk.red('❌ Desconectado:'), lastDisconnect?.error?.output?.statusCode || '')
+  } else if (connection === 'open') {
+    console.log(chalk.green('✅ Conectado como'), conn.user?.name || conn.user?.jid)
+  }
+  if (qr) qrcode.generate(qr, { small: true })
+})
+
+conn.ev.on('messages.upsert', async m => {
+  try {
+    console.log('Mensaje recibido:', JSON.stringify(m, null, 2))
+    // Aquí puedes llamar a tu handler de mensajes
+  } catch (e) {
+    console.error('Error procesando mensaje:', e)
+  }
+})
+
+// --- Limpieza temporal ---
 function clearTmp() {
-  const tmpDirs = [join(__dirname, 'tmp'), join(__dirname, 'serbot')]
+  const tmpDirs = [join(global.__dirname(import.meta.url), 'tmp'), join(global.__dirname(import.meta.url), 'serbot')]
   tmpDirs.forEach(tmpDir => {
-    if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true })
-    const files = existsSync(tmpDir) ? readdirSync(tmpDir).map(f => join(tmpDir, f)) : []
-    files.forEach(file => {
+    mkdirSync(tmpDir, { recursive: true })
+    readdirSync(tmpDir).forEach(file => {
+      const filePath = join(tmpDir, file)
       try {
-        const stats = statSync(file)
-        if (stats.isFile() && Date.now() - stats.mtimeMs >= 1000 * 60 * 3) {
-          unlinkSync(file)
-        }
+        const stats = statSync(filePath)
+        if (stats.isFile() && Date.now() - stats.mtimeMs >= 180000) unlinkSync(filePath)
       } catch (err) {
-        console.error(`❌ Error eliminando archivo ${file}:`, err.message)
+        console.error(`❌ Error eliminando archivo ${filePath}:`, err.message)
       }
     })
   })
@@ -166,11 +146,11 @@ setInterval(() => {
 }, 180000)
 
 // --- Reconexión de sub-bots ---
-global.reconnectSubBots = async function() {
-  if (!global.conns || !Array.isArray(global.conns)) global.conns = []
+global.reconnectSubBots = async function () {
+  if (!global.conns) global.conns = []
 
-  const serbotDir = join(__dirname, 'Serbot')
-  if (!existsSync(serbotDir)) mkdirSync(serbotDir, { recursive: true })
+  const serbotDir = join(global.__dirname(import.meta.url), 'Serbot')
+  mkdirSync(serbotDir, { recursive: true })
 
   const subBotFolders = readdirSync(serbotDir).filter(folder => {
     const folderPath = join(serbotDir, folder)
@@ -181,7 +161,6 @@ global.reconnectSubBots = async function() {
     try {
       const botPath = join(serbotDir, folder)
       const credsPath = join(botPath, 'creds.json')
-
       if (!existsSync(credsPath)) continue
 
       const isAlreadyConnected = global.conns.some(conn => conn.user?.jid?.includes(folder))
@@ -206,4 +185,6 @@ global.reconnectSubBots = async function() {
   }
 }
 
+// --- Captura global de errores ---
 process.on('uncaughtException', console.error)
+process.on('unhandledRejection', console.error)
