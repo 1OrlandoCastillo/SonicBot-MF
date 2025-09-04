@@ -10,10 +10,11 @@ const { proto } = (await import('@whiskeysockets/baileys')).default
 const isNumber = x => typeof x === 'number' && !isNaN(x)
 const delay = ms => isNumber(ms) && new Promise(resolve => setTimeout(resolve, ms))
 
-export async function handler(chatUpdate, conn, opts) {
+export async function handler(chatUpdate, conn, opts = {}) {
   this.msgqueque = this.msgqueque || []
   if (!chatUpdate) return
-  this.pushMessage(chatUpdate.messages).catch(console.error)
+  if (!chatUpdate.messages) return
+  await this.pushMessage(chatUpdate.messages).catch(console.error)
   let m = chatUpdate.messages[chatUpdate.messages.length - 1]
   if (!m) return
   if (global.db.data == null) await global.loadDatabase()
@@ -65,9 +66,10 @@ export async function handler(chatUpdate, conn, opts) {
     if (opts?.swonly && m.chat !== 'status@broadcast') return
     if (typeof m.text !== 'string') m.text = ''
 
-    let _user = global.db.data.users[m.sender]
+    const _user = global.db.data.users[m.sender]
     const isROwner = [conn.decodeJid(conn.user.id), ...global.owner.map(([number]) => number)]
-      .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)
+      .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
+      .includes(m.sender)
     const isOwner = isROwner || m.fromMe
     const isMods = isOwner || global.mods.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)
     const isPrems = isROwner || global.prems.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender) || _user.premium
@@ -90,7 +92,6 @@ export async function handler(chatUpdate, conn, opts) {
     for (let name in global.plugins) {
       let plugin = global.plugins[name]
       if (!plugin || plugin.disabled) continue
-
       const __filename = join(___dirname, name)
 
       if (typeof plugin.all === 'function') {
@@ -134,12 +135,15 @@ export async function handler(chatUpdate, conn, opts) {
       m.plugin = name
 
       try {
-        await plugin.call(this, m, { match, usedPrefix, command, args, conn: this })
+        await plugin.call(this, m, {
+          match, usedPrefix, command, args, conn: this,
+          _user, isOwner, isMods, isPrems
+        })
       } catch (e) {
         console.error(e)
         let text = format(e)
         for (let key of Object.values(global.APIKeys)) text = text.replace(new RegExp(key, 'g'), '#HIDDEN#')
-        m.reply?.(text)
+        try { await conn.sendMessage(m.chat, { text }, { quoted: m }) } catch {}
       }
       break
     }
@@ -149,7 +153,10 @@ export async function handler(chatUpdate, conn, opts) {
   }
 }
 
+// Hot reload
 let file = global.__filename(import.meta.url, true)
 watchFile(file, async () => {
   unwatchFile(file)
-  console.log(chalk.magenta("Se actualizó 'handler.js'
+  console.log(chalk.magenta("Se actualizó 'handler.js'"))
+  if (global.reloadHandler) console.log(await global.reloadHandler())
+})
