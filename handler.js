@@ -4,28 +4,24 @@ import { fileURLToPath } from 'url'
 import path, { join } from 'path'
 import { unwatchFile, watchFile } from 'fs'
 import chalk from 'chalk'
-import fetch from 'node-fetch'
 
-const { proto } = (await import('@whiskeysockets/baileys')).default
 const isNumber = x => typeof x === 'number' && !isNaN(x)
 const delay = ms => isNumber(ms) && new Promise(resolve => setTimeout(resolve, ms))
 
-export async function handler(chatUpdate, conn, opts = {}) {
+export async function handler(chatUpdate) {
   this.msgqueque = this.msgqueque || []
-  if (!chatUpdate) return
-  if (!chatUpdate.messages) return
-  await this.pushMessage(chatUpdate.messages).catch(console.error)
+  if (!chatUpdate || !chatUpdate.messages) return
+  this.pushMessage(chatUpdate.messages).catch(console.error)
   let m = chatUpdate.messages[chatUpdate.messages.length - 1]
   if (!m) return
-  if (global.db.data == null) await global.loadDatabase()
+  if (!global.db.data) await global.loadDatabase()
 
   try {
     m = smsg(this, m) || m
-    if (!m) return
     m.exp = 0
     m.limit = false
 
-    // Inicialización de usuario y chat
+    // Inicialización de usuario
     let user = global.db.data.users[m.sender] || {}
     global.db.data.users[m.sender] = {
       exp: isNumber(user.exp) ? user.exp : 0,
@@ -44,6 +40,7 @@ export async function handler(chatUpdate, conn, opts = {}) {
       premiumTime: user.premiumTime || 0
     }
 
+    // Inicialización de chat
     let chat = global.db.data.chats[m.chat] || {}
     global.db.data.chats[m.chat] = {
       isBanned: chat.isBanned || false,
@@ -54,109 +51,50 @@ export async function handler(chatUpdate, conn, opts = {}) {
       expired: isNumber(chat.expired) ? chat.expired : 0
     }
 
-    let settings = global.db.data.settings[this.user.jid] || {}
-    global.db.data.settings[this.user.jid] = {
-      self: settings.self || false,
-      autoread: settings.autoread || false,
-      status: settings.status || 0
-    }
-
-    if (opts?.nyimak) return
-    if (!m.fromMe && opts?.self) return
-    if (opts?.swonly && m.chat !== 'status@broadcast') return
-    if (typeof m.text !== 'string') m.text = ''
-
-    const _user = global.db.data.users[m.sender]
-    const isROwner = [conn.decodeJid(conn.user.id), ...global.owner.map(([number]) => number)]
-      .map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net')
-      .includes(m.sender)
-    const isOwner = isROwner || m.fromMe
-    const isMods = isOwner || global.mods.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)
-    const isPrems = isROwner || global.prems.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender) || _user.premium
-
-    if (opts?.queque && m.text && !(isMods || isPrems)) {
-      let queque = this.msgqueque, time = 5000
-      const previousID = queque[queque.length - 1]
-      queque.push(m.id || m.key.id)
-      setInterval(async () => {
-        if (queque.indexOf(previousID) === -1) clearInterval(this)
-        await delay(time)
-      }, time)
-    }
-
+    if (!m.fromMe && global.opts?.self) return
     if (m.isBaileys) return
-    m.exp += Math.ceil(Math.random() * 10)
 
     const ___dirname = path.join(path.dirname(fileURLToPath(import.meta.url)), './plugins')
 
     for (let name in global.plugins) {
       let plugin = global.plugins[name]
       if (!plugin || plugin.disabled) continue
+
       const __filename = join(___dirname, name)
 
       if (typeof plugin.all === 'function') {
-        try { await plugin.all.call(this, m, { chatUpdate, __dirname: ___dirname, __filename }) }
+        try { await plugin.all.call(this, m, { __dirname: ___dirname, __filename }) } 
         catch (e) { console.error(e) }
       }
 
-      if (!opts?.restrict && plugin.tags?.includes('admin')) continue
+      if (!plugin.command) continue
 
-      const str2Regex = str => str.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&')
-      let _prefix = plugin.customPrefix ?? conn.prefix ?? global.prefix
-      let match = (_prefix instanceof RegExp
-        ? [[_prefix.exec(m.text), _prefix]]
-        : Array.isArray(_prefix)
-          ? _prefix.map(p => [p instanceof RegExp ? p.exec(m.text) : new RegExp(str2Regex(p)).exec(m.text), p instanceof RegExp ? p : new RegExp(str2Regex(p))])
-          : [[new RegExp(str2Regex(_prefix)).exec(m.text), new RegExp(str2Regex(_prefix))]]
-      ).find(p => p[1])
+      let prefix = plugin.customPrefix ?? global.prefix
+      let matched = Array.isArray(prefix)
+        ? prefix.map(p => (p instanceof RegExp ? p.exec(m.text) : new RegExp(p).exec(m.text))).find(Boolean)
+        : (prefix instanceof RegExp ? prefix.exec(m.text) : new RegExp(prefix).exec(m.text))
+      if (!matched) continue
 
-      if (typeof plugin.before === 'function') {
-        if (await plugin.before.call(this, m, { match, conn: this })) continue
-      }
+      let usedPrefix = matched[0]
+      let args = m.text.replace(usedPrefix, '').trim().split(/\s+/)
+      let command = args.shift()?.toLowerCase()
 
-      if (!match) continue
-      let usedPrefix = (match[0] || '')[0]
-      if (!usedPrefix) continue
+      if (typeof plugin.command === 'string' && plugin.command !== command) continue
+      if (Array.isArray(plugin.command) && !plugin.command.includes(command)) continue
 
-      let noPrefix = m.text.replace(usedPrefix, '')
-      let [command, ...args] = noPrefix.trim().split(/\s+/)
-      command = command.toLowerCase()
-      args = args || []
-
-      let isAccept = plugin.command instanceof RegExp
-        ? plugin.command.test(command)
-        : Array.isArray(plugin.command)
-          ? plugin.command.some(cmd => cmd instanceof RegExp ? cmd.test(command) : cmd === command)
-          : typeof plugin.command === 'string'
-            ? plugin.command === command
-            : false
-
-      if (!isAccept) continue
       m.plugin = name
-
-      try {
-        await plugin.call(this, m, {
-          match, usedPrefix, command, args, conn: this,
-          _user, isOwner, isMods, isPrems
-        })
-      } catch (e) {
-        console.error(e)
-        let text = format(e)
-        for (let key of Object.values(global.APIKeys)) text = text.replace(new RegExp(key, 'g'), '#HIDDEN#')
-        try { await conn.sendMessage(m.chat, { text }, { quoted: m }) } catch {}
-      }
+      try { await plugin.call(this, m, { command, args }) } 
+      catch (e) { console.error(e); m.reply?.(format(e)) }
       break
     }
-
   } catch (e) {
     console.error(e)
   }
 }
 
-// Hot reload
+// Recarga automática del handler
 let file = global.__filename(import.meta.url, true)
 watchFile(file, async () => {
   unwatchFile(file)
   console.log(chalk.magenta("Se actualizó 'handler.js'"))
-  if (global.reloadHandler) console.log(await global.reloadHandler())
 })
