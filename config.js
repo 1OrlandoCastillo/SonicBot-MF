@@ -21,11 +21,11 @@ global.bot = 'Serbot'
 global.AFBots = true
 
 global.packname = 'LOVELLOUD'
-global.namebot = 'KIYOMI MD'
-global.author = 'Sung'
+global.namebot = 'SonicBot'
+global.author = 'White'
 
 
-global.canal = 'https://whatsapp.com/channel/0029Vb3oShrICVfiTWhDHM13''
+global.canal = 'https://whatsapp.com/channel/0029Vb3oShrICVfiTWhDHM13'
 
 global.ch = {
 ch1: '120363411154070926@newsletter',
