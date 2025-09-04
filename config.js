@@ -2,40 +2,40 @@ import { watchFile, unwatchFile } from 'fs'
 import chalk from 'chalk'
 import { fileURLToPath } from 'url'
 
-
 global.owner = [
-  ['5212731590195', 'White444', true],
+  ['5212731590195', 'White', true],
+  ['12543120750', 'adri', true],
 ]
 
 
-global.mods = []
-global.prems = []
+global.ownerLid = [
+  ['5212731590195', 'White', true],
+  ['5212731590195', 'White', true],
+  ['5212731590195', 'White2', true],
 
-global.libreria = 'Baileys'
-global.baileys = 'V 6.7.16' 
-global.vs = '2.2.0'
-global.nameqr = 'YukiBot-MD'
-global.namebot = '✿◟Yυƙι-Sυσυ-Bσƚ◞✿'
+
+]
+
 global.sessions = 'Sessions'
-global.jadi = 'JadiBots' 
-global.yukiJadibts = true
+global.bot = 'Serbot' 
+global.AFBots = true
 
-global.packname = 'SonicBot'
-global.namebot = 'SonicBot-MF'
-global.author = 'White444'
+global.packname = 'LOVELLOUD'
+global.namebot = 'KIYOMI MD'
+global.author = 'Sung'
 
 
-global.namecanal = 'SonicBot-MF Official'
-global.canal = 'https://whatsapp.com/channel/0029Vb3oShrICVfiTWhDHM13'
-global.idcanal = '120363411154070926@newsletter'
+global.canal = 'https://whatsapp.com/channel/0029Vb3oShrICVfiTWhDHM13''
 
 global.ch = {
 ch1: '120363411154070926@newsletter',
 }
 
+global.mods = []
+global.prems = []
+
 global.multiplier = 69 
 global.maxwarn = '2'
-
 
 let file = fileURLToPath(import.meta.url)
 watchFile(file, () => {
