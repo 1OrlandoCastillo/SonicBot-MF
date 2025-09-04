@@ -20,16 +20,19 @@ import lodash from 'lodash'
 import readline from 'readline'
 import NodeCache from 'node-cache'
 import qrcode from 'qrcode-terminal'
+import { spawn } from 'child_process'
 
-const { proto } = (await import('@whiskeysockets/baileys')).default
+// 🔥 Importación correcta de Baileys (CommonJS → ESM)
+import baileys from '@whiskeysockets/baileys'
 const {
+  proto,
   DisconnectReason,
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
   Browsers,
   makeCacheableSignalKeyStore,
   jidNormalizedUser,
-} = await import('@whiskeysockets/baileys')
+} = baileys
 
 const PORT = process.env.PORT || process.env.SERVER_PORT || 3000
 
@@ -37,11 +40,11 @@ protoType()
 serialize()
 
 global.__filename = function filename(pathURL = import.meta.url, rmPrefix = platform !== 'win32') {
-  return rmPrefix ? /file:\/\/\//.test(pathURL) ? fileURLToPath(pathURL) : pathURL : pathToFileURL(pathURL).toString();
-};
+  return rmPrefix ? (/file:\/\/\//.test(pathURL) ? fileURLToPath(pathURL) : pathURL) : pathToFileURL(pathURL).toString()
+}
 global.__dirname = function dirname(pathURL) {
   return path.dirname(global.__filename(pathURL, true))
-};
+}
 global.__require = function require(dir = import.meta.url) {
   return createRequire(dir)
 }
@@ -55,7 +58,7 @@ global.API = (name, path = '/', query = {}, apikeyqueryname) =>
         Object.entries({
           ...query,
           ...(apikeyqueryname ? { [apikeyqueryname]: global.APIKeys[name in global.APIs ? global.APIs[name] : name] } : {}),
-        })
+        }),
       )
     : '')
 
@@ -64,11 +67,7 @@ global.timestamp = { start: new Date() }
 const __dirname = global.__dirname(import.meta.url)
 
 global.opts = new Object(yargs(process.argv.slice(2)).exitProcess(false).parse())
-global.prefix = new RegExp(
-  '^[' +
-    (opts['prefix'] || '‎z/#$%.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') +
-    ']'
-)
+global.prefix = new RegExp('^[' + (opts['prefix'] || '‎z/#$%.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') + ']')
 
 global.db = new Low(new JSONFile(`storage/databases/database.json`))
 
@@ -81,7 +80,7 @@ global.loadDatabase = async function loadDatabase() {
           clearInterval(this)
           resolve(global.db.data == null ? global.loadDatabase() : global.db.data)
         }
-      }, 1 * 1000)
+      }, 1 * 1000),
     )
   if (global.db.data !== null) return
   global.db.READ = true
@@ -98,12 +97,11 @@ global.loadDatabase = async function loadDatabase() {
     antiImg: {},
     ...(global.db.data || {}),
   }
-  global.db.chain = lodash.chain(global.db.data) 
+  global.db.chain = lodash.chain(global.db.data)
 }
 
 global.authFile = `sessions`
 const { state, saveCreds } = await useMultiFileAuthState(global.authFile)
-
 const { version } = await fetchLatestBaileysVersion()
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
@@ -114,8 +112,9 @@ const logger = pino({
 }).child({ class: 'client' })
 logger.level = 'fatal'
 
+// ⚙️ Opciones de conexión a Baileys
 const connectionOptions = {
-  version: version,
+  version,
   logger,
   printQRInTerminal: false,
   auth: {
@@ -123,7 +122,7 @@ const connectionOptions = {
     keys: makeCacheableSignalKeyStore(state.keys, logger),
   },
   browser: Browsers.ubuntu('Chrome'),
-  markOnlineOnclientect: false,
+  markOnlineOnConnect: false, // <- fix typo
   generateHighQualityLinkPreview: true,
   syncFullHistory: true,
   retryRequestDelayMs: 10,
@@ -133,37 +132,41 @@ const connectionOptions = {
     patch: false,
     snapshot: false,
   },
+  // Evita crashear si no existe "store"
   getMessage: async (key) => {
-    const jid = jidNormalizedUser(key.remoteJid)
-    const msg = await store.loadMessage(jid, key.id)
-    return msg?.message || ''
+    try {
+      const jid = jidNormalizedUser(key.remoteJid)
+      if (global.store && typeof global.store.loadMessage === 'function') {
+        const msg = await global.store.loadMessage(jid, key.id)
+        return msg?.message || null
+      }
+      return null
+    } catch {
+      return null
+    }
   },
 }
 
 global.conn = makeWASocket(connectionOptions)
 
+// 🔐 Login QR ó Código de emparejamiento
 async function handleLogin() {
-  if (conn.authState.creds.registered) {
+  if (conn.authState?.creds?.registered) {
     console.log(chalk.green('Sesión ya está registrada.'))
     return
   }
 
   let loginMethod = await question(
-    chalk.green(
-      '¿Cómo deseas iniciar sesión?\nEscribe "qr" para escanear el código QR o "code" para usar un código de 8 dígitos:\n'
-    )
+    chalk.green('¿Cómo deseas iniciar sesión?\nEscribe "qr" para escanear el código QR o "code" para usar un código de 8 dígitos:\n'),
   )
 
   loginMethod = loginMethod.toLowerCase().trim()
 
   if (loginMethod === 'code') {
-    let phoneNumber = await question(chalk.blue('Ingresa el número de WhatsApp donde estará el bot (incluye código país, ej: 521XXXXXXXXXX):\n'))
-    phoneNumber = phoneNumber.replace(/\D/g, '') // Solo números
+    let phoneNumber = await question(chalk.blue('Ingresa el número de WhatsApp (incluye código país, ej: 521XXXXXXXXXX):\n'))
+    phoneNumber = phoneNumber.replace(/\D/g, '')
 
-
-    if (phoneNumber.startsWith('52') && phoneNumber.length === 12) {
-      phoneNumber = `521${phoneNumber.slice(2)}`
-    } else if (phoneNumber.startsWith('52')) {
+    if (phoneNumber.startsWith('52')) {
       phoneNumber = `521${phoneNumber.slice(2)}`
     } else if (phoneNumber.startsWith('0')) {
       phoneNumber = phoneNumber.replace(/^0/, '')
@@ -171,8 +174,7 @@ async function handleLogin() {
 
     if (typeof conn.requestPairingCode === 'function') {
       try {
-
-        if (conn.ws.readyState === ws.OPEN) {
+        if (conn.ws?.readyState === ws.OPEN) {
           let code = await conn.requestPairingCode(phoneNumber)
           code = code?.match(/.{1,4}/g)?.join('-') || code
           console.log(chalk.cyan('Tu código de emparejamiento es:', code))
@@ -180,7 +182,7 @@ async function handleLogin() {
           console.log(chalk.red('La conexión no está abierta. Intenta nuevamente.'))
         }
       } catch (e) {
-        console.log(chalk.red('Error al solicitar código de emparejamiento:'), e.message || e)
+        console.log(chalk.red('Error al solicitar código de emparejamiento:'), e?.message || e)
       }
     } else {
       console.log(chalk.red('Tu versión de Baileys no soporta emparejamiento por código.'))
@@ -232,30 +234,33 @@ async function connectionUpdate(update) {
   const { connection, lastDisconnect, isNewLogin } = update
   global.stopped = connection
   if (isNewLogin) conn.isInit = true
-  const code =
-    lastDisconnect?.error?.output?.statusCode ||
-    lastDisconnect?.error?.output?.payload?.statusCode
-  if (code && code !== DisconnectReason.loggedOut && conn?.ws.socket == null) {
+
+  const code = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.output?.payload?.statusCode
+
+  if (code && code !== DisconnectReason.loggedOut && !conn?.ws) {
     await global.reloadHandler(true).catch(console.error)
     global.timestamp.connect = new Date()
   }
   if (global.db.data == null) await loadDatabase()
+
   if (connection === 'open') {
     console.log(chalk.yellow('Conectado correctamente.'))
     if (!conn.startTime) {
       conn.startTime = Date.now()
     }
   }
+
   const reason = new Boom(lastDisconnect?.error)?.output?.statusCode
   if (reason === 405) {
     if (existsSync('./sessions/creds.json')) unlinkSync('./sessions/creds.json')
     console.log(
       chalk.bold.redBright(
-        `Conexión reemplazada, por favor espera un momento. Reiniciando...\nSi aparecen errores, vuelve a iniciar con: npm start`
-      )
+        `Conexión reemplazada, por favor espera un momento. Reiniciando...\nSi aparecen errores, vuelve a iniciar con: npm start`,
+      ),
     )
-    process.send('reset')
+    if (typeof process.send === 'function') process.send('reset')
   }
+
   if (connection === 'close') {
     switch (reason) {
       case DisconnectReason.badSession:
@@ -268,9 +273,7 @@ async function connectionUpdate(update) {
         await global.reloadHandler(true).catch(console.error)
         break
       case DisconnectReason.connectionReplaced:
-        conn.logger.error(
-          `Conexión reemplazada, se abrió otra sesión. Cierra esta sesión primero.`
-        )
+        conn.logger.error(`Conexión reemplazada, se abrió otra sesión. Cierra esta sesión primero.`)
         break
       case DisconnectReason.loggedOut:
         conn.logger.error(`Sesión cerrada, elimina la carpeta ${global.authFile} y escanea nuevamente.`)
@@ -305,11 +308,9 @@ global.reloadHandler = async function (restartConn) {
     } catch {}
     global.conn.ev.removeAllListeners()
 
-
     const preservedStartTime = global.conn.startTime
 
     global.conn = makeWASocket(connectionOptions)
-
 
     if (preservedStartTime) {
       global.conn.startTime = preservedStartTime
@@ -346,28 +347,23 @@ async function filesInit() {
       const file = global.__filename(join(pluginFolder, filename))
       const module = await import(file)
 
-
       let plugin = module.default || module
 
-
       if (typeof plugin === 'function') {
-
         plugin = {
           handler: plugin,
           command: plugin.command || [],
           tags: plugin.tags || [],
           help: plugin.help || [],
-          disabled: false
+          disabled: false,
         }
       }
-
 
       if (plugin.command && typeof plugin.command === 'string') {
         plugin.command = [plugin.command]
       }
 
       global.plugins[filename] = plugin
-
     } catch (e) {
       conn.logger.error(`Error cargando plugin ${filename}:`, e)
       delete global.plugins[filename]
@@ -409,8 +405,8 @@ Object.freeze(global.reload)
 watch(pluginFolder, global.reload)
 await global.reloadHandler()
 
-
-global.reconnectSubBots = async function() {
+// ========= Reconexión de sub-bots =========
+global.reconnectSubBots = async function () {
   if (!global.conns || !Array.isArray(global.conns)) {
     global.conns = []
   }
@@ -421,7 +417,7 @@ global.reconnectSubBots = async function() {
     return
   }
 
-  const subBotFolders = readdirSync(serbotDir).filter(folder => {
+  const subBotFolders = readdirSync(serbotDir).filter((folder) => {
     const folderPath = join(serbotDir, folder)
     return statSync(folderPath).isDirectory() && existsSync(join(folderPath, 'creds.json'))
   })
@@ -443,16 +439,11 @@ global.reconnectSubBots = async function() {
         continue
       }
 
-
-      const isAlreadyConnected = global.conns.some(conn => 
-        conn.user && conn.user.jid && conn.user.jid.includes(folder)
-      )
-
+      const isAlreadyConnected = global.conns.some((conn) => conn.user && conn.user.jid && conn.user.jid.includes(folder))
       if (isAlreadyConnected) {
         console.log(chalk.green(`✅ Sub-bot ${folder} ya está conectado`))
         continue
       }
-
 
       const serbotModule = await import('./plugins/serbot-serbot.js')
       if (serbotModule.AYBot) {
@@ -463,29 +454,25 @@ global.reconnectSubBots = async function() {
           args: [],
           usedPrefix: '.',
           command: 'qr',
-          fromCommand: false
+          fromCommand: false,
         })
         console.log(chalk.green(`✅ Sub-bot ${folder} reconectado exitosamente`))
       } else {
         console.log(chalk.red(`❌ No se pudo importar AYBot para ${folder}`))
       }
 
-
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
+      await new Promise((resolve) => setTimeout(resolve, 2000))
     } catch (error) {
-      console.log(chalk.red(`❌ Error reconectando sub-bot ${folder}:`, error.message))
+      console.log(chalk.red(`❌ Error reconectando sub-bot ${folder}:`, error?.message))
     }
   }
 
   console.log(chalk.cyan(`\n🎉 Proceso de reconexión de sub-bots completado`))
 }
 
-
 const originalConnectionUpdate = connectionUpdate
-connectionUpdate = async function(update) {
+connectionUpdate = async function (update) {
   await originalConnectionUpdate.call(this, update)
-
 
   if (update.connection === 'open' && !this.subBotsReconnected) {
     this.subBotsReconnected = true
@@ -494,14 +481,13 @@ connectionUpdate = async function(update) {
       global.reloadHandler().then(() => {
         global.reconnectSubBots().catch(console.error)
       })
-    }, 5000) 
+    }, 5000)
   }
 }
-
 
 setTimeout(() => {
   if (global.conn && global.conn.user) {
     console.log(chalk.cyan('\nIniciando reconexión automática de sub-bots..'))
     global.reconnectSubBots().catch(console.error)
   }
-}, 10000) 
+}, 10000)
