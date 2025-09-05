@@ -14,22 +14,34 @@ const handler = async (m, { conn, args, usedPrefix }) => {
         const results = await yts(query);
         if (!results || !results.videos.length) return conn.sendMessage(chatId, { text: '❌ No encontré resultados.' }, { quoted: m });
 
-        const video = results.videos[0];
+        // Tomamos los 3 primeros resultados
+        const top3 = results.videos.slice(0, 3);
 
-        // Mostrar info
-        const infoMsg = `
-🎵 *Título:* ${video.title}
-⏱ *Duración:* ${video.timestamp}
-📺 *Canal:* ${video.author.name}
-🔗 *Link:* ${video.url}
-        `;
+        // Mostrar opciones al usuario
+        let msgText = '🎵 *Resultados encontrados:*\n\n';
+        top3.forEach((v, i) => {
+            msgText += `*${i+1}.* ${v.title}\n⏱ ${v.timestamp} | 📺 ${v.author.name}\n🔗 ${v.url}\n\n`;
+        });
+        msgText += 'Envía el número (1, 2 o 3) de la canción que quieres descargar.';
 
-        await conn.sendMessage(chatId, {
-            image: { url: video.thumbnail },
-            caption: infoMsg
-        }, { quoted: m });
+        await conn.sendMessage(chatId, { text: msgText }, { quoted: m });
 
-        // Asegurarnos de que exista la carpeta tmp
+        // Esperamos la respuesta del usuario
+        const filter = (msg) => msg.key.remoteJid === chatId && msg.key.fromMe === false;
+        const collected = await new Promise((resolve) => {
+            const handlerMsg = (msg) => {
+                const num = parseInt(msg.message?.conversation || msg.message?.extendedTextMessage?.text);
+                if (num >= 1 && num <= top3.length) {
+                    conn.ev.off('messages.upsert', handlerMsg);
+                    resolve(num);
+                }
+            };
+            conn.ev.on('messages.upsert', handlerMsg);
+        });
+
+        const video = top3[collected - 1];
+
+        // Aseguramos carpeta tmp
         const tmpDir = './tmp';
         if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
 
@@ -53,7 +65,6 @@ const handler = async (m, { conn, args, usedPrefix }) => {
             fileName: `${video.title}.mp3`
         }, { quoted: m });
 
-        // Borrar archivo temporal
         await fs.unlink(tempFile);
 
     } catch (e) {
