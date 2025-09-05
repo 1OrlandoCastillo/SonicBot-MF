@@ -10,29 +10,48 @@ const handler = async (m, { text, conn, usedPrefix, command }) => {
     const height = 512
     const image = new Jimp(width, height, 0xFFFFFFFF) // fondo blanco
 
-    // Fuente estilo pixeleada y oscura (Jimp trae una por defecto)
-    const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK)
+    // Fuentes disponibles en Jimp
+    const fonts = {
+      big: Jimp.FONT_SANS_128_BLACK,
+      medium: Jimp.FONT_SANS_64_BLACK,
+      small: Jimp.FONT_SANS_32_BLACK,
+      tiny: Jimp.FONT_SANS_16_BLACK
+    }
 
-    // Dibujar texto alineado a la izquierda, arriba
+    // Elegir la fuente dependiendo del largo del texto
+    let fontToUse
+    if (text.length <= 10) {
+      fontToUse = fonts.big
+    } else if (text.length <= 25) {
+      fontToUse = fonts.medium
+    } else if (text.length <= 60) {
+      fontToUse = fonts.small
+    } else {
+      fontToUse = fonts.tiny
+    }
+
+    const font = await Jimp.loadFont(fontToUse)
+
+    // Escribir el texto alineado a la izquierda, arriba
     image.print(
       font,
       20,  // margen X
       20,  // margen Y
       {
-        text: text, // respeta saltos de línea (\n)
+        text: text,
         alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT,
         alignmentY: Jimp.VERTICAL_ALIGN_TOP
       },
-      width - 40,  // espacio usable
+      width - 40,
       height - 40
     )
 
-    // Para darle un look más “pixelado”
+    // Darle efecto pixelado
     image.resize(width, height, Jimp.RESIZE_NEAREST_NEIGHBOR)
 
     const buffer = await image.getBufferAsync(Jimp.MIME_PNG)
 
-    // Mandar como sticker
+    // Enviar como sticker
     await conn.sendMessage(m.chat, { sticker: buffer }, { quoted: m })
 
   } catch (e) {
