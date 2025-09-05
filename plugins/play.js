@@ -1,5 +1,5 @@
 import yts from 'yt-search';
-import ytdl from 'ytdl-core';
+import { spawn } from 'child_process';
 import fetch from 'node-fetch';
 
 const handler = async (m, { conn, args, usedPrefix }) => {
@@ -17,34 +17,37 @@ const handler = async (m, { conn, args, usedPrefix }) => {
         // Descargar miniatura
         const thumbBuffer = Buffer.from(await (await fetch(video.thumbnail)).arrayBuffer());
 
-        // Mostrar info con mensaje de descarga
+        // Mostrar info de la canción
         const infoText = `🎵 *${video.title}*\n⏱ Duración: ${video.timestamp}\n👁 Vistas: ${video.views}\n📺 Canal: ${video.author.name}\n📅 Publicado: ${video.ago}\n\n⏳ Descargando audio...`;
         await conn.sendMessage(chatId, { image: thumbBuffer, caption: infoText }, { quoted: m });
 
-        // Descargar audio en streaming con manejo de errores
-        let audioBuffer;
-        try {
-            const audioStream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio', highWaterMark: 1 << 25 });
-            const chunks = [];
+        // Stream de audio usando yt-dlp y ffmpeg
+        const ytProcess = spawn('yt-dlp', [
+            '-f', 'bestaudio',
+            '-o', '-', // salida a stdout
+            video.url
+        ]);
 
-            await new Promise((resolve, reject) => {
-                audioStream.on('data', chunk => chunks.push(chunk));
-                audioStream.on('end', () => {
-                    audioBuffer = Buffer.concat(chunks);
-                    resolve();
-                });
-                audioStream.on('error', reject);
+        const chunks = [];
+        ytProcess.stdout.on('data', (chunk) => {
+            chunks.push(chunk);
+        });
+
+        ytProcess.stderr.on('data', (data) => console.log(data.toString()));
+
+        await new Promise((resolve, reject) => {
+            ytProcess.on('close', (code) => {
+                if (code === 0) resolve();
+                else reject(new Error(`yt-dlp exited with code ${code}`));
             });
-        } catch (err) {
-            console.error('Error descargando audio:', err);
-            return conn.sendMessage(chatId, { text: '❌ No se pudo descargar el audio del video.' }, { quoted: m });
-        }
+        });
 
-        // Enviar audio
+        const audioBuffer = Buffer.concat(chunks);
+
         await conn.sendMessage(chatId, {
             audio: audioBuffer,
             mimetype: 'audio/mpeg',
-            fileName: `${video.title}.mp3`,
+            fileName: `${video.title}.mp3`
         }, { quoted: m });
 
     } catch (e) {
