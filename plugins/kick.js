@@ -30,7 +30,7 @@ var handler = async (m, { conn, usedPrefix, command, text }) => {
     try {
       // Intenta expulsar
       await conn.groupParticipantsUpdate(m.chat, [jid], 'remove')
-      let mensaje = `✅ Usuario expulsado: @${jid.split('@')[0]}`
+      let mensaje = `✅ IJIJIJIJIJIJI TE SACARON POR PENDEJO/A: @${jid.split('@')[0]}`
       if (reason) mensaje += `\n📝 Razón: ${reason}`
       conn.sendMessage(m.chat, { text: mensaje, mentions: [jid] })
     } catch (e) {
