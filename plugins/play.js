@@ -17,20 +17,19 @@ const handler = async (m, { conn, args, usedPrefix }) => {
         // Tomamos los 3 primeros resultados
         const top3 = results.videos.slice(0, 3);
 
-        // Mostrar opciones al usuario
-        let msgText = '🎵 *Resultados encontrados:*\n\n';
-        top3.forEach((v, i) => {
-            msgText += `*${i+1}.* ${v.title}\n⏱ ${v.timestamp} | 📺 ${v.author.name}\n🔗 ${v.url}\n\n`;
-        });
-        msgText += 'Envía el número (1, 2 o 3) de la canción que quieres descargar.';
-
-        await conn.sendMessage(chatId, { text: msgText }, { quoted: m });
+        // Mostrar opciones con miniaturas
+        for (let i = 0; i < top3.length; i++) {
+            const v = top3[i];
+            const msgText = `*${i+1}.* ${v.title}\n⏱ ${v.timestamp} | 📺 ${v.author.name}\n🔗 ${v.url}\n\nEnvía el número de la canción que quieres descargar.`;
+            await conn.sendMessage(chatId, { image: { url: v.thumbnail }, caption: msgText }, { quoted: m });
+        }
 
         // Esperamos la respuesta del usuario
         const filter = (msg) => msg.key.remoteJid === chatId && msg.key.fromMe === false;
         const collected = await new Promise((resolve) => {
             const handlerMsg = (msg) => {
-                const num = parseInt(msg.message?.conversation || msg.message?.extendedTextMessage?.text);
+                const text = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
+                const num = parseInt(text);
                 if (num >= 1 && num <= top3.length) {
                     conn.ev.off('messages.upsert', handlerMsg);
                     resolve(num);
