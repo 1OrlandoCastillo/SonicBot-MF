@@ -3,29 +3,22 @@ import axios from 'axios'
 
 const handler = async (m, { conn, args }) => {
   try {
-    // 1️⃣ Obtener texto
-    let text
-    if (args.length >= 1) {
-      text = args.join(' ')
-    } else if (m.quoted && m.quoted.text) {
-      text = m.quoted.text
-    } else {
-      return conn.reply(m.chat, '🚩 Te faltó el texto!', m)
-    }
-
+    // 1️⃣ Texto del sticker
+    let text = args.join(' ')
+    if (!text && m.quoted && m.quoted.text) text = m.quoted.text
     if (!text) return conn.reply(m.chat, '🚩 Te faltó el texto!', m)
 
-    // 2️⃣ Determinar usuario (para foto y nombre)
+    // Limitar longitud
+    if (text.length > 40) return conn.reply(m.chat, '🚩 El texto no puede tener más de 40 caracteres', m)
+
+    // 2️⃣ Usuario para foto y nombre
     const who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender
     const nombre = await conn.getName(who)
 
-    // Limitar longitud del texto
-    if (text.length > 40) return conn.reply(m.chat, '🚩 El texto no puede tener más de 40 caracteres', m)
-
-    // 3️⃣ Obtener foto de perfil
+    // 3️⃣ Foto de perfil
     const pp = await conn.profilePictureUrl(who).catch(() => 'https://telegra.ph/file/24fa902ead26340f3df2c.png')
 
-    // 4️⃣ Crear objeto para API de quote
+    // 4️⃣ Crear objeto para la API de quote
     const obj = {
       type: 'quote',
       format: 'png',
@@ -38,7 +31,7 @@ const handler = async (m, { conn, args }) => {
           entities: [],
           avatar: true,
           from: { id: 1, name: nombre, photo: { url: pp } },
-          text: text,
+          text,
           replyMessage: {}
         }
       ]
@@ -51,7 +44,7 @@ const handler = async (m, { conn, args }) => {
 
     const buffer = Buffer.from(json.data.result.image, 'base64')
 
-    // 6️⃣ Crear sticker y enviar
+    // 6️⃣ Crear sticker
     const stiker = await sticker(buffer, false, global.packname || 'SonicBot', global.author || 'SonicBot')
     if (stiker) return conn.sendFile(m.chat, stiker, 'quote.webp', '', m)
 
@@ -61,9 +54,10 @@ const handler = async (m, { conn, args }) => {
   }
 }
 
+// 🔹 Configuración del comando `.qc`
+handler.command = /^qc$/i
 handler.help = ['qc <texto>']
 handler.tags = ['sticker']
-handler.command = /^(qc)$/i
 handler.limit = 2
 
 export default handler
