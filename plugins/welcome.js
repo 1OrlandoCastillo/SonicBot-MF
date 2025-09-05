@@ -1,32 +1,43 @@
 import { sticker } from '../lib/sticker.js'
 import Jimp from 'jimp'
+import axios from 'axios'
 
-const handler = async (m, { conn }) => {
+const handler = async (update, { conn }) => {
   try {
-    const chatId = m.id || m.key.remoteJid
-    const groupSettings = global.db.data.settings?.[chatId]
-    if (!groupSettings?.welcome) return
+    const { id: chatId, participants, action } = update
+    if (!participants || action !== 'add') return // solo entradas
 
-    if (!m?.participants) return
+    // Configuración del grupo
+    const settings = global.db.data.settings?.[chatId] || {}
+    if (!settings.welcome) return // si welcome está desactivado, no hacer nada
 
-    for (let user of m.participants) {
-      if (m.action !== 'add') continue
+    const groupName = (await conn.groupMetadata(chatId))?.subject || 'este grupo'
 
+    for (let user of participants) {
       const nombre = await conn.getName(user)
-      const groupName = (await conn.groupMetadata(chatId))?.subject || 'este grupo'
-      const message = (groupSettings.welcomeMsg || '👋 ¡Bienvenido %user%!').replace(/%user%/g, nombre).replace(/%group%/g, groupName)
+      const msgText = (settings.welcomeMsg || '👋 ¡Bienvenido %user% a %group%!').replace(/%user%/g, nombre).replace(/%group%/g, groupName)
 
-      // Sticker simple con fondo negro y nombre
-      const image = new Jimp(512, 512, 0x000000ff)
+      // Intentar obtener foto de perfil
+      let avatar
+      try {
+        avatar = await conn.profilePictureUrl(user, 'image')
+      } catch {
+        avatar = 'https://telegra.ph/file/24fa902ead26340f3df2c.png'
+      }
+
+      // Sticker con Jimp
+      const image = await Jimp.read(avatar)
+      image.cover(512, 512)
       const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE)
-      image.print(font, 0, 200, { text: nombre, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER })
+      image.print(font, 0, 400, { text: nombre, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER })
 
       const buffer = await image.getBufferAsync(Jimp.MIME_PNG)
       const stiker = await sticker(buffer, false, global.packname || 'SonicBot', global.author || 'SonicBot')
 
-      await conn.sendMessage(chatId, { text: message })
+      await conn.sendMessage(chatId, { text: msgText })
       await conn.sendMessage(chatId, { sticker: stiker })
     }
+
   } catch (e) {
     console.error('❌ Error en welcome:', e)
   }
