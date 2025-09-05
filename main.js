@@ -65,7 +65,6 @@ global.opts = new Object(yargs(process.argv.slice(2)).exitProcess(false).parse()
 global.prefix = new RegExp('^[' + (opts['prefix'] || '‎z/#$%.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') + ']')
 
 // Base de datos
-// ⚠️ Asegúrate de definir cloudDBAdapter si usarás URLs remotas
 global.db = new Low(/https?:\/\//.test(opts['db'] || '') ? new cloudDBAdapter(opts['db']) : new JSONFile(`${opts._[0] ? opts._[0] + '_' : ''}database.json`))
 global.DATABASE = global.db
 
@@ -123,6 +122,7 @@ console.info = () => {}
 
 const connectionOptions = {
   logger: pino({ level: 'silent' }),
+  // ⚠️ deprecado, pero aún soportado
   printQRInTerminal: opcion == '1' || methodCodeQR,
   mobile: MethodMobile,
   browser: ['AdriBot MD', 'Safari', '2.0.0'],
@@ -203,8 +203,10 @@ async function connectionUpdate(update) {
   const code = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.output?.payload?.statusCode
   if (code && code !== DisconnectReason.loggedOut && conn?.ws.socket == null) await global.reloadHandler(true).catch(console.error)
 
-  if (qr != 0 && qr != undefined || methodCodeQR) {
-    if (opcion == '1' || methodCodeQR) console.log(chalk.yellow('Escanea el código QR.'))
+  // Manejo QR (sin warning de Baileys)
+  if (qr) {
+    console.log(chalk.yellow('Escanea este código QR:'))
+    console.log(qr)
   }
 
   if (connection == 'open') console.log(chalk.yellow('Conectado correctamente.'))
@@ -251,7 +253,13 @@ global.reload = async (_ev, filename) => {
   }
 }
 
-watch(pluginFolder, global.reload)
+// 🔧 Aquí estaba el error → corregido
+fs.watch(pluginFolder, (eventType, filename) => {
+  if (filename) {
+    global.reload(eventType, filename).catch(err => console.error(err))
+  }
+})
+
 await global.reloadHandler()
 
 // Quick test de dependencias
