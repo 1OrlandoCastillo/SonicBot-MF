@@ -1,54 +1,69 @@
-var handler = async (m, { conn, text, usedPrefix, command, isAdmin }) => {
-  if (!m.isGroup) 
-    return conn.reply(m.chat, '❌ Este comando solo funciona en grupos', m);
+var handler = async (m, { conn, text, usedPrefix, command }) => {
+    if (!m.isGroup) 
+        return conn.reply(m.chat, '❌ Este comando solo funciona en grupos', m);
 
-  if (!isAdmin) 
-    return conn.reply(m.chat, '🚫 Solo administradores pueden usar este comando.', m);
+    let chat = await conn.groupMetadata(m.chat);
+    let participants = chat.participants.map(p => p.id);
 
-  const metadata = await conn.groupMetadata(m.chat);
-  const participants = metadata.participants;
+    // Filtrar para no mencionar al bot mismo ni otros grupos
+    participants = participants.filter(jid => jid !== conn.user.jid && !jid.endsWith('@g.us'));
 
-  // Detectar si el bot es admin sin depender de JIDs exactos
-  const botMaybeAdmin = participants.some(p => p.admin && p.id.includes(conn.user.id.split('@')[0]));
+    // Si no hay texto y se respondió a un mensaje, tomar texto o reenviar mensaje citado
+    if (!text && m.quoted) {
+        // Si es texto, tomamos el texto o caption
+        text = m.quoted.text || m.quoted.caption || '';
 
-  if (!botMaybeAdmin) {
-    return conn.reply(m.chat, '❌ Necesito ser administrador para mencionar a todos.', m);
-  }
+        // Si hay texto, enviamos mencionando a todos
+        if (text) {
+            const chunk = (arr, size) => {
+                let result = [];
+                for (let i = 0; i < arr.length; i += size)
+                    result.push(arr.slice(i, i + size));
+                return result;
+            }
 
-  // Crear lista de menciones, excluyendo al bot mismo
-  const mentionList = participants
-    .map(p => p.id)
-    .filter(id => !id.includes(conn.user.id.split('@')[0]) && !id.endsWith('@g.us'));
+            const batches = chunk(participants, 50);
+            for (let batch of batches) {
+                await conn.sendMessage(m.chat, { text, mentions: batch }, { quoted: m });
+            }
+            return;
+        }
 
-  const chunk = (arr, size) => {
-    let res = [];
-    for (let i = 0; i < arr.length; i += size) {
-      res.push(arr.slice(i, i + size));
+        // Si no hay texto (es multimedia), reenviamos el mensaje citado con menciones
+        const chunk = (arr, size) => {
+            let result = [];
+            for (let i = 0; i < arr.length; i += size)
+                result.push(arr.slice(i, i + size));
+            return result;
+        }
+        const batches = chunk(participants, 50);
+        for (let batch of batches) {
+            await conn.copyNForward(m.chat, m.quoted.fakeObj, true, { mentions: batch, quoted: m });
+        }
+        return;
     }
-    return res;
-  };
-  const batches = chunk(mentionList, 50);
 
-  if (m.quoted) {
-    for (const batch of batches) {
-      await conn.copyNForward(m.chat, m.quoted.fakeObj, true, {
-        quoted: m,
-        mentions: batch
-      });
+    // Si no se respondió mensaje y no hay texto, pedir uso correcto
+    if (!text) 
+        return conn.reply(m.chat, `⚠️ Usa el comando así:\n${usedPrefix}${command} <mensaje>`, m);
+
+    // Si hay texto, enviamos texto mencionando a todos
+    const chunk = (arr, size) => {
+        let result = [];
+        for (let i = 0; i < arr.length; i += size)
+            result.push(arr.slice(i, i + size));
+        return result;
     }
-  } else if (text) {
-    for (const batch of batches) {
-      await conn.sendMessage(m.chat, { text, mentions: batch }, { quoted: m });
+
+    const batches = chunk(participants, 50);
+    for (let batch of batches) {
+        await conn.sendMessage(m.chat, { text, mentions: batch }, { quoted: m });
     }
-  } else {
-    return conn.reply(m.chat, `⚠️ Usa el comando así:\n- Responde a un mensaje (texto o multimedia)\n- O escribe: ${usedPrefix}${command} <mensaje>`, m);
-  }
 }
 
-handler.help = ['hidetag','tagall','n'];
+handler.help = ['hidetag <mensaje>'];
 handler.tags = ['group'];
-handler.command = ['hidetag','tagall','n'];
+handler.command = ['hidetag', 'tagall', 'n'];
 handler.group = true;
-handler.admin = true;
 
 export default handler;
