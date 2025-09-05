@@ -122,8 +122,7 @@ console.info = () => {}
 
 const connectionOptions = {
   logger: pino({ level: 'silent' }),
-  // ⚠️ deprecado, pero aún soportado
-  printQRInTerminal: opcion == '1' || methodCodeQR,
+  // ⚠️ ya no usamos printQRInTerminal
   mobile: MethodMobile,
   browser: ['AdriBot MD', 'Safari', '2.0.0'],
   auth: {
@@ -203,9 +202,9 @@ async function connectionUpdate(update) {
   const code = lastDisconnect?.error?.output?.statusCode || lastDisconnect?.error?.output?.payload?.statusCode
   if (code && code !== DisconnectReason.loggedOut && conn?.ws.socket == null) await global.reloadHandler(true).catch(console.error)
 
-  // Manejo QR (sin warning de Baileys)
+  // Mostrar QR aquí
   if (qr) {
-    console.log(chalk.yellow('Escanea este código QR:'))
+    console.log(chalk.yellow('🔗 Escanea este QR:'))
     console.log(qr)
   }
 
@@ -253,7 +252,7 @@ global.reload = async (_ev, filename) => {
   }
 }
 
-// 🔧 Aquí estaba el error → corregido
+// ✅ aquí está el fix: usamos fs.watch
 fs.watch(pluginFolder, (eventType, filename) => {
   if (filename) {
     global.reload(eventType, filename).catch(err => console.error(err))
