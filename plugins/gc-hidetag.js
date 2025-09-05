@@ -1,4 +1,4 @@
-var handler = async (m, { conn, text, usedPrefix, command, participants }) => {
+var handler = async (m, { conn, text, usedPrefix, command }) => {
     if (!m.isGroup) 
         return conn.reply(m.chat, '❌ Este comando solo funciona en grupos', m);
 
@@ -18,31 +18,33 @@ var handler = async (m, { conn, text, usedPrefix, command, participants }) => {
         .map(p => p.id)
         .filter(id => id !== conn.user.jid && !id.endsWith('@g.us'));
 
-    // Si respondió a un mensaje
+    // Caso 1: si solo ponen .n y responden a un mensaje
     if (!text && m.quoted) {
-        // Si el mensaje citado tiene texto
-        text = m.quoted.text || m.quoted.caption || '';
+        let q = m.quoted;
 
-        if (text) {
-            await conn.sendMessage(m.chat, { text, mentions: mentionList }, { quoted: m });
+        // Si el mensaje citado tiene texto
+        let quotedText = q.text || q.caption || '';
+        if (quotedText) {
+            await conn.sendMessage(m.chat, { text: quotedText, mentions: mentionList }, { quoted: m });
             return;
         }
 
         // Si es multimedia sin texto
-        await conn.copyNForward(m.chat, m.quoted, true, {
+        await conn.copyNForward(m.chat, q, true, {
             quoted: m,
             mentions: mentionList
         });
         return;
     }
 
-    // Si no hay mensaje ni texto, enviar advertencia
-    if (!text) {
-        return conn.reply(m.chat, `⚠️ Usa el comando así:\n${usedPrefix}${command} <mensaje>\nO responde a un mensaje para mencionarlo a todos.`, m);
+    // Caso 2: si escriben .n <mensaje>
+    if (text) {
+        await conn.sendMessage(m.chat, { text, mentions: mentionList }, { quoted: m });
+        return;
     }
 
-    // Si hay texto, enviar mensaje una sola vez mencionando a todos
-    await conn.sendMessage(m.chat, { text, mentions: mentionList }, { quoted: m });
+    // Si no ponen nada ni responden a un mensaje
+    return conn.reply(m.chat, `⚠️ Usa el comando así:\n${usedPrefix}${command} <mensaje>\nO responde a un mensaje para mencionarlo a todos.`, m);
 };
 
 handler.help = ['hidetag <mensaje>'];
