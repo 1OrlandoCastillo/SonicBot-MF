@@ -18,13 +18,18 @@ const handler = async (m, { text, conn, usedPrefix, command }) => {
       tiny: Jimp.FONT_SANS_16_BLACK
     }
 
-    // Elegir la fuente dependiendo del largo del texto
+    // Contar caracteres y líneas
+    const lines = text.split("\n")
+    const longestLine = lines.reduce((a, b) => (a.length > b.length ? a : b), "")
+    const totalChars = longestLine.length
+
+    // Elegir fuente según cantidad de caracteres y líneas
     let fontToUse
-    if (text.length <= 10) {
+    if (totalChars <= 8 && lines.length <= 3) {
       fontToUse = fonts.big
-    } else if (text.length <= 25) {
+    } else if (totalChars <= 18 && lines.length <= 5) {
       fontToUse = fonts.medium
-    } else if (text.length <= 60) {
+    } else if (totalChars <= 40) {
       fontToUse = fonts.small
     } else {
       fontToUse = fonts.tiny
@@ -32,26 +37,26 @@ const handler = async (m, { text, conn, usedPrefix, command }) => {
 
     const font = await Jimp.loadFont(fontToUse)
 
-    // Escribir el texto alineado a la izquierda, arriba
+    // Imprimir texto alineado a la izquierda
     image.print(
       font,
-      20,  // margen X
-      20,  // margen Y
+      30, // margen X (dejamos un poco de espacio a la izquierda)
+      30, // margen Y arriba
       {
         text: text,
-        alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT,
+        alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT, // 🔥 alineado a la izquierda
         alignmentY: Jimp.VERTICAL_ALIGN_TOP
       },
-      width - 40,
-      height - 40
+      width - 60, // ancho usable
+      height - 60 // alto usable
     )
 
-    // Darle efecto pixelado
+    // Darle un look más pixelado
     image.resize(width, height, Jimp.RESIZE_NEAREST_NEIGHBOR)
 
     const buffer = await image.getBufferAsync(Jimp.MIME_PNG)
 
-    // Enviar como sticker
+    // Mandar como sticker
     await conn.sendMessage(m.chat, { sticker: buffer }, { quoted: m })
 
   } catch (e) {
