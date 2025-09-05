@@ -17,21 +17,28 @@ const handler = async (m, { conn, args, usedPrefix }) => {
         // Descargar miniatura
         const thumbBuffer = Buffer.from(await (await fetch(video.thumbnail)).arrayBuffer());
 
-        // Mostrar info
-        const infoText = `🎵 *${video.title}*\n⏱ Duración: ${video.timestamp}\n👁 Vistas: ${video.views}\n📺 Canal: ${video.author.name}\n📅 Publicado: ${video.ago}\n\nDescargando audio...`;
+        // Mostrar info con mensaje de descarga
+        const infoText = `🎵 *${video.title}*\n⏱ Duración: ${video.timestamp}\n👁 Vistas: ${video.views}\n📺 Canal: ${video.author.name}\n📅 Publicado: ${video.ago}\n\n⏳ Descargando audio...`;
         await conn.sendMessage(chatId, { image: thumbBuffer, caption: infoText }, { quoted: m });
 
-        // Descargar audio en streaming
-        const audioStream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
-        const chunks = [];
-        audioStream.on('data', chunk => chunks.push(chunk));
+        // Descargar audio en streaming con manejo de errores
+        let audioBuffer;
+        try {
+            const audioStream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio', highWaterMark: 1 << 25 });
+            const chunks = [];
 
-        await new Promise((resolve, reject) => {
-            audioStream.on('end', resolve);
-            audioStream.on('error', reject);
-        });
-
-        const audioBuffer = Buffer.concat(chunks);
+            await new Promise((resolve, reject) => {
+                audioStream.on('data', chunk => chunks.push(chunk));
+                audioStream.on('end', () => {
+                    audioBuffer = Buffer.concat(chunks);
+                    resolve();
+                });
+                audioStream.on('error', reject);
+            });
+        } catch (err) {
+            console.error('Error descargando audio:', err);
+            return conn.sendMessage(chatId, { text: '❌ No se pudo descargar el audio del video.' }, { quoted: m });
+        }
 
         // Enviar audio
         await conn.sendMessage(chatId, {
