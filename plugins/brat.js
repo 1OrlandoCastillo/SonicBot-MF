@@ -2,7 +2,7 @@ import Jimp from 'jimp'
 
 const handler = async (m, { text, conn, usedPrefix, command }) => {
   if (!text) {
-    return m.reply(`✏️ Escribe algo.\nEjemplo:\n${usedPrefix}${command} soy el brat`)
+    return m.reply(`✏️ Escribe algo.\nEjemplo:\n${usedPrefix}${command} arrewé\nsimonwe\nvawe`)
   }
 
   try {
@@ -10,26 +10,26 @@ const handler = async (m, { text, conn, usedPrefix, command }) => {
     const height = 512
     const image = new Jimp(width, height, 0xFFFFFFFF) // fondo blanco
 
-    // Fuente (asegúrate de tener esta fuente)
-    const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK)
+    // Fuente
+    const font = await Jimp.loadFont(Jimp.FONT_SANS_64_BLACK) // más grande y legible
 
-    // Imprimir texto centrado
+    // Imprimir texto con saltos de línea
     image.print(
       font,
       0,
       0,
       {
-        text: text,
+        text: text, // si mandas "arrewé\nsimonwe\nvawe" lo coloca igual que tu imagen
         alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
-        alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE
+        alignmentY: Jimp.VERTICAL_ALIGN_TOP
       },
       width,
       height
     )
 
-    const buffer = await image.getBufferAsync(Jimp.MIME_PNG) // PNG primero
+    const buffer = await image.getBufferAsync(Jimp.MIME_PNG)
 
-    // Convertir a sticker (webp) usando sticker format compatible
+    // Convertir a sticker (webp)
     await conn.sendMessage(m.chat, { sticker: buffer }, { quoted: m })
 
   } catch (e) {
