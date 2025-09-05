@@ -1,9 +1,14 @@
 var handler = async (m, { conn, text, usedPrefix, command }) => {
   if (!m.isGroup) return conn.reply(m.chat, '❌ Este comando solo funciona en grupos', m)
-  
-  // Si se responde a un mensaje, usa el texto del mensaje citado
-  if (!text && m.quoted?.text) text = m.quoted.text
-  if (!text) return conn.reply(m.chat, `⚠️ Usa el comando así:\n${usedPrefix}${command} <mensaje>`, m)
+
+  // Si no hay texto y se responde a un mensaje, usamos el mensaje citado
+  let mensaje = text
+  let quoted = null
+  if (!text && m.quoted) {
+    mensaje = m.quoted.text || '' // si es texto, lo usamos, si no, queda vacío
+    quoted = m.quoted
+  }
+  if (!mensaje) return conn.reply(m.chat, `⚠️ Usa el comando así:\n${usedPrefix}${command} <mensaje>`, m)
 
   // Obtiene todos los participantes del grupo
   let chat = conn.chats[m.chat]
@@ -25,15 +30,15 @@ var handler = async (m, { conn, text, usedPrefix, command }) => {
   for (let batch of batches) {
     await conn.sendMessage(
       m.chat,
-      { text, mentions: batch },
-      { quoted: m }
+      { text: mensaje, mentions: batch },
+      { quoted: quoted || m }
     )
   }
 }
 
 handler.help = ['hidetag <mensaje>']
 handler.tags = ['group']
-handler.command = ['hidetag', 'tagall', 'n'] // <-- ahora también funciona con .n
+handler.command = ['hidetag', 'tagall', 'n']
 handler.group = true
 
 export default handler
