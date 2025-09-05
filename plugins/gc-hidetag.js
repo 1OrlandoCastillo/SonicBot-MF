@@ -1,41 +1,36 @@
-import {generateWAMessageFromContent} from '@whiskeysockets/baileys';
-import * as fs from 'fs';
-const handler = async (m, {conn, text, participants, isOwner, isAdmin}) => {
-  try {
-    const users = participants.map((u) => conn.decodeJid(u.id));
-    const q = m.quoted ? m.quoted : m || m.text || m.sender;
-    const c = m.quoted ? await m.getQuotedObj() : m.msg || m.text || m.sender;
-    const msg = conn.cMod(m.chat, generateWAMessageFromContent(m.chat, {[m.quoted ? q.mtype : 'extendedTextMessage']: m.quoted ? c.message[q.mtype] : {text: '' || c}}, {quoted: m, userJid: conn.user.id}), text || q.text, conn.user.jid, {mentions: users});
-    await conn.relayMessage(m.chat, msg.message, {messageId: msg.key.id});
-  } catch {
+var handler = async (m, { conn, text, usedPrefix, command }) => {
+  if (!m.isGroup) return conn.reply(m.chat, '❌ Este comando solo funciona en grupos', m)
+  if (!text) return conn.reply(m.chat, `⚠️ Usa el comando así:\n${usedPrefix}${command} <mensaje>`, m)
 
-    const users = participants.map((u) => conn.decodeJid(u.id));
-    const quoted = m.quoted ? m.quoted : m;
-    const mime = (quoted.msg || quoted).mimetype || '';
-    const isMedia = /image|video|sticker|audio/.test(mime);
-    const more = String.fromCharCode(8206);
-    const masss = more.repeat(850);
-    const htextos = `${text ? text : '*Que quieres pendejo Soy AdriBot 😸*'}`;
-    if ((isMedia && quoted.mtype === 'imageMessage') && htextos) {
-      var mediax = await quoted.download?.();
-      conn.sendMessage(m.chat, {image: mediax, mentions: users, caption: htextos, mentions: users}, {quoted: m});
-    } else if ((isMedia && quoted.mtype === 'videoMessage') && htextos) {
-      var mediax = await quoted.download?.();
-      conn.sendMessage(m.chat, {video: mediax, mentions: users, mimetype: 'video/mp4', caption: htextos}, {quoted: m});
-    } else if ((isMedia && quoted.mtype === 'audioMessage') && htextos) {
-      var mediax = await quoted.download?.();
-      conn.sendMessage(m.chat, {audio: mediax, mentions: users, mimetype: 'audio/mpeg', fileName: `Hidetag.mp3`}, {quoted: m});
-    } else if ((isMedia && quoted.mtype === 'stickerMessage') && htextos) {
-      var mediax = await quoted.download?.();
-      conn.sendMessage(m.chat, {sticker: mediax, mentions: users}, {quoted: m});
-    } else {
-      await conn.relayMessage(m.chat, {extendedTextMessage: {text: `${masss}\n${htextos}\n`, ...{contextInfo: {mentionedJid: users, externalAdReply: {thumbnail: imagen1, sourceUrl: 'https://whatsapp.com/channel/0029Vb1AFK6HbFV9kaB3b13W'}}}}}, {});
-    }
+  // Obtiene todos los participantes del grupo
+  let chat = conn.chats[m.chat]
+  let participants = chat?.presences ? Object.keys(chat.presences) : []
+  if (!participants.length) participants = chat?.participants?.map(p => p.id) || []
+
+  // Filtra bots y el propio bot
+  participants = participants.filter(jid => !conn.user.jid.includes(jid) && !jid.endsWith('@g.us'))
+
+  // Divide en lotes de 50 para grupos muy grandes
+  const chunk = (arr, size) => {
+    let result = []
+    for (let i = 0; i < arr.length; i += size) result.push(arr.slice(i, i + size))
+    return result
   }
-};
-handler.command = /^(hidetag|notify|notificar|noti|n|hidetah|hidet)$/i;
-handler.help = ['hidetag'];
-handler.tag = ['grupo'];
-handler.group = true;
-handler.admin = true;
-export default handler;
+  const batches = chunk(participants, 50)
+
+  // Envía cada lote de menciones
+  for (let batch of batches) {
+    await conn.sendMessage(
+      m.chat,
+      { text, mentions: batch },
+      { quoted: m }
+    )
+  }
+}
+
+handler.help = ['hidetag <mensaje>']
+handler.tags = ['group']
+handler.command = ['hidetag', 'tagall', 'n'] // <-- ahora también funciona con .n
+handler.group = true
+
+export default handler
