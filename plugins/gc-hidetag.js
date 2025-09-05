@@ -8,23 +8,25 @@ var handler = async (m, { conn, text, usedPrefix, command, isAdmin }) => {
   const metadata = await conn.groupMetadata(m.chat);
   const participants = metadata.participants;
 
-  // Verificar si el bot es admin, independientemente del tipo JID
-  const botIsAdmin = participants.some(p => p.admin && [conn.user.id, conn.user.jid].includes(p.id));
+  // Detectar si el bot es admin sin depender de JIDs exactos
+  const botMaybeAdmin = participants.some(p => p.admin && p.id.includes(conn.user.id.split('@')[0]));
 
-  if (!botIsAdmin) {
+  if (!botMaybeAdmin) {
     return conn.reply(m.chat, '❌ Necesito ser administrador para mencionar a todos.', m);
   }
 
+  // Crear lista de menciones, excluyendo al bot mismo
   const mentionList = participants
     .map(p => p.id)
-    .filter(id => ![conn.user.id, conn.user.jid].includes(id) && !id.endsWith('@g.us'));
+    .filter(id => !id.includes(conn.user.id.split('@')[0]) && !id.endsWith('@g.us'));
 
   const chunk = (arr, size) => {
-    let result = [];
-    for (let i = 0; i < arr.length; i += size)
-      result.push(arr.slice(i, i + size));
-    return result;
-  }
+    let res = [];
+    for (let i = 0; i < arr.length; i += size) {
+      res.push(arr.slice(i, i + size));
+    }
+    return res;
+  };
   const batches = chunk(mentionList, 50);
 
   if (m.quoted) {
