@@ -1,6 +1,7 @@
 import yts from 'yt-search';
 import { spawn } from 'child_process';
 import fs from 'fs';
+import { tmpdir } from 'os';
 import path from 'path';
 import fetch from 'node-fetch';
 
@@ -23,33 +24,44 @@ const handler = async (m, { conn, args, usedPrefix }) => {
         const infoText = `🎵 *${video.title}*\n⏱ Duración: ${video.timestamp}\n👁 Vistas: ${video.views}\n📺 Canal: ${video.author.name}\n📅 Publicado: ${video.ago}\n\n⏳ Descargando audio...`;
         await conn.sendMessage(chatId, { image: thumbBuffer, caption: infoText }, { quoted: m });
 
-        // Crear nombre temporal
-        const tempFile = path.join('./tmp', `song_${Date.now()}.mp3`);
+        // Archivo temporal
+        const tmpFile = path.join(tmpdir(), `audio_${Date.now()}.mp3`);
 
-        // Descargar audio usando yt-dlp
+        // Descargar y convertir audio con yt-dlp + ffmpeg
         await new Promise((resolve, reject) => {
-            const process = spawn('yt-dlp', [
-                '-x', '--audio-format', 'mp3', '--output', tempFile, video.url
+            const ytProcess = spawn('yt-dlp', [
+                '-f', 'bestaudio',
+                '-o', '-', // salida a stdout
+                video.url
             ]);
 
-            process.on('error', reject);
-            process.stderr.on('data', (data) => console.log(data.toString()));
-            process.on('close', (code) => {
+            const ffmpeg = spawn('ffmpeg', [
+                '-i', 'pipe:0',
+                '-vn',
+                '-c:a', 'libmp3lame',
+                '-b:a', '128k',
+                tmpFile
+            ]);
+
+            ytProcess.stdout.pipe(ffmpeg.stdin);
+            ytProcess.stderr.on('data', d => console.log(d.toString()));
+            ffmpeg.stderr.on('data', d => console.log(d.toString()));
+
+            ffmpeg.on('close', (code) => {
                 if (code === 0) resolve();
-                else reject(new Error(`yt-dlp exited with code ${code}`));
+                else reject(new Error('ffmpeg error'));
             });
         });
 
-        // Leer archivo y enviarlo
-        const audioBuffer = fs.readFileSync(tempFile);
+        // Leer archivo y enviar
+        const audioBuffer = fs.readFileSync(tmpFile);
         await conn.sendMessage(chatId, {
             audio: audioBuffer,
             mimetype: 'audio/mpeg',
-            fileName: `${video.title}.mp3`,
+            fileName: `${video.title}.mp3`
         }, { quoted: m });
 
-        // Borrar archivo temporal
-        fs.unlinkSync(tempFile);
+        fs.unlinkSync(tmpFile); // eliminar temporal
 
     } catch (e) {
         console.error(e);
