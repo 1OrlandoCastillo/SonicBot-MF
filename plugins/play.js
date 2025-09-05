@@ -10,64 +10,41 @@ const handler = async (m, { conn, args, usedPrefix }) => {
 
         if (!query) return conn.sendMessage(chatId, { text: `✏️ Usa el comando así:\n${usedPrefix}play [nombre de la canción]` }, { quoted: m });
 
-        // Buscar canciones en YouTube
+        // Buscar canción en YouTube
         const results = await yts(query);
         if (!results || !results.videos.length) return conn.sendMessage(chatId, { text: '❌ No encontré resultados para tu búsqueda.' }, { quoted: m });
 
-        const videos = results.videos.slice(0, 5); // los primeros 5 resultados
-        let listMsg = '🎶 Selecciona la canción que quieres:\n\n';
-        videos.forEach((v, i) => {
-            listMsg += `*${i+1}.* ${v.title}\nDuración: ${v.timestamp}\nCanal: ${v.author.name}\n\n`;
-        });
-        listMsg += 'Responde con el número de la canción. Ej: 1';
-        await conn.sendMessage(chatId, { text: listMsg }, { quoted: m });
+        const video = results.videos[0]; // Tomamos el primer resultado
 
-        // Esperar respuesta del usuario
-        const filter = (res) => res.key.remoteJid === chatId && !isNaN(res.message?.conversation) && parseInt(res.message.conversation) > 0 && parseInt(res.message.conversation) <= videos.length;
-        const collected = await new Promise((resolve) => {
-            const listener = async (res) => {
-                if (filter(res)) {
-                    conn.ev.off('messages.upsert', listener);
-                    resolve(res);
-                }
-            };
-            conn.ev.on('messages.upsert', listener);
-        });
+        // Mostrar info de la canción
+        const infoMsg = `
+🎵 *Título:* ${video.title}
+⏱ *Duración:* ${video.timestamp}
+📺 *Canal:* ${video.author.name}
+🔗 *Link:* ${video.url}
+        `;
 
-        const choice = parseInt(collected.message.conversation) - 1;
-        const video = videos[choice];
+        await conn.sendMessage(chatId, {
+            image: { url: video.thumbnail },
+            caption: infoMsg
+        }, { quoted: m });
 
-        // Preguntar si quiere audio o video
-        await conn.sendMessage(chatId, { text: `Selecciona el formato:\n1. Audio 🎵\n2. Video 🎥\n3. Link 🔗` }, { quoted: m });
+        // Archivo temporal
+        const tempFile = join('./tmp', `${Date.now()}.mp3`);
 
-        const formatCollected = await new Promise((resolve) => {
-            const listener = async (res) => {
-                if (res.key.remoteJid === chatId && ['1','2','3'].includes(res.message?.conversation)) {
-                    conn.ev.off('messages.upsert', listener);
-                    resolve(res.message.conversation);
-                }
-            };
-            conn.ev.on('messages.upsert', listener);
-        });
-
-        if (formatCollected === '3') {
-            return conn.sendMessage(chatId, { text: `🔗 Aquí está tu link:\n${video.url}` }, { quoted: m });
-        }
-
-        const tempFile = join('./tmp', `${Date.now()}.${formatCollected === '1' ? 'mp3' : 'mp4'}`);
-        const stream = ytdl(video.url, { quality: 'highestaudio', filter: formatCollected === '1' ? 'audioonly' : 'audioandvideo' });
+        // Descargar solo audio
+        const stream = ytdl(video.url, { quality: 'highestaudio', filter: 'audioonly' });
         const writeStream = fs.createWriteStream(tempFile);
         stream.pipe(writeStream);
 
-        await conn.sendMessage(chatId, { text: '⏳ Descargando, espera un momento...' }, { quoted: m });
-
         writeStream.on('finish', async () => {
-            if (formatCollected === '1') {
-                await conn.sendMessage(chatId, { audio: { url: tempFile }, mimetype: 'audio/mpeg' }, { quoted: m });
-            } else {
-                await conn.sendMessage(chatId, { video: { url: tempFile }, mimetype: 'video/mp4' }, { quoted: m });
-            }
-            fs.unlinkSync(tempFile);
+            await conn.sendMessage(chatId, {
+                audio: { url: tempFile },
+                mimetype: 'audio/mpeg',
+                fileName: `${video.title}.mp3`
+            }, { quoted: m });
+
+            fs.unlinkSync(tempFile); // Eliminar archivo temporal
         });
 
     } catch (e) {
@@ -77,6 +54,6 @@ const handler = async (m, { conn, args, usedPrefix }) => {
 };
 
 handler.help = ['play'];
-handler.tags = ['audio', 'video'];
+handler.tags = ['audio'];
 handler.command = ['play'];
 export default handler;
