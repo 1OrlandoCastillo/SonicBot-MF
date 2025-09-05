@@ -17,9 +17,15 @@ const handler = async (m, { conn, args, usedPrefix }) => {
 
         const video = results.videos[0];
 
-        // Mostrar información
+        // Descargar miniatura
+        const thumbnailBuffer = Buffer.from(await (await fetch(video.thumbnail)).arrayBuffer());
+
+        // Enviar info con miniatura
         const infoMessage = `🎵 *${video.title}*\n⏱ Duración: ${video.timestamp}\n👁 Vistas: ${video.views}\n📺 Canal: ${video.author.name}\n📅 Publicado: ${video.ago}\n\nDescargando audio...`;
-        await conn.sendMessage(chatId, { text: infoMessage }, { quoted: m });
+        await conn.sendMessage(chatId, {
+            image: thumbnailBuffer,
+            caption: infoMessage
+        }, { quoted: m });
 
         // Crear carpeta temporal
         const tmpDir = './tmp';
@@ -36,14 +42,21 @@ const handler = async (m, { conn, args, usedPrefix }) => {
         });
 
         const audioBuffer = await fs.readFile(tempFile);
-        const thumbnailBuffer = Buffer.from(await (await fetch(video.thumbnail)).arrayBuffer());
 
         // Enviar audio
         await conn.sendMessage(chatId, {
             audio: audioBuffer,
             mimetype: 'audio/mpeg',
             fileName: `${video.title}.mp3`,
-            contextInfo: { externalAdReply: { title: video.title, body: video.author.name, mediaUrl: video.url, mediaType: 2, thumbnail: thumbnailBuffer } }
+            contextInfo: { 
+                externalAdReply: { 
+                    title: video.title, 
+                    body: video.author.name, 
+                    mediaUrl: video.url, 
+                    mediaType: 2, 
+                    thumbnail: thumbnailBuffer 
+                } 
+            }
         }, { quoted: m });
 
         // Eliminar archivo temporal
