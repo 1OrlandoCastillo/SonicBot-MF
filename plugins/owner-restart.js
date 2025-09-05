@@ -1,44 +1,46 @@
-import { existsSync, promises as fs } from 'fs'
-import path from 'path'
+import chalk from 'chalk'
 
-let handler = async (m, { conn }) => {
-    const rwait = '⌛', done = '✅', rcanal = null
+let handler = async (m, { conn, usedPrefix, command, args, text, isOwner }) => {
+  if (!isOwner) {
+    return m.reply('*[❗] Solo los dueños pueden usar este comando.*')
+  }
 
-    if (global.conn.user.jid !== conn.user.jid) {
-        return conn.reply(m.chat, '🚩 *Utiliza este comando directamente en el número principal del Bot*', m, rcanal)
-    }
-    await conn.reply(m.chat, '🚩 *Iniciando proceso de eliminación de todos los archivos de sesión, excepto el archivo creds.json...*', m, rcanal)
-    if (typeof m.react === 'function') await m.react(rwait)
+  try {
 
-    let sessionPath = path.resolve('./CrowSession/')
 
-    try {
-        if (!existsSync(sessionPath)) {
-            return await conn.reply(m.chat, '🚩 *La carpeta CrowSession no existe o está vacía*', m, rcanal)
-        }
-        let files = await fs.readdir(sessionPath)
-        let filesDeleted = 0
-        for (const file of files) {
-            if (file !== 'creds.json') {
-                await fs.unlink(path.join(sessionPath, file))
-                filesDeleted++
-            }
-        }
-        if (filesDeleted === 0) {
-            await conn.reply(m.chat, '🚩 *No se encontró ningún archivo para eliminar (excepto creds.json)*', m, rcanal)
-        } else {
-            if (typeof m.react === 'function') await m.react(done)
-            await conn.reply(m.chat, `🚩 *Se eliminaron ${filesDeleted} archivos de sesión (excepto creds.json)*`, m, rcanal)
-            await conn.reply(m.chat, `🚩 *¡Hola! ¿logras verme?*`, m, rcanal)
-        }
-    } catch (err) {
-        console.error('Error al leer la carpeta o los archivos de sesión:', err)
-        await conn.reply(m.chat, '🚩 *Ocurrió un fallo inesperado*', m, rcanal)
-    }
+    const restartMessage = `╭─「 ✦ 𓆩🔄𓆪 ʀᴇɪɴɪᴄɪᴏ ᴅᴇ ʙᴏᴛ ✦ 」─╮
+
+╰➺ ✧ *Iniciado por:* @${m.sender.split('@')[0]}
+╰➺ ✧ *Estado:* Bot reiniciado con éxito. 
+
+╰────────────────╯
+
+> SonicBot-MF X ADRI🫅🏻`
+
+
+    await conn.sendMessage(m.chat, {
+      text: restartMessage,
+      contextInfo: {
+        ...rcanal.contextInfo,
+        mentionedJid: [m.sender]
+      }
+    }, { quoted: m })
+
+
+    setTimeout(() => {
+      console.log(chalk.yellow('🔄 Reinicio iniciado por owner:', m.sender))
+      process.exit(0) 
+    }, 3000)
+
+  } catch (e) {
+    console.error('Error en comando restart:', e)
+    conn.reply(m.chat, '❌ Hubo un error al reiniciar el bot.', m, rcanal)
+  }
 }
-handler.help = ['dsowner']
+
+handler.command = ['restart', 'reiniciar', 'reboot']
 handler.tags = ['owner']
-handler.command = /^(delzero|dsowner|clearallsession)$/i
+handler.help = ['restart - Reiniciar el bot (solo owners)']
 handler.rowner = true
 
-export default handler
+export default handler 
