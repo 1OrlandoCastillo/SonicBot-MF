@@ -28,13 +28,19 @@ const handler = async (m, { conn, args, usedPrefix }) => {
     await conn.sendMessage(chatId, { text: infoText }, { quoted: m });
 
     // Obtener enlace de audio desde la API externa
-    const apiUrl = `https://api.ejemplo.com/getAudio?videoId=${video.videoId}`;
-    const response = await fetch(apiUrl);
-    if (!response.ok) {
+    const apiUrl = `https://youtube-to-mp315.p.rapidapi.com/dl?id=${video.videoId}`;
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'X-RapidAPI-Host': 'youtube-to-mp315.p.rapidapi.com',
+        'X-RapidAPI-Key': 'YOUR_RAPIDAPI_KEY'
+      }
+    });
+    const data = await response.json();
+    if (!data || !data.link) {
       throw new Error('No se pudo obtener el enlace de audio.');
     }
-    const data = await response.json();
-    const audioUrl = data.audioUrl;
+    const audioUrl = data.link;
 
     // Descargar el audio
     const audioResponse = await fetch(audioUrl);
