@@ -1,6 +1,15 @@
 var handler = async (m, { conn, text, usedPrefix, command }) => {
   if (!m.isGroup) return conn.reply(m.chat, '❌ Este comando solo funciona en grupos', m)
 
+  // Si no hay texto y se responde a un mensaje, usamos el mensaje citado
+  let mensaje = text
+  let quoted = null
+  if (!text && m.quoted) {
+    mensaje = m.quoted.text || '' // si es texto, lo usamos, si no, queda vacío
+    quoted = m.quoted
+  }
+  if (!mensaje) return conn.reply(m.chat, `⚠️ Usa el comando así:\n${usedPrefix}${command} <mensaje>`, m)
+
   // Obtiene todos los participantes del grupo
   let chat = conn.chats[m.chat]
   let participants = chat?.presences ? Object.keys(chat.presences) : []
@@ -17,23 +26,12 @@ var handler = async (m, { conn, text, usedPrefix, command }) => {
   }
   const batches = chunk(participants, 50)
 
-  // Determina el mensaje y el mensaje citado
-  let mensaje = text || (m.quoted && m.quoted.text)
-  let quoted = m.quoted || m
-
-  if (!mensaje && !m.quoted) {
-    return conn.reply(m.chat, `⚠️ Usa el comando así:\n${usedPrefix}${command} <mensaje> o respondiendo a un mensaje`, m)
-  }
-
   // Envía cada lote de menciones
   for (let batch of batches) {
     await conn.sendMessage(
       m.chat,
-      {
-        text: mensaje || '',
-        mentions: batch
-      },
-      { quoted }
+      { text: mensaje, mentions: batch },
+      { quoted: quoted || m }
     )
   }
 }
