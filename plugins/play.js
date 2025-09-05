@@ -8,7 +8,6 @@ const handler = async (m, { conn, args, usedPrefix }) => {
     try {
         const chatId = m.key.remoteJid;
         const query = args.join(' ');
-
         if (!query) return conn.sendMessage(chatId, { text: `✏️ Usa así:\n${usedPrefix}play [nombre de la canción]` }, { quoted: m });
 
         const results = await yts(query);
@@ -16,7 +15,6 @@ const handler = async (m, { conn, args, usedPrefix }) => {
 
         const top3 = results.videos.slice(0, 3);
 
-        // Crear botones para los 3 resultados
         const buttons = top3.map((v, i) => ({
             buttonId: `play_${i}`,
             buttonText: { displayText: `${i+1}` },
@@ -25,7 +23,9 @@ const handler = async (m, { conn, args, usedPrefix }) => {
 
         const buttonMessage = {
             image: { url: top3[0].thumbnail },
-            caption: `🎵 *Resultados para:* ${query}\n\n${top3.map((v,i) => `${i+1}. ${v.title} | ⏱ ${v.timestamp} | 📺 ${v.author.name}`).join('\n')}\n\nPulsa el número de la canción que quieres descargar.`,
+            caption: `🎵 *Resultados para:* ${query}\n\n` +
+                     top3.map((v, i) => `${i+1}. ${v.title}\n⏱ ${v.timestamp} | 👁 ${v.views} vistas | 📺 ${v.author.name} | 📅 ${v.ago}`).join('\n\n') +
+                     `\n\nPulsa el número de la canción que quieres descargar.`,
             buttons,
             headerType: 4
         };
@@ -42,7 +42,6 @@ const handler = async (m, { conn, args, usedPrefix }) => {
             const index = parseInt(selected.split('_')[1]);
             const video = top3[index];
 
-            // Crear carpeta temporal si no existe
             const tmpDir = './tmp';
             if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
             const tempFile = join(tmpDir, `${Date.now()}.mp3`);
@@ -56,12 +55,12 @@ const handler = async (m, { conn, args, usedPrefix }) => {
                 writeStream.on('error', reject);
             });
 
-            // Leer archivo y enviar
             const audioBuffer = await fs.readFile(tempFile);
             await conn.sendMessage(chatId, {
                 audio: audioBuffer,
                 mimetype: 'audio/mpeg',
-                fileName: `${video.title}.mp3`
+                fileName: `${video.title}.mp3`,
+                contextInfo: { externalAdReply: { title: video.title, body: video.author.name, mediaUrl: video.url, mediaType: 2, thumbnail: (await (await fetch(video.thumbnail)).arrayBuffer()) } }
             }, { quoted: m });
 
             await fs.unlink(tempFile);
