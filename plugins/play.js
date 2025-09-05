@@ -1,7 +1,6 @@
 import yts from 'yt-search';
 import ytdl from 'ytdl-core';
-import fs from 'fs/promises';
-import { createWriteStream, existsSync, mkdirSync } from 'fs';
+import { createWriteStream, existsSync, mkdirSync, readFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import fetch from 'node-fetch';
 
@@ -11,21 +10,18 @@ const handler = async (m, { conn, args, usedPrefix }) => {
         const query = args.join(' ');
         if (!query) return conn.sendMessage(chatId, { text: `✏️ Usa así:\n${usedPrefix}play [nombre de la canción]` }, { quoted: m });
 
-        // Buscar la canción en YouTube
+        // Buscar canción en YouTube
         const results = await yts(query);
         if (!results || !results.videos.length) return conn.sendMessage(chatId, { text: '❌ No encontré resultados.' }, { quoted: m });
 
         const video = results.videos[0];
 
         // Descargar miniatura
-        const thumbnailBuffer = Buffer.from(await (await fetch(video.thumbnail)).arrayBuffer());
+        const thumbBuffer = Buffer.from(await (await fetch(video.thumbnail)).arrayBuffer());
 
-        // Enviar info con miniatura
-        const infoMessage = `🎵 *${video.title}*\n⏱ Duración: ${video.timestamp}\n👁 Vistas: ${video.views}\n📺 Canal: ${video.author.name}\n📅 Publicado: ${video.ago}\n\nDescargando audio...`;
-        await conn.sendMessage(chatId, {
-            image: thumbnailBuffer,
-            caption: infoMessage
-        }, { quoted: m });
+        // Mostrar info
+        const infoText = `🎵 *${video.title}*\n⏱ Duración: ${video.timestamp}\n👁 Vistas: ${video.views}\n📺 Canal: ${video.author.name}\n📅 Publicado: ${video.ago}\n\nDescargando audio...`;
+        await conn.sendMessage(chatId, { image: thumbBuffer, caption: infoText }, { quoted: m });
 
         // Crear carpeta temporal
         const tmpDir = './tmp';
@@ -35,32 +31,22 @@ const handler = async (m, { conn, args, usedPrefix }) => {
         // Descargar audio
         await new Promise((resolve, reject) => {
             const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
-            const writeStream = createWriteStream(tempFile);
-            stream.pipe(writeStream);
-            writeStream.on('finish', resolve);
-            writeStream.on('error', reject);
+            const fileStream = createWriteStream(tempFile);
+            stream.pipe(fileStream);
+            fileStream.on('finish', resolve);
+            fileStream.on('error', reject);
         });
 
-        const audioBuffer = await fs.readFile(tempFile);
-
-        // Enviar audio
+        // Leer archivo y enviar
+        const audioBuffer = readFileSync(tempFile);
         await conn.sendMessage(chatId, {
             audio: audioBuffer,
             mimetype: 'audio/mpeg',
             fileName: `${video.title}.mp3`,
-            contextInfo: { 
-                externalAdReply: { 
-                    title: video.title, 
-                    body: video.author.name, 
-                    mediaUrl: video.url, 
-                    mediaType: 2, 
-                    thumbnail: thumbnailBuffer 
-                } 
-            }
         }, { quoted: m });
 
-        // Eliminar archivo temporal
-        await fs.unlink(tempFile);
+        // Borrar archivo temporal
+        unlinkSync(tempFile);
 
     } catch (e) {
         console.error(e);
