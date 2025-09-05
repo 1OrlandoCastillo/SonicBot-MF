@@ -10,26 +10,29 @@ const handler = async (m, { text, conn, usedPrefix, command }) => {
     const height = 512
     const image = new Jimp(width, height, 0xFFFFFFFF) // fondo blanco
 
-    // Fuente
-    const font = await Jimp.loadFont(Jimp.FONT_SANS_64_BLACK) // más grande y legible
+    // Fuente estilo pixeleada y oscura (Jimp trae una por defecto)
+    const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK)
 
-    // Imprimir texto con saltos de línea
+    // Dibujar texto alineado a la izquierda, arriba
     image.print(
       font,
-      0,
-      0,
+      20,  // margen X
+      20,  // margen Y
       {
-        text: text, // si mandas "arrewé\nsimonwe\nvawe" lo coloca igual que tu imagen
-        alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
+        text: text, // respeta saltos de línea (\n)
+        alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT,
         alignmentY: Jimp.VERTICAL_ALIGN_TOP
       },
-      width,
-      height
+      width - 40,  // espacio usable
+      height - 40
     )
+
+    // Para darle un look más “pixelado”
+    image.resize(width, height, Jimp.RESIZE_NEAREST_NEIGHBOR)
 
     const buffer = await image.getBufferAsync(Jimp.MIME_PNG)
 
-    // Convertir a sticker (webp)
+    // Mandar como sticker
     await conn.sendMessage(m.chat, { sticker: buffer }, { quoted: m })
 
   } catch (e) {
