@@ -5,23 +5,25 @@ var handler = async (m, { conn, text, usedPrefix, command, isAdmin }) => {
     if (!isAdmin)
         return conn.reply(m.chat, '🚫 Este comando solo puede ser usado por *administradores*.', m);
 
-    // Verificar si el bot es admin manualmente
-    let bot = conn.user.jid;
-    let botAdmin = false;
+    // Obtener metadata del grupo
+    const groupMetadata = await conn.groupMetadata(m.chat);
+    const participants = groupMetadata.participants;
 
-    if (m.isGroup) {
-        let groupMetadata = await conn.groupMetadata(m.chat);
-        let groupAdmins = groupMetadata.participants.filter(p => p.admin);
-        botAdmin = groupAdmins.some(p => p.id === bot);
-    }
+    // Obtener JID del bot y del remitente
+    const botNumber = conn.decodeJid(conn.user.id); // ✅ este es el fix
+    const botParticipant = participants.find(p => p.id === botNumber);
 
-    if (!botAdmin) {
+    // Verificar si el bot es admin
+    if (!botParticipant?.admin) {
         return conn.reply(m.chat, '❌ Necesito ser administrador para mencionar a todos.', m);
     }
 
-    let participants = (await conn.groupMetadata(m.chat)).participants.map(p => p.id);
-    participants = participants.filter(jid => !conn.user.jid.includes(jid) && !jid.endsWith('@g.us'));
+    // Obtener todos los miembros excepto el bot
+    const mentionList = participants
+        .map(p => p.id)
+        .filter(id => id !== botNumber && !id.endsWith('@g.us'));
 
+    // Dividir en lotes de 50
     const chunk = (arr, size) => {
         let result = [];
         for (let i = 0; i < arr.length; i += size)
@@ -29,7 +31,7 @@ var handler = async (m, { conn, text, usedPrefix, command, isAdmin }) => {
         return result;
     }
 
-    const batches = chunk(participants, 50);
+    const batches = chunk(mentionList, 50);
 
     if (m.quoted) {
         for (let batch of batches) {
