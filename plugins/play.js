@@ -1,6 +1,4 @@
-// plugins/play.js
-import yts from 'yt-search';
-import ytdl from 'ytdl-core';
+import fetch from 'node-fetch';
 
 const handler = async (m, { conn, args, usedPrefix }) => {
   try {
@@ -25,22 +23,35 @@ const handler = async (m, { conn, args, usedPrefix }) => {
 👁 Vistas: ${video.views}
 📺 Canal: ${video.author.name}
 📅 Publicado: ${video.ago}
-\n⏳ Descargando audio...`;
+\n⏳ Buscando audio...`;
 
     await conn.sendMessage(chatId, { text: infoText }, { quoted: m });
 
-    // Descargar el audio
-    const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
+    // Obtener enlace de audio desde la API externa
+    const apiUrl = `https://api.ejemplo.com/getAudio?videoId=${video.videoId}`;
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+      throw new Error('No se pudo obtener el enlace de audio.');
+    }
+    const data = await response.json();
+    const audioUrl = data.audioUrl;
 
-    // Enviar el audio
+    // Descargar el audio
+    const audioResponse = await fetch(audioUrl);
+    if (!audioResponse.ok) {
+      throw new Error('No se pudo descargar el audio.');
+    }
+    const audioBuffer = await audioResponse.buffer();
+
+    // Enviar el audio como mensaje de voz
     await conn.sendMessage(chatId, {
-      audio: stream,
+      audio: audioBuffer,
       mimetype: 'audio/mpeg',
       fileName: `${video.title}.mp3`,
     }, { quoted: m });
 
   } catch (e) {
-    console.error('❌ Error en play:', e);
+    console.error(e);
     await conn.sendMessage(m.key.remoteJid, { text: '❌ Ocurrió un error al reproducir la canción.' }, { quoted: m });
   }
 };
