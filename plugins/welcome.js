@@ -3,31 +3,29 @@ import Jimp from 'jimp'
 
 const handler = async (m, { conn }) => {
   try {
-    // Revisar si el evento es 'group-participants.update'
+    const chatId = m.id || m.key.remoteJid
+    const groupSettings = global.db.data.settings?.[chatId]
+    if (!groupSettings?.welcome) return
+
     if (!m?.participants) return
 
     for (let user of m.participants) {
-      if (m.action === 'add') { // Nueva persona en el grupo
-        const chatId = m.id || m.key.remoteJid
-        const nombre = await conn.getName(user)
+      if (m.action !== 'add') continue
 
-        // Sticker simple con fondo negro y nombre
-        const image = new Jimp(512, 512, 0x000000ff)
-        const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE)
-        image.print(
-          font,
-          0,
-          200,
-          { text: `Bienvenido\n${nombre}`, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER }
-        )
+      const nombre = await conn.getName(user)
+      const groupName = (await conn.groupMetadata(chatId))?.subject || 'este grupo'
+      const message = (groupSettings.welcomeMsg || '👋 ¡Bienvenido %user%!').replace(/%user%/g, nombre).replace(/%group%/g, groupName)
 
-        const buffer = await image.getBufferAsync(Jimp.MIME_PNG)
-        const stiker = await sticker(buffer, false, global.packname || 'SonicBot', global.author || 'SonicBot')
+      // Sticker simple con fondo negro y nombre
+      const image = new Jimp(512, 512, 0x000000ff)
+      const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE)
+      image.print(font, 0, 200, { text: nombre, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER })
 
-        // Mensaje de bienvenida
-        await conn.sendMessage(chatId, { text: `👋 ¡Bienvenido al grupo, ${nombre}!` })
-        await conn.sendMessage(chatId, { sticker: stiker })
-      }
+      const buffer = await image.getBufferAsync(Jimp.MIME_PNG)
+      const stiker = await sticker(buffer, false, global.packname || 'SonicBot', global.author || 'SonicBot')
+
+      await conn.sendMessage(chatId, { text: message })
+      await conn.sendMessage(chatId, { sticker: stiker })
     }
   } catch (e) {
     console.error('❌ Error en welcome:', e)
