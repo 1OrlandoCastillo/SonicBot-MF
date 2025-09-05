@@ -17,15 +17,18 @@ var handler = async (m, { conn, text, usedPrefix, command }) => {
   }
   const batches = chunk(participants, 50)
 
-  // Define el mensaje y el mensaje citado de manera segura
-  let mensaje = text // texto escrito con .n
-  let quoted = m // por defecto, el propio mensaje
-  if (!mensaje && m.quoted) { // si no hay texto pero hay mensaje citado
-    mensaje = m.quoted.text || ''
+  // Determina el mensaje y el mensaje citado
+  let mensaje = text // Si escribes algo con .n
+  let quoted = m // Por defecto, el propio mensaje
+
+  // Si no escribiste texto pero respondes a un mensaje
+  if (!mensaje && m.quoted?.text) {
+    mensaje = m.quoted.text
     quoted = m.quoted
   }
 
-  if (!mensaje && !m.quoted) {
+  // Si no hay texto ni mensaje citado
+  if (!mensaje) {
     return conn.reply(m.chat, `⚠️ Usa el comando así:\n${usedPrefix}${command} <mensaje> o respondiendo a un mensaje`, m)
   }
 
