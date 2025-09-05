@@ -598,4 +598,86 @@ export async function handler(chatUpdate) {
         global.dfail = (type, m, conn) => {
             const msg = {
                 rowner: `✤ Hola, este comando solo puede ser utilizado por el *Creador* de la Bot.`,
-                owner: `
+                owner: `✤ Hola, este comando solo puede ser utilizado por el *Creador* de la Bot y *Sub Bots*.`,
+                mods: `✤ Hola, este comando solo puede ser utilizado por los *Moderadores* de la Bot.`,
+                premium: `✤ Hola, este comando solo puede ser utilizado por Usuarios *Premium*.`,
+                group: `✤ Hola, este comando solo puede ser utilizado en *Grupos*.`,
+                private: `✤ Hola, este comando solo puede ser utilizado en mi Chat *Privado*.`,
+                admin: `✤ Hola, este comando solo puede ser utilizado por los *Administradores* del Grupo.`,
+                botAdmin: `✤ Hola, la bot debe ser *Administradora* para ejecutar este Comando.`,
+                unreg: `✤ Hola, para usar este comando debes estar *Registrado.*`,
+                restrict: `✤ Hola, esta característica está *deshabilitada.*`
+            }[type]
+            if (msg) return conn.reply(m.chat, msg, m, rcanal)
+        }
+    } catch (e) {
+        console.error(e)
+    } finally {
+        if (opts['queque'] && m.text) {
+            const quequeIndex = this.msgqueque.indexOf(m.id || m.key.id)
+            if (quequeIndex !== -1) this.msgqueque.splice(quequeIndex, 1)
+        }
+        let user, stats = global.db.data.stats
+        if (m) {
+            if (m.sender && (user = global.db.data.users[m.sender])) {
+                user.exp += m.exp
+                user.limit -= m.limit * 1
+            }
+            let stat
+            if (m.plugin) {
+                let now = +new Date
+                stat = stats[m.plugin] ||= {
+                    total: 0,
+                    success: 0,
+                    last: 0,
+                    lastSuccess: 0
+                }
+                stat.total += 1
+                stat.last = now
+                if (m.error == null) {
+                    stat.success += 1
+                    stat.lastSuccess = now
+                }
+            }
+        }
+        try {
+            if (!opts['noprint']) await (await import(`./lib/print.js`)).default(m, this)
+        } catch (e) {
+            console.log(m, m.quoted, e)
+        }
+        const settingsREAD = global.db.data.settings[this.user.jid] || {}
+        const isSubBot = this.user.jid !== global.conn.user.jid
+        let shouldAutoRead = true
+        if (isSubBot) {
+            try {
+                const botNumber = this.user.jid.split('@')[0].replace(/\D/g, '')
+                const configPath = `./Serbot/${botNumber}/config.json`
+                if (existsSync(configPath)) {
+                    const config = JSON.parse(readFileSync(configPath, 'utf-8'))
+                    if (config.autoRead === false) {
+                        shouldAutoRead = false
+                    }
+                }
+            } catch (error) {
+                console.error('Error leyendo configuración de auto-leer:', error)
+            }
+        }
+        if (shouldAutoRead) {
+            try {
+                await this.readMessages([m.key])
+                if (m.isGroup) {
+                    await this.readMessages([m.key], { readEphemeral: true })
+                }
+            } catch (e) {
+                console.error('Error al marcar como leído:', e)
+            }
+            if (m.isGroup && global.db.data.modoIA && global.db.data.modoIA[m.chat] === true && m.text && !m.fromMe) {
+                try {
+                    const { callGeminiAPI, isLikelyCommand } = await import('./lib/geminiAPI.js')
+                    if (isLikelyCommand(m.text)) return
+                    if (m.text.trim().length < 3) return
+                    if (/^[\s\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]*$/u.test(m.text)) return
+                    const userName = m.pushName || m.name || 'Usuario'
+                    const groupName = await this.getName(m.chat) || 'Grupo'
+                    await this.sendPresenceUpdate('composing', m.chat)
+                    const response = await callGeminiAPI(m.text, userName, groupName, m.chat)
