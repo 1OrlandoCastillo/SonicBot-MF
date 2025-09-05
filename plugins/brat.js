@@ -1,5 +1,5 @@
 import Jimp from 'jimp'
-import { createSticker } from './sticker.js'
+import { writeExif } from './lib/sticker.js'
 
 const handler = async (m, { text, conn, usedPrefix, command }) => {
   if (!text) {
@@ -49,9 +49,10 @@ const handler = async (m, { text, conn, usedPrefix, command }) => {
 
     const buffer = await image.getBufferAsync(Jimp.MIME_PNG)
 
-    // crear sticker con metadata
-    const sticker = await createSticker(buffer, 'hecho por', 'AdriBot el mejor')
+    // generar sticker con metadata (EXIF)
+    const sticker = await writeExif(buffer, 'hecho por', 'AdriBot el mejor')
 
+    // enviar como archivo webp (para que todos lo vean)
     await conn.sendMessage(m.chat, { sticker }, { quoted: m })
 
   } catch (e) {
