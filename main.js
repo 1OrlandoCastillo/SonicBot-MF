@@ -261,6 +261,29 @@ fs.watch(pluginFolder, (eventType, filename) => {
 
 await global.reloadHandler()
 
+// ✅ aquí está el fix: usamos fs.watch
+fs.watch(pluginFolder, (eventType, filename) => {
+  if (filename) {
+    global.reload(eventType, filename).catch(err => console.error(err))
+  }
+})
+
+// 🚀 Definir reloadHandler para recargar el handler.js
+global.reloadHandler = async function (rest) {
+  try {
+    const Handler = await import(`./handler.js?update=${Date.now()}`)
+    if (Handler) {
+      global.handler = Handler.handler
+      console.log("✅ Handler cargado correctamente")
+    }
+  } catch (err) {
+    console.error("❌ Error cargando handler:", err)
+  }
+}
+
+// 👇 ya puedes usar reloadHandler
+await global.reloadHandler()
+
 // Quick test de dependencias
 async function _quickTest() {
   const test = await Promise.all([
@@ -279,6 +302,7 @@ async function _quickTest() {
   const s = global.support = { ffmpeg, ffprobe, ffmpegWebp, convert, magick, gm, find }
   Object.freeze(global.support)
 }
+
 await _quickTest()
 
 // Intervalos de limpieza
