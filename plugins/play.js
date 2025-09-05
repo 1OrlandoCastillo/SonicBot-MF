@@ -1,3 +1,4 @@
+// plugins/play.js
 import yts from 'yt-search';
 import ytdl from 'ytdl-core';
 
@@ -18,10 +19,17 @@ const handler = async (m, { conn, args, usedPrefix }) => {
     const video = results.videos[0];
 
     // Mostrar info de la canción
-    const infoText = `🎵 *${video.title}*\n⏱ Duración: ${video.timestamp}\n👁 Vistas: ${video.views}\n📺 Canal: ${video.author.name}\n📅 Publicado: ${video.ago}\n\n⏳ Descargando audio...`;
+    const infoText = 
+`🎵 *${video.title}*
+⏱ Duración: ${video.timestamp}
+👁 Vistas: ${video.views}
+📺 Canal: ${video.author.name}
+📅 Publicado: ${video.ago}
+\n⏳ Descargando audio...`;
+
     await conn.sendMessage(chatId, { text: infoText }, { quoted: m });
 
-    // Descargar el audio con ytdl-core
+    // Descargar el audio
     const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
 
     // Enviar el audio
@@ -32,7 +40,7 @@ const handler = async (m, { conn, args, usedPrefix }) => {
     }, { quoted: m });
 
   } catch (e) {
-    console.error(e);
+    console.error('❌ Error en play:', e);
     await conn.sendMessage(m.key.remoteJid, { text: '❌ Ocurrió un error al reproducir la canción.' }, { quoted: m });
   }
 };
