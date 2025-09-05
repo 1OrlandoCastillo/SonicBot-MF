@@ -118,8 +118,8 @@ const isBotAdmin = bot?.admin || false
 
 const ___dirname = path.join(path.dirname(fileURLToPath(import.meta.url)), './plugins')  
 
-global.idcanal = '120363403143798163@newsletter'  
-global.namecanal = 'LOVELLOUD Official Channel'  
+global.idcanal = '120363411154070926@newsletter'  
+global.namecanal = 'SONICBOT-MF Official Channel'  
 global.rcanal = {  
   contextInfo: {  
     isForwarded: true,  
