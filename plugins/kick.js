@@ -1,24 +1,20 @@
 var handler = async (m, { conn, usedPrefix, command, text }) => {
   if (!m.isGroup) return conn.reply(m.chat, '❌ Este comando solo funciona en grupos', m)
 
-  // Obtener metadata del grupo actualizado
+  // Actualiza metadata del grupo
   let metadata = await conn.groupMetadata(m.chat)
   let participants = metadata.participants
   let groupAdmins = participants.filter(p => p.admin === 'admin' || p.admin === 'superadmin').map(p => p.id)
 
-  // Verifica si quien ejecuta el comando es admin
+  // Verifica si quien ejecuta es admin
   if (!groupAdmins.includes(m.sender)) return conn.reply(m.chat, '❌ Solo los administradores pueden usar este comando.', m)
-
-  // Verifica si el bot es admin
-  if (!groupAdmins.includes(conn.user.jid)) return conn.reply(m.chat, '❌ Necesito ser administrador para expulsar a alguien.', m)
 
   // Obtiene JIDs a expulsar
   let mentions = m.mentionedJid || []
   if (m.quoted && m.quoted.sender) mentions.push(m.quoted.sender)
+  if (!mentions.length) return conn.reply(m.chat, `⚠️ Menciona a la(s) persona(s) o responde a su mensaje.\nEjemplo: ${usedPrefix}${command} @usuario [razón]`, m)
 
-  if (!mentions.length) return conn.reply(m.chat, `⚠️ Menciona a la(s) persona(s) o responde a su mensaje para expulsarlas.\nEjemplo: ${usedPrefix}${command} @usuario [razón]`, m)
-
-  // Separar razón del kick si se escribe después de los mentions
+  // Razón opcional
   let reason = text ? text.replace(/@\S+/g, '').trim() : ''
 
   for (let jid of mentions) {
@@ -28,16 +24,23 @@ var handler = async (m, { conn, usedPrefix, command, text }) => {
       continue
     }
 
-    // Evita expulsar al bot o a quien ejecuta el comando
+    // Evita expulsar al bot o a quien ejecuta
     if (jid === m.sender || jid === conn.user.jid) continue
 
     try {
+      // Intenta expulsar
       await conn.groupParticipantsUpdate(m.chat, [jid], 'remove')
       let mensaje = `✅ Usuario expulsado: @${jid.split('@')[0]}`
       if (reason) mensaje += `\n📝 Razón: ${reason}`
-      conn.reply(m.chat, mensaje, m)
+      conn.sendMessage(m.chat, { text: mensaje, mentions: [jid] })
     } catch (e) {
-      conn.reply(m.chat, `❌ No se pudo expulsar a @${jid.split('@')[0]}.\nError: ${e.message}`, m)
+      // Mensaje claro si falla por permisos de WhatsApp
+      let errorMsg = e.message || e
+      if (errorMsg.toLowerCase().includes('admin')) {
+        conn.reply(m.chat, `❌ No pude expulsar a @${jid.split('@')[0]}.\nPosiblemente no tengo permisos suficientes o es administrador.`, m)
+      } else {
+        conn.reply(m.chat, `❌ Error al expulsar a @${jid.split('@')[0]}.\n${errorMsg}`, m)
+      }
     }
   }
 }
@@ -47,6 +50,6 @@ handler.tags = ['group']
 handler.command = ['kick', 'expulsar']
 handler.group = true
 handler.admin = true
-handler.botAdmin = true
+handler.botAdmin = false // Aquí ya no bloquea si WhatsApp no lo permite
 
 export default handler
