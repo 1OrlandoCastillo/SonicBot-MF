@@ -1,75 +1,69 @@
-import { Sticker, StickerTypes } from 'wa-sticker-formatter'
-import Jimp from 'jimp'
+import { sticker } from '../lib/sticker.js'
+import axios from 'axios'
 
-export default async function handler(m, { conn, args }) {
+const handler = async (m, { conn, args }) => {
   try {
-    const text = args.join(' ') || 'Hola!'
-
-    // Obtener foto de perfil del usuario
-    let ppUrl
-    try {
-      ppUrl = await conn.profilePictureUrl(m.sender, 'image')
-    } catch {
-      ppUrl = 'https://i.ibb.co/2k0yT2y/default.jpg' // foto por defecto
+    // 1️⃣ Obtener texto
+    let text
+    if (args.length >= 1) {
+      text = args.join(' ')
+    } else if (m.quoted && m.quoted.text) {
+      text = m.quoted.text
+    } else {
+      return conn.reply(m.chat, '🚩 Te faltó el texto!', m)
     }
 
-    const image = await Jimp.read(ppUrl)
+    if (!text) return conn.reply(m.chat, '🚩 Te faltó el texto!', m)
 
-    // Fuente para el texto
-    const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK) // texto oscuro
+    // 2️⃣ Determinar usuario (para foto y nombre)
+    const who = m.mentionedJid && m.mentionedJid[0] ? m.mentionedJid[0] : m.fromMe ? conn.user.jid : m.sender
+    const nombre = await conn.getName(who)
 
-    // Crear imagen final con un poco de espacio para texto
-    const padding = 50
-    const finalImage = new Jimp(image.bitmap.width, image.bitmap.height + padding, 0x00000000)
-    finalImage.composite(image, 0, 0)
+    // Limitar longitud del texto
+    if (text.length > 40) return conn.reply(m.chat, '🚩 El texto no puede tener más de 40 caracteres', m)
 
-    // Escribir el texto en la parte inferior
-    finalImage.print(
-      font,
-      0,
-      image.bitmap.height + 5,
-      {
-        text,
-        alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
-        alignmentY: Jimp.VERTICAL_ALIGN_TOP,
-      },
-      image.bitmap.width,
-      padding
-    )
+    // 3️⃣ Obtener foto de perfil
+    const pp = await conn.profilePictureUrl(who).catch(() => 'https://telegra.ph/file/24fa902ead26340f3df2c.png')
 
-    // Escribir el nombre del usuario encima de la imagen
-    finalImage.print(
-      font,
-      0,
-      5,
-      {
-        text: m.pushName || 'Usuario',
-        alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
-        alignmentY: Jimp.VERTICAL_ALIGN_TOP,
-      },
-      image.bitmap.width,
-      40
-    )
+    // 4️⃣ Crear objeto para API de quote
+    const obj = {
+      type: 'quote',
+      format: 'png',
+      backgroundColor: '#000000', // fondo oscuro
+      width: 512,
+      height: 768,
+      scale: 2,
+      messages: [
+        {
+          entities: [],
+          avatar: true,
+          from: { id: 1, name: nombre, photo: { url: pp } },
+          text: text,
+          replyMessage: {}
+        }
+      ]
+    }
 
-    const buffer = await finalImage.getBufferAsync(Jimp.MIME_PNG)
-
-    // Crear sticker
-    const sticker = new Sticker(buffer, {
-      pack: 'SonicBot',
-      author: 'SonicBot',
-      type: StickerTypes.FULL,
-      quality: 100,
+    // 5️⃣ Llamar a la API
+    const json = await axios.post('https://bot.lyo.su/quote/generate', obj, {
+      headers: { 'Content-Type': 'application/json' }
     })
 
-    await conn.sendMessage(m.chat, { sticker: sticker.toMessage() }, { quoted: m })
+    const buffer = Buffer.from(json.data.result.image, 'base64')
+
+    // 6️⃣ Crear sticker y enviar
+    const stiker = await sticker(buffer, false, global.packname || 'SonicBot', global.author || 'SonicBot')
+    if (stiker) return conn.sendFile(m.chat, stiker, 'quote.webp', '', m)
 
   } catch (e) {
     console.error(e)
-    m.reply('❌ Ocurrió un error creando el sticker')
+    return conn.reply(m.chat, '❌ Ocurrió un error creando el sticker', m)
   }
 }
 
-handler.command = ['qc']
-handler.help = ['.qc <texto>']
+handler.help = ['qc <texto>']
 handler.tags = ['sticker']
+handler.command = /^(qc)$/i
 handler.limit = 2
+
+export default handler
