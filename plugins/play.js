@@ -1,53 +1,50 @@
 import ytdl from 'ytdl-core';
-import yts from 'yt-search';
-import streamToBuffer from 'stream-to-buffer';
+import axios from 'axios';
+import fs from 'fs';
+import { join } from 'path';
 
-const handler = async (msg, { conn, args }) => {
-    const chatId = msg.key.remoteJid;
-
-    if (!args || args.length === 0) {
-        return conn.sendMessage(chatId, { text: '✏️ Uso: .play [nombre de la canción]' }, { quoted: msg });
-    }
-
-    const query = args.join(' ');
-    await conn.sendMessage(chatId, { text: `🔎 Buscando: ${query}...` }, { quoted: msg });
-
+const handler = async (m, { conn, args, usedPrefix }) => {
     try {
-        // Buscar en YouTube
-        const result = await yts(query);
-        if (!result || !result.videos || result.videos.length === 0) {
-            return conn.sendMessage(chatId, { text: '❌ No se encontró la canción.' }, { quoted: msg });
+        const chatId = m.key.remoteJid;
+        const query = args.join(' ');
+
+        if (!query) {
+            return conn.sendMessage(chatId, { text: `✏️ Usa el comando así:\n${usedPrefix}play [nombre o link de la canción]` }, { quoted: m });
         }
 
-        const video = result.videos[0];
-        const url = video.url;
+        let url = '';
+        if (ytdl.validateURL(query)) {
+            url = query;
+        } else {
+            // Busca en YouTube usando API de búsqueda de YouTube (sin API key)
+            const response = await axios.get('https://www.youtube.com/results', {
+                params: { search_query: query }
+            });
+            const videoIdMatch = response.data.match(/"videoId":"(.*?)"/);
+            if (!videoIdMatch) return conn.sendMessage(chatId, { text: '❌ No encontré resultados para tu búsqueda.' }, { quoted: m });
+            url = 'https://www.youtube.com/watch?v=' + videoIdMatch[1];
+        }
 
-        // Descargar audio como stream
-        const audioStream = ytdl(url, { filter: 'audioonly', quality: 'highestaudio' });
+        conn.sendMessage(chatId, { text: '🎵 Descargando tu canción...' }, { quoted: m });
 
-        // Convertir stream a buffer
-        streamToBuffer(audioStream, async (err, buffer) => {
-            if (err) {
-                console.error(err);
-                return conn.sendMessage(chatId, { text: '❌ Error al procesar el audio.' }, { quoted: msg });
-            }
+        const tempFile = join('./tmp', `${Date.now()}.mp3`);
+        const stream = ytdl(url, { filter: 'audioonly', quality: 'highestaudio' });
+        const writeStream = fs.createWriteStream(tempFile);
 
-            // Enviar audio
-            await conn.sendMessage(chatId, {
-                audio: buffer,
-                mimetype: 'audio/mpeg',
-                fileName: `${video.title}.mp3`
-            }, { quoted: msg });
+        stream.pipe(writeStream);
+
+        writeStream.on('finish', async () => {
+            await conn.sendMessage(chatId, { audio: { url: tempFile }, mimetype: 'audio/mpeg' }, { quoted: m });
+            fs.unlinkSync(tempFile);
         });
 
-    } catch (err) {
-        console.error(err);
-        return conn.sendMessage(chatId, { text: '❌ Ocurrió un error al reproducir la canción.' }, { quoted: msg });
+    } catch (e) {
+        console.error(e);
+        conn.sendMessage(m.key.remoteJid, { text: '❌ Ocurrió un error al intentar reproducir la canción.' }, { quoted: m });
     }
 };
 
+handler.help = ['play'];
+handler.tags = ['audio'];
 handler.command = ['play'];
-handler.tags = ['music'];
-handler.help = ['play [nombre de la canción]'];
-
 export default handler;
