@@ -1,25 +1,28 @@
-var handler = async (m, { conn, text, usedPrefix, command }) => {
+var handler = async (m, { conn, usedPrefix, command }) => {
   if (!m.isGroup) return conn.reply(m.chat, '❌ Este comando solo funciona en grupos', m)
 
-  // Verifica si el bot es admin
-  const botAdmin = conn.user && conn.chats[m.chat]?.participants?.some(p => p.id === conn.user.jid && (p.admin === 'admin' || p.admin === 'superadmin'))
-  if (!botAdmin) return conn.reply(m.chat, '❌ Necesito ser administrador para expulsar a alguien.', m)
+  // Obtener metadata del grupo actualizado
+  let metadata = await conn.groupMetadata(m.chat)
+  let participants = metadata.participants
+
+  // Admins del grupo
+  let groupAdmins = participants.filter(p => p.admin === 'admin' || p.admin === 'superadmin').map(p => p.id)
 
   // Verifica si quien ejecuta el comando es admin
-  const senderAdmin = conn.chats[m.chat]?.participants?.some(p => p.id === m.sender && (p.admin === 'admin' || p.admin === 'superadmin'))
-  if (!senderAdmin) return conn.reply(m.chat, '❌ Solo los administradores pueden usar este comando.', m)
+  if (!groupAdmins.includes(m.sender)) return conn.reply(m.chat, '❌ Solo los administradores pueden usar este comando.', m)
+
+  // Verifica si el bot es admin
+  if (!groupAdmins.includes(conn.user.jid)) return conn.reply(m.chat, '❌ Necesito ser administrador para expulsar a alguien.', m)
 
   // Obtiene JIDs a expulsar
   let mentions = m.mentionedJid || []
-  // Si responde a un mensaje, agrega ese usuario
   if (m.quoted && m.quoted.sender) mentions.push(m.quoted.sender)
 
   if (!mentions.length) return conn.reply(m.chat, `⚠️ Menciona a la(s) persona(s) o responde a su mensaje para expulsarlas.\nEjemplo: ${usedPrefix}${command} @usuario`, m)
 
   for (let jid of mentions) {
     // Evita expulsar admins
-    const participant = conn.chats[m.chat]?.participants?.find(p => p.id === jid)
-    if (participant && (participant.admin === 'admin' || participant.admin === 'superadmin')) {
+    if (groupAdmins.includes(jid)) {
       conn.reply(m.chat, `❌ No puedo expulsar a @${jid.split('@')[0]} porque es administrador.`, m)
       continue
     }
@@ -44,4 +47,3 @@ handler.admin = true
 handler.botAdmin = true
 
 export default handler
-
