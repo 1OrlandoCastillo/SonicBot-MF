@@ -1,5 +1,8 @@
 var handler = async (m, { conn, text, usedPrefix, command }) => {
   if (!m.isGroup) return conn.reply(m.chat, '❌ Este comando solo funciona en grupos', m)
+  
+  // Si se responde a un mensaje, usa el texto del mensaje citado
+  if (!text && m.quoted?.text) text = m.quoted.text
   if (!text) return conn.reply(m.chat, `⚠️ Usa el comando así:\n${usedPrefix}${command} <mensaje>`, m)
 
   // Obtiene todos los participantes del grupo
