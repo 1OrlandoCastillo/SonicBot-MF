@@ -1,7 +1,5 @@
 import yts from 'yt-search';
 import ytdl from 'ytdl-core';
-import { createWriteStream, existsSync, mkdirSync, readFileSync, unlinkSync } from 'fs';
-import { join } from 'path';
 import fetch from 'node-fetch';
 
 const handler = async (m, { conn, args, usedPrefix }) => {
@@ -23,30 +21,24 @@ const handler = async (m, { conn, args, usedPrefix }) => {
         const infoText = `🎵 *${video.title}*\n⏱ Duración: ${video.timestamp}\n👁 Vistas: ${video.views}\n📺 Canal: ${video.author.name}\n📅 Publicado: ${video.ago}\n\nDescargando audio...`;
         await conn.sendMessage(chatId, { image: thumbBuffer, caption: infoText }, { quoted: m });
 
-        // Crear carpeta temporal
-        const tmpDir = './tmp';
-        if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
-        const tempFile = join(tmpDir, `${Date.now()}.mp3`);
+        // Descargar audio en streaming
+        const audioStream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
+        const chunks = [];
+        audioStream.on('data', chunk => chunks.push(chunk));
 
-        // Descargar audio
         await new Promise((resolve, reject) => {
-            const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
-            const fileStream = createWriteStream(tempFile);
-            stream.pipe(fileStream);
-            fileStream.on('finish', resolve);
-            fileStream.on('error', reject);
+            audioStream.on('end', resolve);
+            audioStream.on('error', reject);
         });
 
-        // Leer archivo y enviar
-        const audioBuffer = readFileSync(tempFile);
+        const audioBuffer = Buffer.concat(chunks);
+
+        // Enviar audio
         await conn.sendMessage(chatId, {
             audio: audioBuffer,
             mimetype: 'audio/mpeg',
             fileName: `${video.title}.mp3`,
         }, { quoted: m });
-
-        // Borrar archivo temporal
-        unlinkSync(tempFile);
 
     } catch (e) {
         console.error(e);
