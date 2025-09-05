@@ -1,6 +1,7 @@
 import yts from 'yt-search';
 import ytdl from 'ytdl-core';
-import fs from 'fs';
+import fs from 'fs/promises';
+import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
 const handler = async (m, { conn, args, usedPrefix }) => {
@@ -10,13 +11,12 @@ const handler = async (m, { conn, args, usedPrefix }) => {
 
         if (!query) return conn.sendMessage(chatId, { text: `✏️ Usa el comando así:\n${usedPrefix}play [nombre de la canción]` }, { quoted: m });
 
-        // Buscar canción en YouTube
         const results = await yts(query);
-        if (!results || !results.videos.length) return conn.sendMessage(chatId, { text: '❌ No encontré resultados para tu búsqueda.' }, { quoted: m });
+        if (!results || !results.videos.length) return conn.sendMessage(chatId, { text: '❌ No encontré resultados.' }, { quoted: m });
 
-        const video = results.videos[0]; // Tomamos el primer resultado
+        const video = results.videos[0];
 
-        // Mostrar info de la canción
+        // Mostrar info
         const infoMsg = `
 🎵 *Título:* ${video.title}
 ⏱ *Duración:* ${video.timestamp}
@@ -29,23 +29,32 @@ const handler = async (m, { conn, args, usedPrefix }) => {
             caption: infoMsg
         }, { quoted: m });
 
-        // Archivo temporal
-        const tempFile = join('./tmp', `${Date.now()}.mp3`);
+        // Asegurarnos de que exista la carpeta tmp
+        const tmpDir = './tmp';
+        if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
 
-        // Descargar solo audio
-        const stream = ytdl(video.url, { quality: 'highestaudio', filter: 'audioonly' });
-        const writeStream = fs.createWriteStream(tempFile);
-        stream.pipe(writeStream);
+        const tempFile = join(tmpDir, `${Date.now()}.mp3`);
 
-        writeStream.on('finish', async () => {
-            await conn.sendMessage(chatId, {
-                audio: { url: tempFile },
-                mimetype: 'audio/mpeg',
-                fileName: `${video.title}.mp3`
-            }, { quoted: m });
-
-            fs.unlinkSync(tempFile); // Eliminar archivo temporal
+        // Descargar audio
+        await new Promise((resolve, reject) => {
+            const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
+            const writeStream = createWriteStream(tempFile);
+            stream.pipe(writeStream);
+            writeStream.on('finish', resolve);
+            writeStream.on('error', reject);
         });
+
+        // Leer archivo como Buffer
+        const audioBuffer = await fs.readFile(tempFile);
+
+        await conn.sendMessage(chatId, {
+            audio: audioBuffer,
+            mimetype: 'audio/mpeg',
+            fileName: `${video.title}.mp3`
+        }, { quoted: m });
+
+        // Borrar archivo temporal
+        await fs.unlink(tempFile);
 
     } catch (e) {
         console.error(e);
