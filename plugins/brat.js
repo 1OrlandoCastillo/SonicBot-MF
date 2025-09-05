@@ -1,5 +1,4 @@
 import Jimp from 'jimp'
-import { createSticker } from './sticker.js'
 
 const handler = async (m, { text, conn, usedPrefix, command }) => {
   if (!text) {
@@ -9,9 +8,9 @@ const handler = async (m, { text, conn, usedPrefix, command }) => {
   try {
     const width = 512
     const height = 512
-    const image = new Jimp(width, height, 0xFFFFFFFF)
+    const image = new Jimp(width, height, 0xFFFFFFFF) // fondo blanco
 
-    // fuentes
+    // Fuentes disponibles
     const fonts = {
       big: Jimp.FONT_SANS_128_BLACK,
       medium: Jimp.FONT_SANS_64_BLACK,
@@ -19,23 +18,30 @@ const handler = async (m, { text, conn, usedPrefix, command }) => {
       tiny: Jimp.FONT_SANS_16_BLACK
     }
 
+    // Calcular longitud de la línea más larga y número de líneas
     const lines = text.split("\n")
     const longestLine = lines.reduce((a, b) => (a.length > b.length ? a : b), "")
     const totalChars = longestLine.length
 
+    // Elegir fuente según tamaño de texto
     let fontToUse
-    if (totalChars <= 8 && lines.length <= 3) fontToUse = fonts.big
-    else if (totalChars <= 18 && lines.length <= 5) fontToUse = fonts.medium
-    else if (totalChars <= 40) fontToUse = fonts.small
-    else fontToUse = fonts.tiny
+    if (totalChars <= 8 && lines.length <= 3) {
+      fontToUse = fonts.big
+    } else if (totalChars <= 18 && lines.length <= 5) {
+      fontToUse = fonts.medium
+    } else if (totalChars <= 40) {
+      fontToUse = fonts.small
+    } else {
+      fontToUse = fonts.tiny
+    }
 
     const font = await Jimp.loadFont(fontToUse)
 
-    // texto alineado a la izquierda y centrado verticalmente
+    // Imprimir texto alineado a la izquierda y centrado verticalmente
     image.print(
       font,
-      30,
-      0,
+      30, // margen izquierdo
+      0,  // Y = 0, pero con alineación vertical en medio
       {
         text: text,
         alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT,
@@ -45,14 +51,21 @@ const handler = async (m, { text, conn, usedPrefix, command }) => {
       height
     )
 
+    // Efecto pixelado
     image.resize(width, height, Jimp.RESIZE_NEAREST_NEIGHBOR)
 
     const buffer = await image.getBufferAsync(Jimp.MIME_PNG)
 
-    // crear sticker con metadata
-    const sticker = await createSticker(buffer, 'hecho por', 'AdriBot el mejor')
-
-    await conn.sendMessage(m.chat, { sticker }, { quoted: m })
+    // Mandar como sticker con nombre personalizado
+    await conn.sendMessage(
+      m.chat,
+      {
+        sticker: buffer,
+        packname: "hecho por",
+        author: "AdriBot el mejor"
+      },
+      { quoted: m }
+    )
 
   } catch (e) {
     console.error(e)
