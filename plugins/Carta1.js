@@ -1,4 +1,6 @@
-import fetch from 'node-fetch';
+// Módulo para manejar cartas de amor
+// No necesita 'fetch' ya que no se usa
+// import fetch from 'node-fetch';
 
 const cartas = [
   {
@@ -40,20 +42,33 @@ Para: {destinatario}
 
 let handler = async (m, { conn }) => {
   try {
+    // Obtener destinatario: mencionado, citado o el propio remitente
     let _user = m.mentionedJid?.[0] || m.quoted?.sender || m.sender;
     let remitente = m.sender.split('@')[0];
     let destinatario = _user.split('@')[0];
 
+    // Seleccionar carta aleatoria
     const cartaAleatoria = cartas[Math.floor(Math.random() * cartas.length)];
-    const text2 = cartaAleatoria.texto
+
+    // Reemplazar placeholders {remitente} y {destinatario}
+    const mensajeFinal = cartaAleatoria.texto
       .replace('{remitente}', `@${remitente}`)
       .replace('{destinatario}', `@${destinatario}`);
 
-    conn.sendMessage(m.chat, { text: text2, mentions: [m.sender, _user] });
+    // Enviar mensaje con menciones
+    await conn.sendMessage(m.chat, { 
+      text: mensajeFinal, 
+      mentions: [m.sender, _user] 
+    });
+
   } catch (e) {
+    // Manejo de errores
+    console.error('Error enviando carta:', e);
     m.reply(`*Error:* ${e.message}`);
   }
 };
 
+// Comando para activar la función
 handler.command = /^(carta)$/i;
+
 export default handler;
