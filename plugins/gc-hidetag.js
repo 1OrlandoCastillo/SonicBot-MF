@@ -1,39 +1,40 @@
 var handler = async (m, { conn, text, usedPrefix, command }) => {
-    if (!m.isGroup)
-        return conn.reply(m.chat, '❌ Este comando solo funciona en grupos', m);
+  if (!m.isGroup)
+    return conn.reply(m.chat, '❌ Este comando solo funciona en grupos', m);
 
-    let chat = await conn.groupMetadata(m.chat);
-    let participants = chat.participants.map(p => p.id);
-    participants = participants.filter(jid => jid !== conn.user.jid && !jid.endsWith('@g.us'));
+  // Obtener participantes del grupo
+  const metadata = await conn.groupMetadata(m.chat);
+  const participants = metadata.participants.map(p => p.id);
 
-    const chunk = (arr, size) => {
-        let result = [];
-        for (let i = 0; i < arr.length; i += size)
-            result.push(arr.slice(i, i + size));
-        return result;
+  // Excluir al bot mismo y grupos
+  const mentionList = participants.filter(id => id !== conn.user.jid && !id.endsWith('@g.us'));
+
+  // Función para partir arrays en chunks de 50 (limite para mentions)
+  const chunk = (arr, size) => {
+    const chunks = [];
+    for (let i = 0; i < arr.length; i += size) {
+      chunks.push(arr.slice(i, i + size));
     }
-    const batches = chunk(participants, 50);
+    return chunks;
+  };
 
-    if (!text && m.quoted) {
-        // Obtenemos el mensaje citado
-        let quotedMsg = m.quoted.fakeObj || m.quoted;
+  const batches = chunk(mentionList, 50);
 
-        for (let batch of batches) {
-            await conn.copyNForward(m.chat, quotedMsg, true, {
-                quoted: m,
-                mentions: batch
-            });
-        }
-        return;
+  if (m.quoted) {
+    // Si respondes a un mensaje, reenviar ese mensaje mencionando a todos
+    for (const batch of batches) {
+      await conn.copyNForward(m.chat, m.quoted, true, { mentions: batch, quoted: m });
     }
-
-    if (!text)
-        return conn.reply(m.chat, `⚠️ Usa el comando así:\n${usedPrefix}${command} <mensaje>`, m);
-
-    for (let batch of batches) {
-        await conn.sendMessage(m.chat, { text, mentions: batch }, { quoted: m });
+  } else if (text) {
+    // Si no respondes, pero hay texto, enviar texto mencionando a todos
+    for (const batch of batches) {
+      await conn.sendMessage(m.chat, { text, mentions: batch }, { quoted: m });
     }
-}
+  } else {
+    // No texto ni mensaje respondido
+    return conn.reply(m.chat, `⚠️ Usa el comando así:\n${usedPrefix}${command} <mensaje>`, m);
+  }
+};
 
 handler.help = ['hidetag <mensaje>'];
 handler.tags = ['group'];
