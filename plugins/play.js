@@ -1,56 +1,61 @@
 import yts from 'yt-search';
 import fetch from 'node-fetch';
+import fs from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 
-const handler = async (m, { conn, args, usedPrefix }) => {
+const handler = async (m, { conn, args }) => {
   try {
-    const chatId = m.key.remoteJid;
+    if (!args || args.length === 0) {
+      return conn.sendMessage(m.chat, { text: '❌ Uso: .play [nombre de la canción]' }, { quoted: m });
+    }
+
     const query = args.join(' ');
-    if (!query) {
-      return conn.sendMessage(chatId, { text: `✏️ Usa así:\n${usedPrefix}play [nombre de la canción]` }, { quoted: m });
+    const search = await yts(query);
+    const video = search.videos[0];
+
+    if (!video) {
+      return conn.sendMessage(m.chat, { text: '❌ No se encontró la canción.' }, { quoted: m });
     }
 
-    // Buscar canción en YouTube
-    const results = await yts(query);
-    if (!results || !results.videos.length) {
-      return conn.sendMessage(chatId, { text: '❌ No encontré resultados.' }, { quoted: m });
+    const infoText = `
+🎵 *Título:* ${video.title}
+📺 *Canal:* ${video.author.name}
+⏱ *Duración:* ${video.timestamp}
+👁 *Vistas:* ${video.views}
+🔗 *URL:* ${video.url}
+    `.trim();
+
+    await conn.sendMessage(m.chat, { text: infoText }, { quoted: m });
+
+    // Descargar audio
+    const res = await fetch(`https://yt-download.org/api/button/mp3/${video.videoId}`);
+    const html = await res.text();
+    const match = html.match(/href="(https:\/\/[^\"]+\.mp3)"/);
+
+    if (!match) {
+      return conn.sendMessage(m.chat, { text: '❌ No se pudo descargar el audio.' }, { quoted: m });
     }
 
-    const video = results.videos[0];
+    const audioUrl = match[1];
+    const audioRes = await fetch(audioUrl);
+    const buffer = Buffer.from(await audioRes.arrayBuffer());
 
-    // Mostrar información del video
-    const infoText = `🎵 *${video.title}*\n⏱ Duración: ${video.timestamp}\n👁 Vistas: ${video.views}\n📺 Canal: ${video.author.name}\n📅 Publicado: ${video.ago}\n\n⏳ Buscando audio...`;
-    await conn.sendMessage(chatId, { text: infoText }, { quoted: m });
+    const tmpFile = join(tmpdir(), `${video.videoId}.mp3`);
+    fs.writeFileSync(tmpFile, buffer);
 
-    // Obtener enlace de audio MP3 usando la API
-    const apiUrl = `https://api.vevioz.com/api/button/mp3/${video.videoId}`;
-    const response = await fetch(apiUrl);
-    if (!response.ok) {
-      throw new Error('No se pudo obtener el enlace de audio.');
-    }
-    const data = await response.json();
-    const audioUrl = data.url;
+    await conn.sendMessage(m.chat, { audio: { url: tmpFile }, mimetype: 'audio/mpeg', fileName: `${video.title}.mp3` }, { quoted: m });
 
-    // Descargar el audio
-    const audioResponse = await fetch(audioUrl);
-    if (!audioResponse.ok) {
-      throw new Error('No se pudo descargar el audio.');
-    }
-    const audioBuffer = await audioResponse.buffer();
-
-    // Enviar el audio como mensaje de voz
-    await conn.sendMessage(chatId, {
-      audio: audioBuffer,
-      mimetype: 'audio/mpeg',
-      fileName: `${video.title}.mp3`,
-    }, { quoted: m });
+    fs.unlinkSync(tmpFile); // borrar temporal
 
   } catch (e) {
-    console.error(e);
-    await conn.sendMessage(m.key.remoteJid, { text: '❌ Ocurrió un error al reproducir la canción.' }, { quoted: m });
+    console.error('Error en .play:', e);
+    conn.sendMessage(m.chat, { text: '❌ Ocurrió un error al reproducir la canción.' }, { quoted: m });
   }
 };
 
-handler.help = ['play'];
-handler.tags = ['audio'];
 handler.command = ['play'];
+handler.tags = ['downloader', 'music'];
+handler.help = ['play [nombre de la canción]'];
+
 export default handler;
