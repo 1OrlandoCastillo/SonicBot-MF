@@ -408,6 +408,11 @@ Object.freeze(global.reload)
 
 watch(pluginFolder, global.reload)
 await global.reloadHandler()
+import welcomeHandler from './plugins/welcome-despedida.js'
+
+conn.ev.on('group-participants.update', (update) => {
+  welcomeHandler(update, { conn })
+})
 
 
 global.reconnectSubBots = async function() {
