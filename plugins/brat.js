@@ -2,40 +2,40 @@ import Jimp from 'jimp'
 
 const handler = async (m, { text, conn, usedPrefix, command }) => {
   if (!text) {
-    return m.reply(`⚠️ Usa el comando así:\n${usedPrefix}${command} <texto>\n\nEjemplo:\n${usedPrefix}${command} hola soy el brat`)
+    return m.reply(`✏️ Escribe un texto para crear el sticker.\nEjemplo:\n${usedPrefix}${command} soy el brat`)
   }
 
   try {
+    // Crear imagen en blanco
     const width = 512
     const height = 512
+    const image = new Jimp(width, height, 0xFFFFFFFF) // blanco
 
-    const image = new Jimp(width, height, 0xffffffff) // Fondo blanco
-
+    // Cargar fuente
     const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK)
 
+    // Escribir texto centrado
     image.print(
       font,
-      0,
-      0,
+      10,
+      10,
       {
         text: text,
         alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER,
         alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE
       },
-      width,
-      height
+      width - 20,
+      height - 20
     )
 
-    const buffer = await image.getBufferAsync(Jimp.MIME_WEBP)
+    // Convertir a webp
+    const stickerBuffer = await image.getBufferAsync(Jimp.MIME_WEBP)
 
-    await conn.sendMessage(m.chat, {
-      sticker: buffer
-    }, {
-      quoted: m
-    })
+    // Enviar como sticker
+    await conn.sendMessage(m.chat, { sticker: stickerBuffer }, { quoted: m })
 
   } catch (e) {
-    console.error(e)
+    console.error('Error en .brat:', e)
     m.reply('❌ Error al generar el sticker.')
   }
 }
@@ -43,7 +43,6 @@ const handler = async (m, { text, conn, usedPrefix, command }) => {
 handler.help = ['brat <texto>']
 handler.tags = ['sticker']
 handler.command = ['brat']
-handler.register = true // Si quieres que solo usuarios registrados lo usen
-handler.limit = false   // Si quieres poner límite diario, cámbialo a true
+handler.limit = false
 
 export default handler
