@@ -1,40 +1,58 @@
-import ytSearch from 'yt-search';
-import { exec } from 'child_process';
+import ytdl from 'ytdl-core';
+import yts from 'yt-search';
+import fs from 'fs';
+import path from 'path';
 
-const handler = async (m, { conn, args }) => {
+const handler = async (m, { conn, args, usedPrefix }) => {
   try {
-    if (!args || args.length === 0) 
-      return conn.sendMessage(m.chat, { text: '🚩 Usa: .play <nombre de la canción>' }, { quoted: m });
-
+    const chatId = m.key.remoteJid;
     const query = args.join(' ');
-    const results = await ytSearch(query);
+    if (!query) return conn.sendMessage(chatId, { text: `✏️ Usa así:\n${usedPrefix}play [nombre de la canción]` }, { quoted: m });
 
-    if (!results || !results.videos.length) 
-      return conn.sendMessage(m.chat, { text: '❌ No se encontró la canción.' }, { quoted: m });
+    // Buscar video en YouTube
+    const r = await yts(query);
+    const video = r.videos[0];
+    if (!video) return conn.sendMessage(chatId, { text: '❌ No encontré resultados.' }, { quoted: m });
 
-    const video = results.videos[0];
+    // Mostrar info de la canción
+    const infoText = 
+`🎵 *${video.title}*
+⏱ Duración: ${video.timestamp}
+👁 Vistas: ${video.views}
+📺 Canal: ${video.author.name}
+📅 Publicado: ${video.ago}\n\n⏳ Descargando audio...`;
+    await conn.sendMessage(chatId, { text: infoText }, { quoted: m });
 
-    // Mensaje con info
-    const infoMsg = `
-🎵 *Título:* ${video.title}
-📺 *Canal:* ${video.author.name}
-⏱️ *Duración:* ${video.timestamp}
-👀 *Vistas:* ${video.views.toLocaleString()}
-🔗 *Enlace:* ${video.url}
-    `;
-    await conn.sendMessage(m.chat, { text: infoMsg }, { quoted: m });
+    // Descargar audio con ytdl-core
+    const audioPath = path.join('./tmp', `${video.videoId}.mp3`);
+    const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' });
+    const writeStream = fs.createWriteStream(audioPath);
+    stream.pipe(writeStream);
 
-    // Enviar enlace de audio directo usando ytdl (no descarga)
-    const audioUrl = `${video.url}`;
-    await conn.sendMessage(m.chat, { 
-      text: `Puedes reproducir el audio desde este enlace: ${audioUrl}` 
+    // Esperar a que termine la descarga
+    await new Promise((resolve, reject) => {
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
+      stream.on('error', reject);
+    });
+
+    // Enviar audio a WhatsApp
+    await conn.sendMessage(chatId, {
+      audio: fs.readFileSync(audioPath),
+      mimetype: 'audio/mpeg',
+      fileName: `${video.title}.mp3`
     }, { quoted: m });
 
-  } catch (e) {
-    console.error(e);
-    await conn.sendMessage(m.chat, { text: '❌ Ocurrió un error al reproducir la canción.' }, { quoted: m });
+    // Eliminar archivo temporal
+    fs.unlinkSync(audioPath);
+
+  } catch (err) {
+    console.error(err);
+    await conn.sendMessage(m.key.remoteJid, { text: '❌ Ocurrió un error al reproducir la canción.' }, { quoted: m });
   }
 };
 
+handler.help = ['play'];
+handler.tags = ['audio'];
 handler.command = ['play'];
 export default handler;
