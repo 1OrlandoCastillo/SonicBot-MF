@@ -10,7 +10,7 @@ const handler = async (m, { text, conn, usedPrefix, command }) => {
     const height = 512
     const image = new Jimp(width, height, 0xFFFFFFFF) // fondo blanco
 
-    // Fuentes disponibles en Jimp
+    // Fuentes disponibles
     const fonts = {
       big: Jimp.FONT_SANS_128_BLACK,
       medium: Jimp.FONT_SANS_64_BLACK,
@@ -18,12 +18,12 @@ const handler = async (m, { text, conn, usedPrefix, command }) => {
       tiny: Jimp.FONT_SANS_16_BLACK
     }
 
-    // Contar caracteres y líneas
+    // Calcular longitud de la línea más larga y número de líneas
     const lines = text.split("\n")
     const longestLine = lines.reduce((a, b) => (a.length > b.length ? a : b), "")
     const totalChars = longestLine.length
 
-    // Elegir fuente según cantidad de caracteres y líneas
+    // Elegir fuente según tamaño de texto
     let fontToUse
     if (totalChars <= 8 && lines.length <= 3) {
       fontToUse = fonts.big
@@ -37,27 +37,35 @@ const handler = async (m, { text, conn, usedPrefix, command }) => {
 
     const font = await Jimp.loadFont(fontToUse)
 
-    // Imprimir texto alineado a la izquierda
+    // Imprimir texto alineado a la izquierda y centrado verticalmente
     image.print(
       font,
-      30, // margen X (dejamos un poco de espacio a la izquierda)
-      30, // margen Y arriba
+      30, // margen izquierdo
+      0,  // Y = 0, pero con alineación vertical en medio
       {
         text: text,
-        alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT, // 🔥 alineado a la izquierda
-        alignmentY: Jimp.VERTICAL_ALIGN_TOP
+        alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT,
+        alignmentY: Jimp.VERTICAL_ALIGN_MIDDLE
       },
-      width - 60, // ancho usable
-      height - 60 // alto usable
+      width - 60,
+      height
     )
 
-    // Darle un look más pixelado
+    // Efecto pixelado
     image.resize(width, height, Jimp.RESIZE_NEAREST_NEIGHBOR)
 
     const buffer = await image.getBufferAsync(Jimp.MIME_PNG)
 
-    // Mandar como sticker
-    await conn.sendMessage(m.chat, { sticker: buffer }, { quoted: m })
+    // Mandar como sticker con nombre personalizado
+    await conn.sendMessage(
+      m.chat,
+      {
+        sticker: buffer,
+        packname: "hecho por",
+        author: "AdriBot el mejor"
+      },
+      { quoted: m }
+    )
 
   } catch (e) {
     console.error(e)
