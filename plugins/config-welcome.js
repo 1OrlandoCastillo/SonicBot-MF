@@ -7,9 +7,9 @@ const handler = async (m, { conn, args, usedPrefix, command }) => {
     if (!global.db.data.settings[chatId]) {
       global.db.data.settings[chatId] = {
         welcome: false,
-        goodbye: false,
+        despedida: false,
         welcomeMsg: '👋 ¡Bienvenido %user% al grupo %group%!',
-        goodbyeMsg: '👋 %user% ha salido del grupo %group%.'
+        despedidaMsg: '👋 %user% ha salido del grupo %group%.'
       }
     }
 
@@ -22,7 +22,7 @@ const handler = async (m, { conn, args, usedPrefix, command }) => {
         groupSettings.welcome = setting
         conn.reply(chatId, `✅ Mensajes de bienvenida ${setting ? 'activados' : 'desactivados'}`, m)
       } else if (command === 'despedida') {
-        groupSettings.goodbye = setting
+        groupSettings.despedida = setting
         conn.reply(chatId, `✅ Mensajes de despedida ${setting ? 'activados' : 'desactivados'}`, m)
       }
     }
@@ -32,7 +32,7 @@ const handler = async (m, { conn, args, usedPrefix, command }) => {
       const newMsg = args.slice(1).join(' ')
       if (!newMsg) return conn.reply(chatId, `✏️ Usa: ${usedPrefix}${command} msg [mensaje]`, m)
       if (command === 'welcome') groupSettings.welcomeMsg = newMsg
-      else if (command === 'despedida') groupSettings.goodbyeMsg = newMsg
+      else if (command === 'despedida') groupSettings.despedidaMsg = newMsg
       conn.reply(chatId, `✅ Mensaje de ${command} actualizado correctamente`, m)
     }
 
