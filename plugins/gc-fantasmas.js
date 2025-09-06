@@ -1,4 +1,4 @@
-var handler = async (m, { conn, participants, command, text }) => {
+var handler = async (m, { conn, participants, command }) => {
   if (!m.isGroup) return m.reply('🔒 Este comando solo se usa en grupos.')
   const groupMetadata = await conn.groupMetadata(m.chat)
 
@@ -46,9 +46,9 @@ var handler = async (m, { conn, participants, command, text }) => {
 
       for (let user of sider) {
         try {
-          console.log(`Expulsando a: ${user}`) // debug en consola
+          console.log(`Expulsando a: ${user}`)
           await conn.groupParticipantsUpdate(m.chat, [user], 'remove')
-          await delay(8000) // espera entre expulsiones
+          await delay(2000) // ahora solo 2 segundos
         } catch (e) {
           console.error(`Error expulsando a ${user}:`, e)
           await conn.reply(m.chat, `⚠️ No pude expulsar a @${user.split('@')[0]}`, m, {
@@ -64,7 +64,7 @@ var handler = async (m, { conn, participants, command, text }) => {
 handler.tags = ['grupo']
 handler.command = ['fantasmas', 'kickfantasmas']
 handler.group = true
-handler.admin = true   // solo admins
-handler.botAdmin = true // el bot debe ser admin
+handler.admin = true
+handler.botAdmin = true
 
 export default handler
