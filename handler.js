@@ -28,34 +28,23 @@ if (m.messageStubType) return
 m.exp = 0
 m.limit = false
 // --- Escuchar stickers como comandos ---
-// Esto va en tu handler.js (o donde procesas todos los mensajes)
+try {
+  let sticker = m.message?.stickerMessage
+  if (sticker?.fileSha256) {
+    let hash = Buffer.from(sticker.fileSha256).toString('hex')
+    global.db.data.stickerCmds = global.db.data.stickerCmds || {}
 
-conn.ev.on('messages.upsert', async ({ messages }) => {
-  let m = messages[0]
-  if (!m.message) return
+    if (global.db.data.stickerCmds[hash]) {
+      let cmd = global.db.data.stickerCmds[hash]
 
-  try {
-    // Si el mensaje es un sticker
-    let sticker = m.message.stickerMessage
-    if (sticker?.fileSha256) {
-      let hash = Buffer.from(sticker.fileSha256).toString('hex')
-      global.db.data.stickerCmds = global.db.data.stickerCmds || {}
-
-      if (global.db.data.stickerCmds[hash]) {
-        let cmd = global.db.data.stickerCmds[hash]
-
-        // Creamos un "fake message" para que el handler lo tome como si fuera comando
-        m.text = global.prefix + cmd
-        console.log(`🎭 Sticker reconocido → ejecutando comando: ${cmd}`)
-
-        // Pasar el mensaje al handler normal
-        await handler.handler.call(conn, m, { conn })
-      }
+      // Simular que el usuario escribió el comando
+      m.text = global.prefix + cmd
+      console.log(`🎭 Sticker reconocido → ejecutando comando: ${cmd}`)
     }
-  } catch (e) {
-    console.error('❌ Error en sticker listener:', e)
   }
-})
+} catch (e) {
+  console.error('❌ Error en sticker listener:', e)
+}
 try {  
   let user = global.db.data.users[m.sender] ||= {}  
   if (!isNumber(user.exp)) user.exp = 0  
