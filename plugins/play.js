@@ -14,47 +14,53 @@ const handler = async (m, { conn, args, usedPrefix }) => {
     const video = r.videos[0]
     if (!video) return conn.sendMessage(chatId, { text: '❌ No encontré resultados.' }, { quoted: m })
 
-    // Asegurar carpeta tmp
-    const tmpDir = path.join('./tmp')
-    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir)
-
     // Mostrar info de la canción
-    const infoText = 
+    const infoText =
 `🎵 *${video.title}*
 ⏱ Duración: ${video.timestamp}
 👁 Vistas: ${video.views}
 📺 Canal: ${video.author.name}
-📅 Publicado: ${video.ago}\n\n⏳ Descargando audio...`
+📅 Publicado: ${video.ago}\n\n⏳ Intentando descargar audio...`
     await conn.sendMessage(chatId, { text: infoText }, { quoted: m })
 
+    // Crear carpeta tmp si no existe
+    const tmpDir = path.join('./tmp')
+    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir)
+
     // Descargar audio con play-dl
-    const stream = await play.stream(video.url)
     const audioPath = path.join(tmpDir, `${video.videoId}.mp3`)
-    const writeStream = fs.createWriteStream(audioPath)
-    stream.stream.pipe(writeStream)
+    try {
+      const stream = await play.stream(video.url)
+      const writeStream = fs.createWriteStream(audioPath)
+      stream.stream.pipe(writeStream)
 
-    // Esperar fin de descarga
-    await new Promise((resolve, reject) => {
-      writeStream.on('finish', resolve)
-      writeStream.on('error', reject)
-    })
+      await new Promise((resolve, reject) => {
+        writeStream.on('finish', resolve)
+        writeStream.on('error', reject)
+      })
 
-    // Verificar tamaño antes de enviar (WhatsApp máx ~16 MB)
-    const stats = fs.statSync(audioPath)
-    if (stats.size > 16 * 1024 * 1024) {
+      // Revisar tamaño máximo de WhatsApp (~16MB)
+      const stats = fs.statSync(audioPath)
+      if (stats.size > 16 * 1024 * 1024) {
+        fs.unlinkSync(audioPath)
+        return conn.sendMessage(chatId, { text: `⚠️ El audio es demasiado pesado. Escúchalo aquí: ${video.url}` }, { quoted: m })
+      }
+
+      // Enviar audio
+      await conn.sendMessage(chatId, {
+        audio: fs.readFileSync(audioPath),
+        mimetype: 'audio/mpeg',
+        fileName: `${video.title}.mp3`
+      }, { quoted: m })
+
+      // Borrar archivo temporal
       fs.unlinkSync(audioPath)
-      return conn.sendMessage(chatId, { text: '⚠️ El audio es demasiado pesado para enviarlo por WhatsApp.' }, { quoted: m })
+
+    } catch (err) {
+      console.error('Error descargando audio:', err)
+      // Si falla la descarga, enviamos el link directo
+      await conn.sendMessage(chatId, { text: `⚠️ No se pudo descargar el audio. Escúchalo aquí: ${video.url}` }, { quoted: m })
     }
-
-    // Enviar audio
-    await conn.sendMessage(chatId, {
-      audio: fs.readFileSync(audioPath),
-      mimetype: 'audio/mpeg',
-      fileName: `${video.title}.mp3`
-    }, { quoted: m })
-
-    // Eliminar archivo temporal
-    fs.unlinkSync(audioPath)
 
   } catch (err) {
     console.error('Error en .play:', err)
