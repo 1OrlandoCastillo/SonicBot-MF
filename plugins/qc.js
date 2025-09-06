@@ -8,14 +8,14 @@ export default {
   tags: ['sticker', 'fun'],
   help: ['.qc <texto> - Convierte texto en sticker estilo chat de WhatsApp'],
   async handler(m, { conn, args, text, usedPrefix, command }) {
+    const chat = m.chat || (m.key && m.key.remoteJid)
     try {
-      const chat = m.chat || (m.key && m.key.remoteJid)
       const input = (text || args?.join(' ') || '').trim()
       if (!input) {
         return conn.sendMessage(chat, { text: `Uso: ${usedPrefix || '.'}${command} <texto>` }, { quoted: m })
       }
 
-      // Foto de perfil
+      // Foto de perfil (fallback si no tiene)
       let pfp
       try {
         const url = await conn.profilePictureUrl(m.sender, 'image')
@@ -24,62 +24,71 @@ export default {
         pfp = await Jimp.read('https://i.ibb.co/fx3Dzj8/avatar.png')
       }
       pfp.resize(50, 50)
+      // máscara circular
       const mask = new Jimp(50, 50, 0x00000000)
       mask.scan(0, 0, 50, 50, function (x, y, idx) {
         const dx = x - 25, dy = y - 25
-        if (dx * dx + dy * dy <= 625) this.bitmap.data[idx + 3] = 255
+        if (dx * dx + dy * dy <= 25 * 25) this.bitmap.data[idx + 3] = 255
       })
       pfp.mask(mask)
 
-      // Nombre y número
+      // Nombre tal cual sale en WhatsApp y número
       const displayName = m.pushName || 'Usuario'
-      const number = m.sender.split('@')[0]
+      const number = (m.sender || '').split('@')[0] || ''
 
-      // Fuentes
+      // Fuentes (válidas en Jimp)
       const fontName = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE)
-      const fontNumber = await Jimp.loadFont(Jimp.FONT_SANS_14_WHITE)
+      const fontNumber = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE) // <- 16 (no 14)
       const fontMsg = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE)
 
-      // Calcular alto dinámico
+      // Dimensiones dinámicas
       const width = 500
       const textWidth = width - 120
       const textHeight = Jimp.measureTextHeight(fontMsg, input, textWidth)
-      const height = Math.max(120, textHeight + 80)
+      const height = Math.max(120, textHeight + 90)
 
       // Fondo estilo WhatsApp
       const image = new Jimp(width, height, '#121b22')
 
-      // Burbuja con borde negro
-      const bubble = new Jimp(width - 80, textHeight + 50, '#1f2c34')
-      bubble.scan(0, 0, bubble.bitmap.width, bubble.bitmap.height, function (x, y, idx) {
-        if (x === 0 || y === 0 || x === bubble.bitmap.width - 1 || y === bubble.bitmap.height - 1) {
-          this.bitmap.data[idx + 0] = 0 // R
-          this.bitmap.data[idx + 1] = 0 // G
-          this.bitmap.data[idx + 2] = 0 // B
+      // Burbuja con borde negro (2px)
+      const bubbleW = width - 80
+      const bubbleH = textHeight + 60
+      const bubble = new Jimp(bubbleW, bubbleH, '#1f2c34')
+
+      // Borde negro simple
+      const bw = 2
+      bubble.scan(0, 0, bubbleW, bubbleH, function (x, y, idx) {
+        const onBorder = (x < bw || y < bw || x >= bubbleW - bw || y >= bubbleH - bw)
+        if (onBorder) {
+          this.bitmap.data[idx + 0] = 0
+          this.bitmap.data[idx + 1] = 0
+          this.bitmap.data[idx + 2] = 0
+          this.bitmap.data[idx + 3] = 255
         }
       })
 
-      // Componer todo
+      // Componer
       image.composite(bubble, 60, 20)
       image.composite(pfp, 5, 35)
 
       // Nombre (arriba)
       image.print(fontName, 70, 25, displayName)
 
-      // Número (debajo del nombre, gris claro)
+      // Número debajo del nombre
       image.print(fontNumber, 70, 45, `+${number}`)
 
-      // Mensaje (ajustado al tamaño del texto)
-      image.print(fontMsg, 70, 65, {
-        text: input,
-        alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT,
-        alignmentY: Jimp.VERTICAL_ALIGN_TOP
-      }, textWidth, textHeight)
+      // Mensaje (respeta saltos de línea)
+      image.print(
+        fontMsg,
+        70,
+        70,
+        { text: input, alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT, alignmentY: Jimp.VERTICAL_ALIGN_TOP },
+        textWidth,
+        textHeight
+      )
 
-      // Exportar a PNG
+      // PNG -> Sticker
       const pngBuffer = await image.getBufferAsync(Jimp.MIME_PNG)
-
-      // Convertir en sticker
       const stickerBuffer = await createSticker(pngBuffer, {
         pack: 'Adribot Pack',
         author: 'El mejor bot Adribot ✨',
@@ -89,9 +98,8 @@ export default {
 
       await conn.sendMessage(chat, { sticker: stickerBuffer }, { quoted: m })
     } catch (err) {
-      console.error(err)
-      const chat = m.chat || (m.key && m.key.remoteJid)
-      await conn.sendMessage(chat, { text: '❌ Error al generar el sticker tipo chat' }, { quoted: m })
+      console.error('qc error:', err)
+      await conn.sendMessage(chat, { text: '❌ Error al generar el sticker: ' + (err?.message || err) }, { quoted: m })
     }
   }
 }
