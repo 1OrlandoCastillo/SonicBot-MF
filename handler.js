@@ -38,6 +38,7 @@ try {
 
       // Simular que el usuario escribió el comando
       m.text = (global.prefix || '.') + cmd
+      m.command = cmd
       console.log(`🧩 Sticker reconocido → ejecutando comando: ${cmd}`)
     }
   }
