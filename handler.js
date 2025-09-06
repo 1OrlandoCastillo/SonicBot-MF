@@ -26,7 +26,24 @@ export async function handler(chatUpdate) {
     if (!m) return
     m.exp = 0
     m.limit = false
+// --- Escuchar stickers como comandos ---
+try {
+  let sticker = m.message?.stickerMessage
+  if (sticker?.fileSha256) {
+    let hash = Buffer.from(sticker.fileSha256).toString('hex')
+    global.db.data.stickerCmds = global.db.data.stickerCmds || {}
 
+    if (global.db.data.stickerCmds[hash]) {
+      let cmd = global.db.data.stickerCmds[hash]
+
+      // Simular que el usuario escribió el comando
+      m.text = (global.prefix || '.') + cmd
+      console.log(`🧩 Sticker reconocido → ejecutando comando: ${cmd}`)
+    }
+  }
+} catch (e) {
+  console.error('❌ Error en sticker listener:', e)
+}
     try {
       let user = global.db.data.users[m.sender]
       if (typeof user !== 'object') global.db.data.users[m.sender] = {}
