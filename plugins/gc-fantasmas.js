@@ -1,28 +1,20 @@
-import { areJidsSameUser } from '@whiskeysockets/baileys'
-
 var handler = async (m, { conn, participants, command, text }) => {
   if (!m.isGroup) return m.reply('🔒 Este comando solo se usa en grupos.')
-
   const groupMetadata = await conn.groupMetadata(m.chat)
+
   const ownerGroup = groupMetadata.owner || m.chat.split`-`[0] + '@s.whatsapp.net'
   const ownerBot = global.owner[0][0] + '@s.whatsapp.net'
 
   let member = participants.map(u => u.id)
   let sider = []
   let total = 0
-  let limite = text ? Number(text) : member.length
 
-  for (let i = 0; i < limite; i++) {
-    let data = global.db.data.users[member[i]] || { chat: 0, whitelist: false }
-
+  for (let user of member) {
+    let data = global.db.data.users[user] || { chat: 0, whitelist: false }
     if ((data.chat === 0) && !data.whitelist) {
-      if (
-        member[i] !== conn.user.jid &&
-        member[i] !== ownerGroup &&
-        member[i] !== ownerBot
-      ) {
+      if (user !== conn.user.jid && user !== ownerGroup && user !== ownerBot) {
         total++
-        sider.push(member[i])
+        sider.push(user)
       }
     }
   }
@@ -31,37 +23,40 @@ var handler = async (m, { conn, participants, command, text }) => {
 
   switch (command) {
     case 'fantasmas':
-      if (total == 0)
+      if (!total)
         return conn.reply(m.chat, '✅ Este grupo es activo, no tiene fantasmas.', m)
-      m.reply(
-        `👻 *Revisión de inactivos*\n\n📋 *Lista de fantasmas:*\n${sider.map(v => '@' + v.replace(/@.+/, '')).join('\n')}\n\n📝 *Nota:* El conteo empieza desde que el bot se activó en este número.`,
-        null,
+
+      return conn.reply(
+        m.chat,
+        `👻 *Revisión de inactivos*\n\n${sider.map(v => '@' + v.replace(/@.+/, '')).join('\n')}`,
+        m,
         { mentions: sider }
       )
-      break
 
     case 'kickfantasmas':
-      if (total == 0)
+      if (!total)
         return conn.reply(m.chat, '✅ Este grupo es activo, no tiene fantasmas.', m)
-      await m.reply(
-        `👻 *Eliminación de inactivos*\n\n📋 *Lista de fantasmas:*\n${sider.map(v => '@' + v.replace(/@.+/, '')).join('\n')}\n\n🕒 El bot eliminará un usuario cada 10 segundos.`,
-        null,
+
+      await conn.reply(
+        m.chat,
+        `👻 *Eliminando ${total} fantasmas...*`,
+        m,
         { mentions: sider }
       )
-      await delay(5000)
 
-      let chat = global.db.data.chats[m.chat]
-      chat.welcome = false
-      try {
-        for (let user of sider) {
-          if (user.endsWith('@s.whatsapp.net')) {
-            await conn.groupParticipantsUpdate(m.chat, [user], 'remove')
-            await delay(10000) // espera 10s entre expulsiones
-          }
+      for (let user of sider) {
+        try {
+          console.log(`Expulsando a: ${user}`) // debug en consola
+          await conn.groupParticipantsUpdate(m.chat, [user], 'remove')
+          await delay(8000) // espera entre expulsiones
+        } catch (e) {
+          console.error(`Error expulsando a ${user}:`, e)
+          await conn.reply(m.chat, `⚠️ No pude expulsar a @${user.split('@')[0]}`, m, {
+            mentions: [user],
+          })
         }
-      } finally {
-        chat.welcome = true
       }
+
       break
   }
 }
