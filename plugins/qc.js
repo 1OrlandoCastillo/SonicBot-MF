@@ -11,9 +11,11 @@ export default {
     try {
       const chat = m.chat || (m.key && m.key.remoteJid)
       const input = (text || args?.join(' ') || '').trim()
-      if (!input) return conn.sendMessage(chat, { text: `Uso: ${usedPrefix || '.'}${command} <texto>` }, { quoted: m })
+      if (!input) {
+        return conn.sendMessage(chat, { text: `Uso: ${usedPrefix || '.'}${command} <texto>` }, { quoted: m })
+      }
 
-      // foto de perfil
+      // Foto de perfil
       let pfp
       try {
         const url = await conn.profilePictureUrl(m.sender, 'image')
@@ -22,37 +24,62 @@ export default {
         pfp = await Jimp.read('https://i.ibb.co/fx3Dzj8/avatar.png')
       }
       pfp.resize(50, 50)
-      const mask = await new Jimp(50, 50, 0x00000000)
+      const mask = new Jimp(50, 50, 0x00000000)
       mask.scan(0, 0, 50, 50, function (x, y, idx) {
         const dx = x - 25, dy = y - 25
         if (dx * dx + dy * dy <= 625) this.bitmap.data[idx + 3] = 255
       })
       pfp.mask(mask)
 
-      // base sticker
-      const width = 500
-      const height = 120
-      const image = new Jimp(width, height, '#121b22') // fondo oscuro tipo WhatsApp
+      // Nombre y número
+      const displayName = m.pushName || 'Usuario'
+      const number = m.sender.split('@')[0]
 
-      // burbuja mensaje
-      const bubble = new Jimp(width - 80, height - 40, '#1f2c34') // burbuja negra
+      // Fuentes
+      const fontName = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE)
+      const fontNumber = await Jimp.loadFont(Jimp.FONT_SANS_14_WHITE)
+      const fontMsg = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE)
+
+      // Calcular alto dinámico
+      const width = 500
+      const textWidth = width - 120
+      const textHeight = Jimp.measureTextHeight(fontMsg, input, textWidth)
+      const height = Math.max(120, textHeight + 80)
+
+      // Fondo estilo WhatsApp
+      const image = new Jimp(width, height, '#121b22')
+
+      // Burbuja con borde negro
+      const bubble = new Jimp(width - 80, textHeight + 50, '#1f2c34')
+      bubble.scan(0, 0, bubble.bitmap.width, bubble.bitmap.height, function (x, y, idx) {
+        if (x === 0 || y === 0 || x === bubble.bitmap.width - 1 || y === bubble.bitmap.height - 1) {
+          this.bitmap.data[idx + 0] = 0 // R
+          this.bitmap.data[idx + 1] = 0 // G
+          this.bitmap.data[idx + 2] = 0 // B
+        }
+      })
+
+      // Componer todo
       image.composite(bubble, 60, 20)
       image.composite(pfp, 5, 35)
 
-      // fuentes
-      const fontName = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE)
-      const fontMsg = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE)
+      // Nombre (arriba)
+      image.print(fontName, 70, 25, displayName)
 
-      const senderName = m.pushName || 'Usuario'
+      // Número (debajo del nombre, gris claro)
+      image.print(fontNumber, 70, 45, `+${number}`)
 
-      // nombre arriba
-      image.print(fontName, 70, 25, senderName)
+      // Mensaje (ajustado al tamaño del texto)
+      image.print(fontMsg, 70, 65, {
+        text: input,
+        alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT,
+        alignmentY: Jimp.VERTICAL_ALIGN_TOP
+      }, textWidth, textHeight)
 
-      // mensaje
-      image.print(fontMsg, 70, 50, input)
-
-      // sticker final
+      // Exportar a PNG
       const pngBuffer = await image.getBufferAsync(Jimp.MIME_PNG)
+
+      // Convertir en sticker
       const stickerBuffer = await createSticker(pngBuffer, {
         pack: 'Adribot Pack',
         author: 'El mejor bot Adribot ✨',
@@ -61,7 +88,6 @@ export default {
       })
 
       await conn.sendMessage(chat, { sticker: stickerBuffer }, { quoted: m })
-
     } catch (err) {
       console.error(err)
       const chat = m.chat || (m.key && m.key.remoteJid)
