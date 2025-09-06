@@ -1,28 +1,30 @@
-// plugins/sticker-comandos.js
+// plugins/sticker-addco.js
 
 let handler = async (m, { conn, args }) => {
-  // Buscar sticker ya sea en el mensaje o en la respuesta
+  // Si responde a un mensaje, lo tomamos
   let q = m.quoted ? m.quoted : m
-  let sticker = q.message?.stickerMessage
+  let stickerMessage = q?.message?.stickerMessage || (q.msg && q.msg.mimetype === 'image/webp' ? q.msg : null)
 
-  if (!sticker) 
-    return m.reply('⚠️ Responde o envía un sticker con el comando.\n\nEjemplo:\n`.addco menu`')
+  if (!stickerMessage || !stickerMessage.fileSha256) {
+    return m.reply('⚠️ Responde a un sticker con:\n\n`.addco <comando>`')
+  }
 
-  if (!args[0]) 
-    return m.reply('⚠️ Debes indicar el comando que quieres asignar.\n\nEjemplo:\n`.addco menu`')
+  if (!args[0]) {
+    return m.reply('⚠️ Debes indicar el comando.\n\nEjemplo:\n`.addco menu`')
+  }
 
+  let hash = Buffer.from(stickerMessage.fileSha256).toString('hex')
   let cmd = args[0].toLowerCase()
-  let hash = sticker.fileSha256.toString('hex')
 
   global.db.data.stickerCmds = global.db.data.stickerCmds || {}
   global.db.data.stickerCmds[hash] = cmd
 
-  m.reply(`✅ El sticker fue guardado como comando: *${cmd}*`)
+  m.reply(`✅ Sticker registrado como comando: *${cmd}*`)
 }
 
+handler.help = ['addco <comando> (responde a un sticker)']
 handler.tags = ['sticker']
-handler.command = ['addco']   // 🔥 AQUÍ ESTÁ EL FIX
+handler.command = /^addco$/i
 handler.group = true
-handler.help = ['addco <comando> (responde o envía un sticker)']
 
 export default handler
