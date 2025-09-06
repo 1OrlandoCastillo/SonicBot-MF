@@ -1,141 +1,73 @@
 process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '1'
-
 import './config.js'
 
 import { createRequire } from 'module'
-
 import path, { join } from 'path'
-
 import { fileURLToPath, pathToFileURL } from 'url'
-
 import { platform } from 'process'
-
 import * as ws from 'ws'
-
 import { readdirSync, statSync, unlinkSync, existsSync, readFileSync, watch } from 'fs'
-
 import yargs from 'yargs'
-
 import chalk from 'chalk'
-
 import syntaxerror from 'syntax-error'
-
 import { tmpdir } from 'os'
-
 import { format } from 'util'
-
 import pino from 'pino'
-
 import { Boom } from '@hapi/boom'
-
 import { makeWASocket, protoType, serialize } from './lib/simple.js'
-
 import { Low, JSONFile } from 'lowdb'
-
 import lodash from 'lodash'
-
 import readline from 'readline'
-
 import NodeCache from 'node-cache'
-
 import qrcode from 'qrcode-terminal'
-
 const { proto } = (await import('@whiskeysockets/baileys')).default
-
 const {
-
 DisconnectReason,
-
 useMultiFileAuthState,
-
 fetchLatestBaileysVersion,
-
 Browsers,
-
 makeCacheableSignalKeyStore,
-
 jidNormalizedUser,
-
 } = await import('@whiskeysockets/baileys')
-
 const PORT = process.env.PORT || process.env.SERVER_PORT || 3000
-
 protoType()
-
 serialize()
-
 global.__filename = function filename(pathURL = import.meta.url, rmPrefix = platform !== 'win32') {
-
 return rmPrefix ? /file:////.test(pathURL) ? fileURLToPath(pathURL) : pathURL : pathToFileURL(pathURL).toString();
-
 };
-
 global.__dirname = function dirname(pathURL) {
-
 return path.dirname(global.__filename(pathURL, true))
-
 };
-
 global.__require = function require(dir = import.meta.url) {
-
 return createRequire(dir)
-
 }
-
 global.API = (name, path = '/', query = {}, apikeyqueryname) =>
-
 (name in global.APIs ? global.APIs[name] : name) +
-
 path +
-
 (query || apikeyqueryname
-
 ? '?' +
-
   new URLSearchParams(
-
     Object.entries({
-
       ...query,
-
       ...(apikeyqueryname ? { [apikeyqueryname]: global.APIKeys[name in global.APIs ? global.APIs[name] : name] } : {}),
-
     })
-
   )
-
 : '')
-
 global.timestamp = { start: new Date() }
-
 const __dirname = global.__dirname(import.meta.url)
-
 global.opts = new Object(yargs(process.argv.slice(2)).exitProcess(false).parse())
-
 global.prefix = new RegExp(
-
 '^[' +
-
 (opts['prefix'] || '‎z/#$%.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') +
-
 ']'
-
 )
-
 global.db = new Low(new JSONFile(storage/databases/database.json))
-
 global.DATABASE = global.db
-
 global.loadDatabase = async function loadDatabase() {
-
 if (global.db.READ)
-
 return new Promise((resolve) =>
-
   setInterval(async function () {
-
     if (!global.db.READ) {
-
       clearInterval(this)
 
       resolve(global.db.data == null ? global.loadDatabase() : global.db.data)
