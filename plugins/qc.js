@@ -1,7 +1,7 @@
 // plugins/qc.js
 import Jimp from 'jimp'
 import { createSticker } from 'wa-sticker-formatter'
-import path from 'path'
+import fetch from 'node-fetch'
 
 export default {
   name: 'qc',
@@ -32,7 +32,7 @@ export default {
       })
       pfp.mask(mask)
 
-      // Nombre y texto
+      // Nombre y mensaje
       const displayName = m.pushName || 'Usuario'
       const fontName = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE)
       const fontMsg = await Jimp.loadFont(Jimp.FONT_SANS_16_WHITE)
@@ -46,29 +46,35 @@ export default {
       // Fondo general
       const image = new Jimp(width, height, '#121b22')
 
-      // Burbuja redondeada
+      // 🟤 Burbuja redondeada (usando máscara externa)
+      // 👉 Debes tener un PNG de burbuja con esquinas redondeadas en tu proyecto
+      const bubbleMaskUrl = 'https://i.ibb.co/0jC9vRc/bubble-mask.png' // PNG transparente con la forma de burbuja
+      const bubbleMask = await Jimp.read(bubbleMaskUrl)
       const bubble = new Jimp(width - 80, textHeight + 50, '#1f2c34')
-      const maskPath = path.join(process.cwd(), 'assets', 'bubble-mask.png') // ruta a tu máscara
-      const bubbleMask = await Jimp.read(maskPath)
-      bubbleMask.resize(bubble.bitmap.width, bubble.bitmap.height)
-      bubble.mask(bubbleMask, 0, 0)
+      bubble.resize(bubbleMask.bitmap.width, bubbleMask.bitmap.height)
+      bubble.mask(bubbleMask)
 
-      // Componer
+      // Componer todo
       image.composite(bubble, 60, 20)
       image.composite(pfp, 5, 35)
 
-      // Nombre (arriba, estilo marrón/naranja)
-      image.print(fontName, 70, 25, displayName)
+      // Nombre arriba (simulamos color marrón/naranja)
+      image.print(fontName, 70, 25, {
+        text: displayName,
+        alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT
+      }, textWidth, 30)
 
-      // Mensaje
+      // Mensaje dentro de la burbuja
       image.print(fontMsg, 70, 55, {
         text: input,
         alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT,
         alignmentY: Jimp.VERTICAL_ALIGN_TOP
       }, textWidth, textHeight)
 
-      // Exportar
+      // Exportar a PNG
       const pngBuffer = await image.getBufferAsync(Jimp.MIME_PNG)
+
+      // Convertir a sticker
       const stickerBuffer = await createSticker(pngBuffer, {
         pack: 'Adribot Pack',
         author: 'El mejor bot Adribot ✨',
