@@ -21,7 +21,7 @@ export default {
       }
 
       const size = 512
-      const image = new Jimp(size, size, 0x00000000) // fondo transparente
+      const image = new Jimp(size, size, '#ffffff') // 🔥 fondo blanco
 
       // Selección de fuente dinámica según la longitud
       let font
