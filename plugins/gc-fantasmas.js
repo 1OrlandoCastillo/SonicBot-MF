@@ -44,18 +44,25 @@ var handler = async (m, { conn, participants, command }) => {
         { mentions: sider }
       )
 
+      let eliminados = []
+      let noEliminados = []
+
       for (let user of sider) {
         try {
           console.log(`Expulsando a: ${user}`)
           await conn.groupParticipantsUpdate(m.chat, [user], 'remove')
-          await delay(2000) // ahora solo 2 segundos
+          eliminados.push(user)
+          await delay(2000) // 2 seg entre expulsiones
         } catch (e) {
           console.error(`Error expulsando a ${user}:`, e)
-          await conn.reply(m.chat, `⚠️ No pude expulsar a @${user.split('@')[0]}`, m, {
-            mentions: [user],
-          })
+          noEliminados.push(user)
         }
       }
+
+      let msg = `✅ *Integrantes eliminados:*\n${eliminados.length ? eliminados.map(v => '@' + v.replace(/@.+/, '')).join('\n') : 'Ninguno'}\n\n`
+      msg += `⛔ *No eliminados (admins o error):*\n${noEliminados.length ? noEliminados.map(v => '@' + v.replace(/@.+/, '')).join('\n') : 'Ninguno'}`
+
+      await conn.reply(m.chat, msg, m, { mentions: [...eliminados, ...noEliminados] })
 
       break
   }
