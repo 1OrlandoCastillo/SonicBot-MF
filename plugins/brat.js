@@ -1,5 +1,5 @@
 // plugins/brat.js
-// Plugin .brat -> genera un sticker con texto dinámico y remarcado
+// Plugin .brat -> genera un sticker con texto dinámico y ajusta tamaño automáticamente
 import Jimp from 'jimp'
 import { createSticker } from 'wa-sticker-formatter'
 
@@ -23,21 +23,33 @@ export default {
       const size = 512
       const image = new Jimp(size, size, '#ffffff') // 🔥 fondo blanco
 
-      // Selección de fuente dinámica según la longitud
-      let font
-      if (input.length <= 10) font = await Jimp.loadFont(Jimp.FONT_SANS_128_BLACK)
-      else if (input.length <= 20) font = await Jimp.loadFont(Jimp.FONT_SANS_64_BLACK)
-      else if (input.length <= 40) font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK)
-      else font = await Jimp.loadFont(Jimp.FONT_SANS_16_BLACK)
+      // Fuentes disponibles de mayor a menor
+      const fonts = [
+        await Jimp.loadFont(Jimp.FONT_SANS_128_BLACK),
+        await Jimp.loadFont(Jimp.FONT_SANS_64_BLACK),
+        await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK),
+        await Jimp.loadFont(Jimp.FONT_SANS_16_BLACK)
+      ]
 
       const textBoxWidth = size - 60
       const textBoxHeight = size - 60
 
-      // Función para dibujar texto con contorno
+      // Seleccionar la fuente más grande que quepa
+      let chosenFont = fonts[fonts.length - 1] // por defecto la más pequeña
+      for (let f of fonts) {
+        const textWidth = Jimp.measureText(f, input)
+        const textHeight = Jimp.measureTextHeight(f, input, textBoxWidth)
+        if (textWidth <= textBoxWidth && textHeight <= textBoxHeight) {
+          chosenFont = f
+          break
+        }
+      }
+
+      // Dibujar texto con contorno
       const drawTextWithOutline = (img, font, text) => {
         const positions = [
-          [-2, 0], [2, 0], [0, -2], [0, 2], // lados
-          [-2, -2], [2, -2], [-2, 2], [2, 2] // esquinas
+          [-2, 0], [2, 0], [0, -2], [0, 2],
+          [-2, -2], [2, -2], [-2, 2], [2, 2]
         ]
 
         // contorno gris
@@ -71,7 +83,7 @@ export default {
         )
       }
 
-      drawTextWithOutline(image, font, input)
+      drawTextWithOutline(image, chosenFont, input)
 
       const pngBuffer = await image.getBufferAsync(Jimp.MIME_PNG)
 
