@@ -10,8 +10,10 @@ var handler = async (m, { conn, participants, command }) => {
   let total = 0
 
   for (let user of member) {
-    let data = global.db.data.users[user] || { chat: 0, whitelist: false }
-    if ((data.chat === 0) && !data.whitelist) {
+    let data = global.db.data.users[user] || { chat: 0, whitelist: false, baneado: false }
+    
+    // si ya fue expulsado (baneado), no lo marcamos como fantasma
+    if ((data.chat === 0) && !data.whitelist && !data.baneado) {
       if (user !== conn.user.jid && user !== ownerGroup && user !== ownerBot) {
         total++
         sider.push(user)
@@ -52,6 +54,11 @@ var handler = async (m, { conn, participants, command }) => {
           console.log(`Expulsando a: ${user}`)
           await conn.groupParticipantsUpdate(m.chat, [user], 'remove')
           eliminados.push(user)
+
+          // marcamos como baneado en la db para que no vuelva a salir
+          if (!global.db.data.users[user]) global.db.data.users[user] = { chat: 0, whitelist: false }
+          global.db.data.users[user].baneado = true
+
           await delay(2000) // 2 seg entre expulsiones
         } catch (e) {
           console.error(`Error expulsando a ${user}:`, e)
