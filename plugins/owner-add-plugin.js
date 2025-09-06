@@ -55,7 +55,7 @@ ${usedPrefix}plugin <nombre_archivo.js>
     txt += `╰➺ ✧ *Recarga:* El plugin se cargará automáticamente\n`
     txt += `│\n`
     txt += `╰────────────────╯\n`
-    txt += `\n> LOVELLOUD Official`
+    txt += `\n> SonicBot-MF X Adri🤴🏻`
 
     await conn.sendMessage(m.chat, { text: txt }, { quoted: m })
 
