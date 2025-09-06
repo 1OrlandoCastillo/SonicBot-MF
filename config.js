@@ -20,7 +20,7 @@ global.sessions = 'Sessions'
 global.bot = 'Serbot' 
 global.AFBots = true
 
-global.packname = 'LOVELLOUD'
+global.packname = 'SonicBot-MF'
 global.namebot = 'SonicBot'
 global.author = 'White'
 
