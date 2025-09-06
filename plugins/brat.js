@@ -21,7 +21,7 @@ export default {
       }
 
       const size = 512
-      const image = new Jimp(size, size, '#ffffff') // fondo blanco
+      const image = new Jimp(size, size, 0x00000000) // fondo transparente
 
       // Selección de fuente dinámica según la longitud
       let font
@@ -40,7 +40,7 @@ export default {
           [-2, -2], [2, -2], [-2, 2], [2, 2] // esquinas
         ]
 
-        // dibujar sombra/contorno en gris
+        // contorno gris
         positions.forEach(([dx, dy]) => {
           img.print(
             font,
@@ -56,7 +56,7 @@ export default {
           )
         })
 
-        // dibujar texto principal en negro
+        // texto principal negro
         img.print(
           font,
           30,
@@ -76,8 +76,8 @@ export default {
       const pngBuffer = await image.getBufferAsync(Jimp.MIME_PNG)
 
       const stickerBuffer = await createSticker(pngBuffer, {
-        pack: 'BratPack',
-        author: (m.pushName || 'Brat Bot').toString(),
+        pack: 'Adribot Pack',
+        author: 'El mejor bot Adribot ✨',
         type: 'full',
         quality: 80,
         categories: ['✨']
