@@ -1,4 +1,3 @@
-import { sticker } from '../lib/sticker.js'
 import Jimp from 'jimp'
 
 const handler = async (update, { conn }) => {
@@ -9,13 +8,11 @@ const handler = async (update, { conn }) => {
 
     if (!participants || !['add','remove'].includes(action)) return
 
-    // Asegurarse que existe la configuración
+    // Asegurar configuración básica
     if (!global.db.data.settings?.[chatId]) {
       global.db.data.settings[chatId] = {
         welcome: true,
-        despedida: true,
-        welcomeMsg: '👋 ¡Bienvenido %user% al grupo %group%!',
-        despedidaMsg: '👋 %user% ha salido del grupo %group%.'
+        despedida: true
       }
       await global.db.write()
     }
@@ -26,29 +23,34 @@ const handler = async (update, { conn }) => {
     for (let user of participants) {
       const nombre = await conn.getName(user)
       let msgText = ''
+      let avatar
+
+      try {
+        avatar = await conn.profilePictureUrl(user, 'image')
+      } catch {
+        avatar = 'https://telegra.ph/file/24fa902ead26340f3df2c.png'
+      }
 
       if (action === 'add' && groupSettings.welcome) {
-        msgText = (groupSettings.welcomeMsg).replace(/%user%/g, nombre).replace(/%group%/g, groupName)
+        msgText = `👋 Bienvenido *@${user.split('@')[0]}* a *${groupName}*`
       } else if (action === 'remove' && groupSettings.despedida) {
-        msgText = (groupSettings.despedidaMsg).replace(/%user%/g, nombre).replace(/%group%/g, groupName)
+        msgText = `👋 *@${user.split('@')[0]}* se fue...\n😈 QUE BUENO QUE SE SALIÓ`
       } else continue
 
-      // Foto de perfil
-      let avatar
-      try { avatar = await conn.profilePictureUrl(user, 'image') } 
-      catch { avatar = 'https://telegra.ph/file/24fa902ead26340f3df2c.png' }
-
-      // Sticker con Jimp
+      // Imagen personalizada con Jimp
       const image = await Jimp.read(avatar)
       image.cover(512, 512)
-      const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE)
-      image.print(font, 0, 400, { text: nombre, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER })
+      const font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE)
+      image.print(font, 10, 470, { text: nombre, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER })
 
       const buffer = await image.getBufferAsync(Jimp.MIME_PNG)
-      const stiker = await sticker(buffer, false, global.packname || 'SonicBot', global.author || 'SonicBot')
 
-      await conn.sendMessage(chatId, { text: msgText })
-      await conn.sendMessage(chatId, { sticker: stiker })
+      // Enviar mensaje con mención + foto
+      await conn.sendMessage(chatId, { 
+        image: buffer, 
+        caption: msgText, 
+        mentions: [user] 
+      })
     }
 
   } catch (e) {
