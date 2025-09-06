@@ -1,4 +1,4 @@
-import ytdl from 'ytdl-core'
+import play from 'play-dl'
 import yts from 'yt-search'
 import fs from 'fs'
 import path from 'path'
@@ -19,7 +19,7 @@ const handler = async (m, { conn, args, usedPrefix }) => {
     if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir)
 
     // Mostrar info de la canción
-    const infoText =
+    const infoText = 
 `🎵 *${video.title}*
 ⏱ Duración: ${video.timestamp}
 👁 Vistas: ${video.views}
@@ -27,20 +27,26 @@ const handler = async (m, { conn, args, usedPrefix }) => {
 📅 Publicado: ${video.ago}\n\n⏳ Descargando audio...`
     await conn.sendMessage(chatId, { text: infoText }, { quoted: m })
 
-    // Descargar audio con ytdl-core
+    // Descargar audio con play-dl
+    const stream = await play.stream(video.url)
     const audioPath = path.join(tmpDir, `${video.videoId}.mp3`)
-    const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' })
     const writeStream = fs.createWriteStream(audioPath)
-    stream.pipe(writeStream)
+    stream.stream.pipe(writeStream)
 
     // Esperar fin de descarga
     await new Promise((resolve, reject) => {
       writeStream.on('finish', resolve)
       writeStream.on('error', reject)
-      stream.on('error', reject)
     })
 
-    // Enviar audio a WhatsApp
+    // Verificar tamaño antes de enviar (WhatsApp máx ~16 MB)
+    const stats = fs.statSync(audioPath)
+    if (stats.size > 16 * 1024 * 1024) {
+      fs.unlinkSync(audioPath)
+      return conn.sendMessage(chatId, { text: '⚠️ El audio es demasiado pesado para enviarlo por WhatsApp.' }, { quoted: m })
+    }
+
+    // Enviar audio
     await conn.sendMessage(chatId, {
       audio: fs.readFileSync(audioPath),
       mimetype: 'audio/mpeg',
@@ -51,10 +57,8 @@ const handler = async (m, { conn, args, usedPrefix }) => {
     fs.unlinkSync(audioPath)
 
   } catch (err) {
-    console.error('Error en .play:', err) // para consola
-    await conn.sendMessage(m.chat, { 
-      text: `❌ Error en .play:\n${err.message || err}` 
-    }, { quoted: m })
+    console.error('Error en .play:', err)
+    await conn.sendMessage(m.chat, { text: `❌ Error en .play:\n${err.message || err}` }, { quoted: m })
   }
 }
 
