@@ -22,7 +22,7 @@ var user = number + '@s.whatsapp.net'
 } catch (e) {
 } finally {
 conn.groupParticipantsUpdate(m.chat, [user], 'promote')
-conn.reply(m.chat, `✅ *El nuevo se la chupo a Orlando y ya es administrador.*`, m, rcanal)
+conn.reply(m.chat, `✅ *El nuevo se la chupo a ADRI y ya es administrador.*`, m, rcanal)
 }
 
 }
