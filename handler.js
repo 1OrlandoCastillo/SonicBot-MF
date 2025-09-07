@@ -100,28 +100,16 @@ if (m.isGroup) {
   let chat = global.db.data.chats[m.chat] || {}
 
   if (chat.onlyAdmins) {
-    // verificar si es admin en el grupo
-    let isAdmin = participants.find(p => this.decodeJid(p.id) === m.sender)?.admin
-
-    if (!isAdmin) {
-      // aseguramos estructura de avisos en la DB
-      chat._lastNotified = chat._lastNotified || {}
-
-      // usamos el ID del mensaje para evitar spam masivo
-      if (!chat._lastNotified[m.sender]) {
-        chat._lastNotified[m.sender] = true
-        await this.reply(m.chat, '⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.', m)
+    // verificar si el mensaje es comando
+    if (m.text && m.text.startsWith(global.prefix || '.')) {
+      let isAdmin = participants.find(p => this.decodeJid(p.id) === m.sender)?.admin
+      if (!isAdmin) {
+        return this.reply(m.chat, '⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.', m)
       }
-
-      return true // 🔒 cortamos aquí y NO ejecutamos más plugins
     }
-  } else {
-    // resetear avisos si se apaga el modo admin
-    chat._lastNotified = {}
   }
 }
 // --- Fin filtro para Modo Admin ---
-
 if (opts['queque'] && m.text && !(isMods || isPrems)) {  
   let queque = this.msgqueque, time = 1000 * 5  
   const previousID = queque[queque.length - 1]  
