@@ -135,17 +135,45 @@ let usedPrefix = '.'
 
 
 let commandExecuted = false
-// --- Modo solo admins ---
-if (m.isGroup) {
-  let chat = global.db.data.chats[m.chat] || {}
-  if (chat.onlyAdmins) {
-    let participant = participants.find(p => conn.decodeJid(p.id) === m.sender)
-    let isAdmin = participant?.admin === 'admin' || participant?.admin === 'superadmin'
-    if (!isAdmin) {
-      return m.reply(`⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.`)
+export async function handler(chatUpdate) {
+  this.msgqueue = this.msgqueue || []
+  if (!chatUpdate) return
+  this.pushMessage(chatUpdate.messages).catch(console.error)
+  let m = chatUpdate.messages[chatUpdate.messages.length - 1]
+  if (!m) return
+  if (global.db.data == null) await global.loadDatabase()
+
+  try {
+    m = smsg(this, m) || m
+    if (!m) return
+    if (m.messageStubType) return
+    m.exp = 0
+    m.limit = false
+
+    // --- Filtro para Modo Admin ---
+    if (m.isGroup) {
+      let chat = global.db.data.chats[m.chat] || {}
+
+      if (chat.onlyAdmins) {
+        try {
+          let groupMetadata = await this.groupMetadata(m.chat)
+          let isAdmin = groupMetadata.participants.find(p => p.id === m.sender)?.admin
+
+          if (!isAdmin) {
+            if (!m._modoadminWarned) { // 🔥 evita spam
+              m._modoadminWarned = true
+              await this.reply(m.chat, '⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.', m)
+            }
+            return // 🚫 bloquea el comando
+          }
+        } catch (e) {
+          console.error('Error verificando admins en Modo Admin:', e)
+        }
+      }
     }
-  }
-}
+    // --- Fin filtro Modo Admin ---
+
+    // aquí sigue tu código normal del handler...
 
 const processedPlugins = []
 for (let name in global.plugins) {
