@@ -1,16 +1,14 @@
 // plugins/index/link.js
-const handler = async (m, { conn, usedPrefix, command }) => {
+let handler = async (m, { conn }) => {
+  if (!m.isGroup) {
+    return m.reply('❌ Este comando solo funciona en grupos.')
+  }
+
   try {
-    if (!m.isGroup) {
-      return m.reply('❌ Este comando solo funciona en grupos.')
-    }
+    let inviteCode = await conn.groupInviteCode(m.chat)
+    let link = `https://chat.whatsapp.com/${inviteCode}`
 
-    const groupMetadata = await conn.groupMetadata(m.chat)
-    const groupInvite = await conn.groupInviteCode(m.chat)
-
-    const groupLink = `https://chat.whatsapp.com/${groupInvite}`
-
-    await conn.sendMessage(m.chat, { text: `🔗 Enlace del grupo:\n${groupLink}` }, { quoted: m })
+    await conn.sendMessage(m.chat, { text: `🔗 Enlace del grupo:\n${link}` }, { quoted: m })
   } catch (e) {
     console.error(e)
     m.reply('⚠️ No pude obtener el link del grupo.')
