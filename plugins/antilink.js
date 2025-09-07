@@ -1,13 +1,13 @@
 // plugins/antilink.js
 
-let handler = async (m, { conn, args, command, participants }) => {
+let handler = async (m, { conn, args }) => {
   if (!m.isGroup) return m.reply('❌ Este comando solo funciona en grupos.')
   if (!m.isAdmin) return m.reply('⚠️ Solo los administradores pueden usar este comando.')
 
   let chat = global.db.data.chats[m.chat] ||= {}
 
   if (!args[0]) {
-    return m.reply(`📌 Estado actual del *antilink*: ${chat.antiLink ? '✅ Activado' : '❌ Desactivado'}\n\nUsa:\n.${command} on\n.${command} off`)
+    return m.reply(`📌 Estado actual del *antilink*: ${chat.antiLink ? '✅ Activado' : '❌ Desactivado'}\n\nUsa:\n.antilink on\n.antilink off`)
   }
 
   if (args[0].toLowerCase() === 'on') {
@@ -20,7 +20,7 @@ let handler = async (m, { conn, args, command, participants }) => {
     return m.reply('❌ El *antilink* ha sido *desactivado* en este grupo.')
   }
 
-  return m.reply(`⚠️ Uso correcto:\n.${command} on\n.${command} off`)
+  return m.reply(`⚠️ Uso correcto:\n.antilink on\n.antilink off`)
 }
 
 handler.help = ['antilink <on/off>']
