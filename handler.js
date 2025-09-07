@@ -135,6 +135,7 @@ let usedPrefix = '.'
 
 
 let commandExecuted = false
+
 // --- Filtro para Modo Admin ---
 if (m.isGroup) {
   let chat = global.db.data.chats[m.chat] || {}
@@ -145,13 +146,12 @@ if (m.isGroup) {
       let isAdmin = groupMetadata.participants.find(p => p.id === m.sender)?.admin
 
       if (!isAdmin) {
-        // --- Evitar spam: solo avisar 1 vez cada 10 segundos ---
-        global.db.data.cooldowns = global.db.data.cooldowns || {}
-        if (!global.db.data.cooldowns[m.chat]) global.db.data.cooldowns[m.chat] = 0
+        // --- Evitar spam: avisar solo 1 vez hasta que otro intente ---
+        global.db.data.lastWarn = global.db.data.lastWarn || {}
+        
+        if (!global.db.data.lastWarn[m.chat]) {
+          global.db.data.lastWarn[m.chat] = true
 
-        let now = Date.now()
-        if (now - global.db.data.cooldowns[m.chat] > 10000) { // 10s de cooldown
-          global.db.data.cooldowns[m.chat] = now
           await this.reply(
             m.chat,
             '⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.',
