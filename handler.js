@@ -95,21 +95,31 @@ const isOwner = isROwner || m.fromMe
 const isMods = isOwner || global.mods.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)  
 const isPrems = isROwner || global.prems.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender) || _user?.prem == true  
 
-// --- Filtro para Modo Admin ---
+// --- Filtro Modo Admin ---
 if (m.isGroup) {
   let chat = global.db.data.chats[m.chat] || {}
 
   if (chat.onlyAdmins) {
-    // verificar si el mensaje es comando
-    if (m.text && m.text.startsWith(global.prefix || '.')) {
+    // ¿es un comando?
+    if (m.text && m.text.startsWith('.')) {
       let isAdmin = participants.find(p => this.decodeJid(p.id) === m.sender)?.admin
+
       if (!isAdmin) {
-        return this.reply(m.chat, '⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.', m)
+        // ⚠️ solo un mensaje y se corta la ejecución
+        if (!chat._lastWarn || chat._lastWarn !== m.sender) {
+          chat._lastWarn = m.sender
+          await this.reply(m.chat, '⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.', m)
+        }
+        return // 🔒 no sigue a los plugins
       }
     }
+  } else {
+    // si se apaga el modo, limpiamos la memoria
+    if (chat._lastWarn) delete chat._lastWarn
   }
 }
-// --- Fin filtro para Modo Admin ---
+// --- Fin Filtro Modo Admin ---
+
 if (opts['queque'] && m.text && !(isMods || isPrems)) {  
   let queque = this.msgqueque, time = 1000 * 5  
   const previousID = queque[queque.length - 1]  
