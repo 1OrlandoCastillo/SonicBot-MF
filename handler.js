@@ -94,7 +94,22 @@ const isROwner = allOwnerIds.includes(m.sender)
 const isOwner = isROwner || m.fromMe  
 const isMods = isOwner || global.mods.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)  
 const isPrems = isROwner || global.prems.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender) || _user?.prem == true  
-
+// --- Filtro para Modo Admin ---
+if (m.isGroup) {
+  let chat = global.db.data.chats[m.chat] || {}
+  if (chat.onlyAdmins) {
+    // verificar si es admin en el grupo
+    let isAdmin = participants.find(p => this.decodeJid(p.id) === m.sender)?.admin
+    if (!isAdmin) {
+      if (!m._notified) {
+        m._notified = true
+        await this.reply(m.chat, '⚠️ Solo los administradores pueden usar comandos en *Modo Admin*.', m)
+      }
+      return // 🔒 corta aquí y no ejecuta más plugins
+    }
+  }
+}
+// --- Fin filtro Modo Admin ---
 if (opts['queque'] && m.text && !(isMods || isPrems)) {  
   let queque = this.msgqueque, time = 1000 * 5  
   const previousID = queque[queque.length - 1]  
@@ -135,25 +150,6 @@ let usedPrefix = '.'
 
 
 let commandExecuted = false
-
-// --- Filtro para Modo Admin ---
-if (m.isGroup) {
-  let chat = global.db.data.chats[m.chat] || {}
-  if (chat.onlyAdmins) {
-    let groupMetadata = await this.groupMetadata(m.chat)
-    let isAdmin = groupMetadata.participants.find(p => conn.decodeJid(p.id) === m.sender)?.admin
-
-    if (!isAdmin) {
-      // Solo avisar una vez por mensaje (no en cada plugin)
-      if (!m._notified) {
-        m._notified = true
-        await this.reply(m.chat, '⚠️ Solo los administradores pueden usar comandos en *Modo Admin*.', m)
-      }
-      return // bloquea la ejecución de más plugins
-    }
-  }
-}
-// --- Fin filtro Modo Admin ---
 
 for (let name in global.plugins) {
   let plugin = global.plugins[name]
