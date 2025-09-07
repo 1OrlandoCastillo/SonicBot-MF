@@ -74,19 +74,6 @@ if (!m.fromMe && opts['self']) return
 if (opts['swonly'] && m.chat !== 'status@broadcast') return  
 if (typeof m.text !== 'string') m.text = ''  
 
-// 🚨 FILTRO MODO ADMIN
-if (m.isGroup) {
-  let chat = global.db.data.chats[m.chat] || {}
-  if (chat.onlyAdmins) {
-    let isAdmin = participants.find(p => conn.decodeJid(p.id) === m.sender)?.admin
-    if (!isAdmin) {
-      if (m.text && m.text.startsWith('.')) {
-        return this.reply(m.chat, '⚠️ Este bot está en *Modo Admin*. Solo los administradores pueden usar comandos.', m)
-      }
-    }
-  }
-}
-
 let _user = global.db.data?.users?.[m.sender]  
 
 const createOwnerIds = (number) => {
@@ -107,8 +94,6 @@ const isROwner = allOwnerIds.includes(m.sender)
 const isOwner = isROwner || m.fromMe  
 const isMods = isOwner || global.mods.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)  
 const isPrems = isROwner || global.prems.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender) || _user?.prem == true  
-
-
 
 if (opts['queque'] && m.text && !(isMods || isPrems)) {  
   let queque = this.msgqueque, time = 1000 * 5  
@@ -133,8 +118,8 @@ const isBotAdmin = bot?.admin || false
 
 const ___dirname = path.join(path.dirname(fileURLToPath(import.meta.url)), './plugins')  
 
-global.idcanal = '120363411154070926@newsletter'  
-global.namecanal = 'SONICBOT-MF Official Channel'  
+global.idcanal = '120363403143798163@newsletter'  
+global.namecanal = 'LOVELLOUD Official Channel'  
 global.rcanal = {  
   contextInfo: {  
     isForwarded: true,  
@@ -151,6 +136,8 @@ let usedPrefix = '.'
 
 let commandExecuted = false
 
+
+const processedPlugins = []
 for (let name in global.plugins) {
   let plugin = global.plugins[name]
   if (!plugin || plugin.disabled) continue
@@ -734,7 +721,7 @@ if (m.isGroup && global.db.data.soloAdmin && global.db.data.soloAdmin[m.chat] ==
   if (isCommand && !isAdmin && !isOwner) {
     try {
       await this.sendMessage(m.chat, {
-        text: `╭─「 ✦ 🔐 ᴍᴏᴅᴏ sᴏʟᴏ-ᴀᴅᴍɪɴs ✦ 」─╮\n│\n╰➺ ✧ @${m.sender.split('@')[0]} el bot está en\n╰➺ ✧ modo *Solo Administradores*\n│\n╰➺ ✧ Solo admins del grupo y\n╰➺ ✧ owners del bot pueden usar comandos\n│\n╰➺ ✧ *Estado:* 🔐 Restringido\n\n> SonicBot-MF`,
+        text: `╭─「 ✦ 🔐 ᴍᴏᴅᴏ sᴏʟᴏ-ᴀᴅᴍɪɴs ✦ 」─╮\n│\n╰➺ ✧ @${m.sender.split('@')[0]} el bot está en\n╰➺ ✧ modo *Solo Administradores*\n│\n╰➺ ✧ Solo admins del grupo y\n╰➺ ✧ owners del bot pueden usar comandos\n│\n╰➺ ✧ *Estado:* 🔐 Restringido\n\n> SonicBot Official`,
         contextInfo: {
           ...rcanal.contextInfo,
           mentionedJid: [m.sender]
@@ -848,7 +835,7 @@ if (m.text && !commandExecuted && !m.commandExecuted) {
         }
       })
 
-      let message = `《✧》El comando *${fullCommand}* no existe en SonicBot-MF.\n\n`
+      let message = `《✧》El comando *${fullCommand}* no existe en SonicBot MF.\n\n`
 
       if (bestSuggestion && bestScore >= 10) {
 
@@ -899,14 +886,14 @@ if (m.text && !commandExecuted && !m.commandExecuted) {
 
 global.dfail = (type, m, conn) => {  
   const msg = {  
-    rowner: `✤ Hola, este comando solo puede ser utilizado por el *Creador* del  Bot.`,  
+    rowner: `✤ Hola, este comando solo puede ser utilizado por el *Creador* del Bot.`,  
     owner: `✤ Hola, este comando solo puede ser utilizado por el *Creador* del Bot y *Sub Bots*.`,  
-    mods: `✤ Hola, este comando solo puede ser utilizado por los *Moderadores* del Bot.`,  
+    mods: `✤ Hola, este comando solo puede ser utilizado por los *Moderadores* del  Bot.`,  
     premium: `✤ Hola, este comando solo puede ser utilizado por Usuarios *Premium*.`,  
     group: `✤ Hola, este comando solo puede ser utilizado en *Grupos*.`,  
     private: `✤ Hola, este comando solo puede ser utilizado en mi Chat *Privado*.`,  
     admin: `✤ Hola, este comando solo puede ser utilizado por los *Administradores* del Grupo.`,  
-    botAdmin: `✤ Hola, el bot debe ser *Administradora* para ejecutar este Comando.`,  
+    botAdmin: `✤ Hola, el bot debe ser *Administrador* para ejecutar este Comando.`,  
     unreg: `✤ Hola, para usar este comando debes estar *Registrado.*`,  
     restrict: `✤ Hola, esta característica está *deshabilitada.*`  
   }[type]  
