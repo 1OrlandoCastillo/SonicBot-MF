@@ -32,11 +32,6 @@ let handler = async (msg, { conn, args }) => {
       }, { quoted: msg });
     }
 
-    // Reacción de espera
-    await conn.sendMessage(chatId, {
-      react: { text: "⏳", key: msg.key }
-    });
-
     const subbotID = conn.user.id;
     const filePath = path.resolve("./activossubbots.json");
 
@@ -51,34 +46,64 @@ let handler = async (msg, { conn, args }) => {
 
     if (args[0] === 'on') {
       data.antilink[subbotID][chatId] = true;
-      await conn.sendMessage(chatId, {
-        text: "✅ Antilink *activado* en este grupo."
-      }, { quoted: msg });
+      await conn.sendMessage(chatId, { text: "✅ Antilink *activado* en este grupo." }, { quoted: msg });
     } else {
       delete data.antilink[subbotID][chatId];
-      await conn.sendMessage(chatId, {
-        text: "✅ Antilink *desactivado* en este grupo."
-      }, { quoted: msg });
+      await conn.sendMessage(chatId, { text: "✅ Antilink *desactivado* en este grupo." }, { quoted: msg });
     }
 
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-
-    await conn.sendMessage(chatId, {
-      react: { text: "✅", key: msg.key }
-    });
-
   } catch (e) {
     console.error("❌ Error en comando antilink:", e);
-    await conn.sendMessage(chatId, {
-      text: "❌ Ocurrió un error al procesar el comando."
-    }, { quoted: msg });
-
-    await conn.sendMessage(chatId, {
-      react: { text: "❌", key: msg.key }
-    });
+    await conn.sendMessage(chatId, { text: "❌ Ocurrió un error al procesar el comando." }, { quoted: msg });
   }
 };
 
-// Aquí defines el nombre del comando
+// -------------------------------------------------------------
+// 🔍 Listener: detecta mensajes con links y actúa según antilink
+// -------------------------------------------------------------
+handler.before = async (msg, { conn }) => {
+  const chatId = msg.key.remoteJid;
+  if (!chatId || !chatId.endsWith("@g.us")) return;
+
+  const subbotID = conn.user.id;
+  const filePath = path.resolve("./activossubbots.json");
+
+  if (!fs.existsSync(filePath)) return;
+  const data = JSON.parse(fs.readFileSync(filePath));
+
+  if (!data.antilink || !data.antilink[subbotID] || !data.antilink[subbotID][chatId]) return;
+
+  const body = msg.message?.conversation || msg.message?.extendedTextMessage?.text;
+  if (!body) return;
+
+  const regex = /(https?:\/\/[^\s]+|chat\.whatsapp\.com\/[A-Za-z0-9]+)/gi;
+  if (regex.test(body)) {
+    try {
+      const metadata = await conn.groupMetadata(chatId);
+      const senderId = msg.key.participant || msg.key.remoteJid;
+      const senderClean = senderId.replace(/[^0-9]/g, '');
+      const participant = metadata.participants.find(p => p.id.includes(senderClean));
+      const isAdmin = participant?.admin === 'admin' || participant?.admin === 'superadmin';
+
+      if (isAdmin) return; // los admins pueden enviar links
+
+      // 1. Eliminar mensaje
+      await conn.sendMessage(chatId, { delete: msg.key });
+
+      // 2. Expulsar al usuario
+      await conn.groupParticipantsUpdate(chatId, [senderId], "remove");
+
+      // 3. Aviso al grupo
+      await conn.sendMessage(chatId, {
+        text: `🚫 El usuario @${senderClean} fue eliminado por enviar enlaces.`,
+        mentions: [senderId]
+      });
+    } catch (e) {
+      console.error("Error en antilink listener:", e);
+    }
+  }
+};
+
 handler.command = ['antilink'];
 module.exports = handler;
