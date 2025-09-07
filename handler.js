@@ -95,30 +95,27 @@ const isOwner = isROwner || m.fromMe
 const isMods = isOwner || global.mods.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)  
 const isPrems = isROwner || global.prems.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender) || _user?.prem == true  
 
-// --- Filtro Modo Admin ---
+// handler.js
 if (m.isGroup) {
   let chat = global.db.data.chats[m.chat] || {}
 
   if (chat.onlyAdmins) {
-    // ¿es un comando?
     if (m.text && m.text.startsWith('.')) {
-      let isAdmin = participants.find(p => this.decodeJid(p.id) === m.sender)?.admin
-
+      let isAdmin = participants.find(p => conn.decodeJid(p.id) === m.sender)?.admin
       if (!isAdmin) {
-        // ⚠️ solo un mensaje y se corta la ejecución
-        if (!chat._lastWarn || chat._lastWarn !== m.sender) {
-          chat._lastWarn = m.sender
-          await this.reply(m.chat, '⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.', m)
-        }
-        return // 🔒 no sigue a los plugins
+        await conn.reply(m.chat, '⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.', m)
+        return // ⛔ Aquí detenemos ANTES del bucle de plugins
       }
     }
-  } else {
-    // si se apaga el modo, limpiamos la memoria
-    if (chat._lastWarn) delete chat._lastWarn
   }
 }
-// --- Fin Filtro Modo Admin ---
+
+// 👉 recién después de esto haces el for que recorre plugins
+for (let plugin of plugins) {
+  try {
+    // ejecución normal
+  } catch (e) { ... }
+}
 
 if (opts['queque'] && m.text && !(isMods || isPrems)) {  
   let queque = this.msgqueque, time = 1000 * 5  
