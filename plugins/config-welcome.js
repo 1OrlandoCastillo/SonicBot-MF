@@ -16,7 +16,7 @@ const handler = async (m, { conn, args, usedPrefix, command }) => {
     const groupSettings = global.db.data.settings[chatId]
 
     // Activar / desactivar
-    if (args[0] && ['on','off'].includes(args[0].toLowerCase())) {
+    if (args[0] && ['on', 'off'].includes(args[0].toLowerCase())) {
       const setting = args[0].toLowerCase() === 'on'
       if (command === 'welcome') {
         groupSettings.welcome = setting
@@ -36,13 +36,16 @@ const handler = async (m, { conn, args, usedPrefix, command }) => {
       conn.reply(chatId, `✅ Mensaje de ${command} actualizado correctamente`, m)
     }
 
+    // Ayuda del comando
     else {
       conn.reply(chatId,
-        `✏️ Uso del comando ${command}:\n` +
+        `✏️ Uso del comando *${command}*:\n` +
         `• ${usedPrefix}${command} on → Activar\n` +
         `• ${usedPrefix}${command} off → Desactivar\n` +
         `• ${usedPrefix}${command} msg [mensaje] → Cambiar mensaje\n\n` +
-        `Variables disponibles: %user%, %group%`
+        `📌 Variables disponibles:\n` +
+        `%user% → Mención del usuario\n` +
+        `%group% → Nombre del grupo`
       , m)
     }
 
@@ -57,4 +60,5 @@ handler.command = ['welcome', 'despedida']
 handler.group = true
 handler.botAdmin = true
 handler.admin = true
+
 export default handler
