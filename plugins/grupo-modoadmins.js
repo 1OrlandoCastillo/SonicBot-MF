@@ -9,11 +9,17 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 
   let option = args[0].toLowerCase()
   if (option === 'on') {
+    if (chat.onlyAdmins) {
+      return m.reply('⚠️ El *Modo Admin* ya estaba activado.')
+    }
     chat.onlyAdmins = true
-    m.reply('✅ *Modo Admin activado*\nAhora solo los administradores pueden usar comandos del bot.')
+    m.reply('✅ *Modo Admin activado*\nSolo administradores podrán usar comandos.')
   } else if (option === 'off') {
+    if (!chat.onlyAdmins) {
+      return m.reply('⚠️ El *Modo Admin* ya estaba desactivado.')
+    }
     chat.onlyAdmins = false
-    m.reply('❌ *Modo Admin desactivado*\nTodos los miembros pueden usar comandos del bot.')
+    m.reply('❌ *Modo Admin desactivado*\nTodos los miembros pueden usar comandos.')
   } else {
     m.reply(`⚠️ Opción no válida.\n\nUsa:\n${usedPrefix + command} on\n${usedPrefix + command} off`)
   }
@@ -21,7 +27,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 
 handler.help = ['modoadmin on/off']
 handler.tags = ['grupo']
-handler.command = ['modoadmin']   // 🔥 ahora es texto plano
+handler.command = ['modoadmin']   // texto plano, sin regex
 handler.group = true
 handler.admin = true
 
