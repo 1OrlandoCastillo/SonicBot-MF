@@ -135,7 +135,17 @@ let usedPrefix = '.'
 
 
 let commandExecuted = false
-
+// --- Modo solo admins ---
+if (m.isGroup) {
+  let chat = global.db.data.chats[m.chat] || {}
+  if (chat.onlyAdmins) {
+    let participant = participants.find(p => conn.decodeJid(p.id) === m.sender)
+    let isAdmin = participant?.admin === 'admin' || participant?.admin === 'superadmin'
+    if (!isAdmin) {
+      return m.reply(`⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.`)
+    }
+  }
+}
 
 const processedPlugins = []
 for (let name in global.plugins) {
