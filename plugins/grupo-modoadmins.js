@@ -1,26 +1,24 @@
-let handler = async (m, { args, conn }) => {
-  if (!m.isGroup) return m.reply('⚠️ Solo funciona en grupos.')
-
+// --- Filtro para Modo Admin ---
+if (m.isGroup) {
   let chat = global.db.data.chats[m.chat] || {}
-  if (!args[0]) return m.reply('⚠️ Usa:\n\n.modoadmin on\n.modoadmin off')
 
-  if (args[0].toLowerCase() === 'on') {
-    chat.onlyAdmins = true
-    global.db.data.chats[m.chat] = chat
-    return m.reply('✅ Modo Admin activado. Solo los administradores podrán usar comandos.')
+  if (chat.onlyAdmins) {
+    // verificar si es admin en el grupo
+    let isAdmin = participants.find(p => this.decodeJid(p.id) === m.sender)?.admin
+    if (!isAdmin) {
+      // inicializamos memoria de notificaciones por grupo
+      chat.notifiedUsers = chat.notifiedUsers || {}
+
+      if (!chat.notifiedUsers[m.sender]) {
+        chat.notifiedUsers[m.sender] = true
+        await this.reply(m.chat, '⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.', m)
+      }
+
+      return // 🔒 corta aquí y no ejecuta más plugins
+    }
+  } else {
+    // resetear notificaciones cuando se desactiva el modo
+    if (chat.notifiedUsers) chat.notifiedUsers = {}
   }
-
-  if (args[0].toLowerCase() === 'off') {
-    chat.onlyAdmins = false
-    global.db.data.chats[m.chat] = chat
-    return m.reply('✅ Modo Admin desactivado. Todos los miembros pueden usar comandos.')
-  }
-
-  return m.reply('⚠️ Usa:\n\n.modoadmin on\n.modoadmin off')
 }
-
-handler.command = ['modoadmin']
-handler.group = true
-handler.admin = true // solo un admin del grupo puede activarlo
-
-export default handler
+// --- Fin filtro Modo Admin ---
