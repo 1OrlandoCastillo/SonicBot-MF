@@ -40,7 +40,8 @@ let handler = async (m, { conn, args, participants, isAdmin, isBotAdmin, isOwner
 
     // Mensaje de confirmación visible en el grupo
     await conn.sendMessage(m.chat, {
-      text: '✅ El mjs ha sido eliminado jefe 🫡',
+      text: '✅ 𝗘𝗹 𝗺𝗲𝗻𝘀𝗮𝗷𝗲 𝗵𝗮 𝘀𝗶𝗱𝗼 𝗲𝗹𝗶𝗺𝗶𝗻𝗮𝗱𝗼, 𝗷𝗲𝗳𝗲 🫡
+',
       contextInfo
     })
 
