@@ -96,25 +96,56 @@ const isMods = isOwner || global.mods.map(v => v.replace(/[^0-9]/g, '') + '@s.wh
 const isPrems = isROwner || global.prems.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender) || _user?.prem == true  
 
 // handler.js
-if (m.isGroup) {
+
+export default async function handler(m, { conn, plugins, participants }) {
   let chat = global.db.data.chats[m.chat] || {}
 
-  if (chat.onlyAdmins) {
+  // ==============================
+  // 🔒 FILTRO: MODO ADMIN
+  // ==============================
+  if (m.isGroup && chat.onlyAdmins) {
+    // ¿es un comando?
     if (m.text && m.text.startsWith('.')) {
       let isAdmin = participants.find(p => conn.decodeJid(p.id) === m.sender)?.admin
       if (!isAdmin) {
-        await conn.reply(m.chat, '⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.', m)
-        return // ⛔ Aquí detenemos ANTES del bucle de plugins
+        // 🚨 este mensaje se manda solo 1 vez por comando escrito
+        await conn.reply(
+          m.chat,
+          '⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.',
+          m
+        )
+        return // ⛔ DETENEMOS AQUÍ → no se ejecuta ningún plugin
       }
     }
   }
-}
 
-// 👉 recién después de esto haces el for que recorre plugins
-for (let plugin of plugins) {
-  try {
-    // ejecución normal
-  } catch (e) { ... }
+  // ==============================
+  // 🚀 EJECUCIÓN DE PLUGINS
+  // ==============================
+  for (let plugin of plugins) {
+    try {
+      if (plugin.command) {
+        let isMatch = false
+
+        // comando como string
+        if (typeof plugin.command === 'string') {
+          isMatch = m.text?.toLowerCase().startsWith('.' + plugin.command)
+        }
+
+        // comando como regex
+        if (plugin.command instanceof RegExp) {
+          isMatch = plugin.command.test(m.text)
+        }
+
+        if (isMatch) {
+          await plugin.handler(m, { conn, participants, command: m.text.split(' ')[0].slice(1), args: m.text.split(' ').slice(1) })
+          break // ⏹️ detenemos después de ejecutar un plugin
+        }
+      }
+    } catch (e) {
+      console.error(`❌ Error en plugin ${plugin?.name}:`, e)
+    }
+  }
 }
 
 if (opts['queque'] && m.text && !(isMods || isPrems)) {  
