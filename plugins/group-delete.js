@@ -1,51 +1,49 @@
-let handler = async (m, { conn, args, participants, isAdmin, isBotAdmin, isOwner, isPrems, usedPrefix, command }) => {
+let handler = async (m, { conn, args, isAdmin, isOwner, isPrems, usedPrefix, command }) => {
   const contextInfo = typeof rcanal !== 'undefined' ? rcanal.contextInfo : {}
 
   if (!m.isGroup) return conn.sendMessage(m.chat, {
-    text: '《✧》Este comando solo puede ser usado en grupos.',
+    text: 'Este comando solo puede ser usado en grupos.',
     contextInfo
   }, { quoted: m })
 
   if (!isAdmin && !isOwner && !isPrems) return conn.sendMessage(m.chat, {
-    text: '《✧》Solo los administradores pueden usar este comando.',
+    text: 'Solo los administradores pueden usar este comando.',
     contextInfo
   }, { quoted: m })
 
-  if (!m.quoted) {
-    return conn.sendMessage(m.chat, {
-      text: `《✧》Debes responder al mensaje que deseas eliminar.\n\n> Ejemplo: Responde a un mensaje y escribe ${usedPrefix + command}`,
-      contextInfo
-    }, { quoted: m })
-  }
+  if (!m.quoted) return conn.sendMessage(m.chat, {
+    text: `Debes responder al mensaje que deseas eliminar.\nEjemplo: Responde a un mensaje y escribe ${usedPrefix + command}`,
+    contextInfo
+  }, { quoted: m })
 
   try {
-    const messageId = m.msg?.contextInfo?.stanzaId || m.quoted?.id
+    const messageId = m.quoted?.id || m.msg?.key?.id
+    const participant = m.quoted?.sender || m.msg?.key?.participant || m.sender
 
-    if (!messageId) {
-      return conn.sendMessage(m.chat, {
-        text: '《✧》No se pudo obtener información del mensaje a eliminar.',
-        contextInfo
-      }, { quoted: m })
-    }
+    if (!messageId) return conn.sendMessage(m.chat, {
+      text: 'No se pudo obtener información del mensaje a eliminar.',
+      contextInfo
+    }, { quoted: m })
 
-    // Elimina únicamente el mensaje citado
+    // Elimina el mensaje citado
     await conn.sendMessage(m.chat, {
       delete: {
         remoteJid: m.chat,
         fromMe: false,
         id: messageId,
-        participant: m.msg?.contextInfo?.participant || m.chat
+        participant
       }
     })
 
-    // Mensaje de confirmación visible en el grupo
+    // Confirmación visible
     await conn.sendMessage(m.chat, {
-      text: '✅ 𝗘𝗹 𝗺𝗲𝗻𝘀𝗮𝗷𝗲 𝗵𝗮 𝘀𝗶𝗱𝗼 𝗲𝗹𝗶𝗺𝗶𝗻𝗮𝗱𝗼,𝗷𝗲𝗳𝗲🫡
-',
+      text: `✅ El mensaje ha sido eliminado, jefe 🫡`,
       contextInfo
-    })
+    }, { quoted: m })
 
-  } catch {}
+  } catch (error) {
+    console.error('Error al eliminar mensaje:', error)
+  }
 }
 
 handler.command = ['delete', 'eliminar', 'borrar', 'del']
