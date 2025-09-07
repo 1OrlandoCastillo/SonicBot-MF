@@ -1,6 +1,6 @@
 // plugins/antilink.js
 
-let handler = async (m, { conn, args, command }) => {
+let handler = async (m, { conn, args, command, participants }) => {
   if (!m.isGroup) return m.reply('❌ Este comando solo funciona en grupos.')
   if (!m.isAdmin) return m.reply('⚠️ Solo los administradores pueden usar este comando.')
 
