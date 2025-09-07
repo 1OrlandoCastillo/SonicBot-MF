@@ -15,10 +15,12 @@ const handler = async (m, { conn, isAdmin, groupMetadata }) => {
     console.error(e);
   }
 };
-handler.tags = ['owner'];
+
 handler.help = ['autoadmin'];
+handler.tags = ['owner'];
 handler.command = ['autoadmin'];
-handler.mods = true;
+handler.rowner = true; // 🔒 Solo funciona para el Owner
 handler.group = true;
 handler.botAdmin = true;
+
 export default handler;
