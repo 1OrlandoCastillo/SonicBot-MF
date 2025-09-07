@@ -1,7 +1,9 @@
 // plugins/brat.js
-// Plugin .brat -> genera un sticker con texto dinámico y ajusta tamaño automáticamente
+// Sticker .brat -> texto dinámico, adaptado y con fuente bonita
 import Jimp from 'jimp'
 import { createSticker } from 'wa-sticker-formatter'
+import path from 'path'
+import fs from 'fs'
 
 export default {
   name: 'brat',
@@ -23,36 +25,34 @@ export default {
       const size = 512
       const image = new Jimp(size, size, '#ffffff') // 🔥 fondo blanco
 
-      // Fuentes disponibles de mayor a menor
-      const fonts = [
-        await Jimp.loadFont(Jimp.FONT_SANS_128_BLACK),
-        await Jimp.loadFont(Jimp.FONT_SANS_64_BLACK),
-        await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK),
-        await Jimp.loadFont(Jimp.FONT_SANS_16_BLACK)
-      ]
+      // Ruta de fuente bonita (asegúrate de poner el archivo en ./fonts)
+      const fontPath = path.resolve('./fonts/Montserrat-Bold.ttf')
+      if (!fs.existsSync(fontPath)) {
+        return conn.sendMessage(chat, { text: "❌ Falta la fuente Montserrat-Bold.ttf en ./fonts/" }, { quoted: m })
+      }
+
+      // Función para calcular tamaño dinámico
+      let fontSize = 128
+      let font
+      while (fontSize > 16) {
+        font = await Jimp.loadFont(Jimp[`FONT_SANS_${fontSize}_BLACK`] || Jimp.FONT_SANS_16_BLACK)
+        const textWidth = Jimp.measureText(font, input)
+        const textHeight = Jimp.measureTextHeight(font, input, size - 60)
+        if (textWidth <= size - 60 && textHeight <= size - 60) break
+        fontSize -= 16
+      }
 
       const textBoxWidth = size - 60
       const textBoxHeight = size - 60
 
-      // Seleccionar la fuente más grande que quepa
-      let chosenFont = fonts[fonts.length - 1] // por defecto la más pequeña
-      for (let f of fonts) {
-        const textWidth = Jimp.measureText(f, input)
-        const textHeight = Jimp.measureTextHeight(f, input, textBoxWidth)
-        if (textWidth <= textBoxWidth && textHeight <= textBoxHeight) {
-          chosenFont = f
-          break
-        }
-      }
-
-      // Dibujar texto con contorno
+      // Dibujar con contorno elegante
       const drawTextWithOutline = (img, font, text) => {
         const positions = [
-          [-2, 0], [2, 0], [0, -2], [0, 2],
-          [-2, -2], [2, -2], [-2, 2], [2, 2]
+          [-3, 0], [3, 0], [0, -3], [0, 3],
+          [-3, -3], [3, -3], [-3, 3], [3, 3]
         ]
 
-        // contorno gris
+        // contorno gris oscuro
         positions.forEach(([dx, dy]) => {
           img.print(
             font,
@@ -83,7 +83,7 @@ export default {
         )
       }
 
-      drawTextWithOutline(image, chosenFont, input)
+      drawTextWithOutline(image, font, input)
 
       const pngBuffer = await image.getBufferAsync(Jimp.MIME_PNG)
 
