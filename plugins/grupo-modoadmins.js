@@ -26,6 +26,5 @@ handler.tags = ['grupo']
 handler.command = /^modoadmin$/i
 handler.group = true
 handler.admin = true // solo admins pueden activarlo/desactivarlo
-handler.botAdmin = false
 
 export default handler
