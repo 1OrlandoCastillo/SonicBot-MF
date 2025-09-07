@@ -1,32 +1,84 @@
 // plugins/antilink.js
+const fs = require("fs");
+const path = require("path");
 
-let handler = async (m, { conn, args }) => {
-  if (!m.isGroup) return m.reply('❌ Este comando solo funciona en grupos.')
-  if (!m.isAdmin) return m.reply('⚠️ Solo los administradores pueden usar este comando.')
+let handler = async (msg, { conn, args }) => {
+  const chatId = msg.key.remoteJid;
+  const senderId = msg.key.participant || msg.key.remoteJid;
+  const senderClean = senderId.replace(/[^0-9]/g, '');
 
-  let chat = global.db.data.chats[m.chat] ||= {}
-
-  if (!args[0]) {
-    return m.reply(`📌 Estado actual del *antilink*: ${chat.antiLink ? '✅ Activado' : '❌ Desactivado'}\n\nUsa:\n.antilink on\n.antilink off`)
+  // Solo en grupos
+  if (!chatId.endsWith("@g.us")) {
+    return conn.sendMessage(chatId, {
+      text: "❌ Este comando solo puede usarse en grupos."
+    }, { quoted: msg });
   }
 
-  if (args[0].toLowerCase() === 'on') {
-    chat.antiLink = true
-    return m.reply('✅ El *antilink* ha sido *activado* en este grupo.')
+  try {
+    const metadata = await conn.groupMetadata(chatId);
+    const participant = metadata.participants.find(p => p.id.includes(senderClean));
+    const isAdmin = participant?.admin === 'admin' || participant?.admin === 'superadmin';
+    const isOwner = global.owner.some(o => o[0] === senderClean);
+
+    if (!isAdmin && !isOwner) {
+      return conn.sendMessage(chatId, {
+        text: "❌ Solo los administradores del grupo o el owner del bot pueden usar este comando."
+      }, { quoted: msg });
+    }
+
+    if (!args[0] || !['on', 'off'].includes(args[0])) {
+      return conn.sendMessage(chatId, {
+        text: "⚙️ Usa el comando así:\n\n📌 *.antilink on*  (activar)\n📌 *.antilink off* (desactivar)"
+      }, { quoted: msg });
+    }
+
+    // Reacción de espera
+    await conn.sendMessage(chatId, {
+      react: { text: "⏳", key: msg.key }
+    });
+
+    const subbotID = conn.user.id;
+    const filePath = path.resolve("./activossubbots.json");
+
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, JSON.stringify({ antilink: {} }, null, 2));
+    }
+
+    const data = JSON.parse(fs.readFileSync(filePath));
+
+    if (!data.antilink) data.antilink = {};
+    if (!data.antilink[subbotID]) data.antilink[subbotID] = {};
+
+    if (args[0] === 'on') {
+      data.antilink[subbotID][chatId] = true;
+      await conn.sendMessage(chatId, {
+        text: "✅ Antilink *activado* en este grupo."
+      }, { quoted: msg });
+    } else {
+      delete data.antilink[subbotID][chatId];
+      await conn.sendMessage(chatId, {
+        text: "✅ Antilink *desactivado* en este grupo."
+      }, { quoted: msg });
+    }
+
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+
+    await conn.sendMessage(chatId, {
+      react: { text: "✅", key: msg.key }
+    });
+
+  } catch (e) {
+    console.error("❌ Error en comando antilink:", e);
+    await conn.sendMessage(chatId, {
+      text: "❌ Ocurrió un error al procesar el comando."
+    }, { quoted: msg });
+
+    await conn.sendMessage(chatId, {
+      react: { text: "❌", key: msg.key }
+    });
   }
+};
 
-  if (args[0].toLowerCase() === 'off') {
-    chat.antiLink = false
-    return m.reply('❌ El *antilink* ha sido *desactivado* en este grupo.')
-  }
-
-  return m.reply(`⚠️ Uso correcto:\n.antilink on\n.antilink off`)
-}
-
-handler.help = ['antilink <on/off>']
-handler.tags = ['grupo']
-handler.command = ['antilink']
-handler.group = true
-handler.admin = true
-
-export default handler
+// Aquí defines el nombre del comando
+handler.command = ['antilink'];
+module.exports = handler;
