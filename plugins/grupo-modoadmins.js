@@ -1,30 +1,28 @@
-// plugins/grupo-modoadmin.js
+let handler = async (m, { conn, args, usedPrefix, command }) => {
+  if (!m.isGroup) return m.reply('⚠️ Este comando solo funciona en grupos.')
 
-let handler = async (m, { args }) => {
   let chat = global.db.data.chats[m.chat] || {}
-  global.db.data.chats[m.chat] = chat
 
   if (!args[0]) {
-    return m.reply(`⚠️ Usa:\n\n.modoadmin on\n.modoadmin off`)
+    return m.reply(`⚙️ Uso correcto:\n\n${usedPrefix + command} on\n${usedPrefix + command} off\n\n📌 Estado actual: *${chat.onlyAdmins ? 'ON ✅' : 'OFF ❌'}*`)
   }
 
-  if (args[0].toLowerCase() === 'on') {
+  let option = args[0].toLowerCase()
+  if (option === 'on') {
     chat.onlyAdmins = true
-    return m.reply('✅ Modo solo *admins* activado en este grupo.')
-  }
-
-  if (args[0].toLowerCase() === 'off') {
+    m.reply('✅ *Modo Admin activado*\nAhora solo los administradores pueden usar comandos del bot.')
+  } else if (option === 'off') {
     chat.onlyAdmins = false
-    return m.reply('❎ Modo solo *admins* desactivado en este grupo.')
+    m.reply('❌ *Modo Admin desactivado*\nTodos los miembros pueden usar comandos del bot.')
+  } else {
+    m.reply(`⚠️ Opción no válida.\n\nUsa:\n${usedPrefix + command} on\n${usedPrefix + command} off`)
   }
-
-  m.reply('⚠️ Opción inválida. Usa:\n\n.modoadmin on\n.modoadmin off')
 }
 
-handler.help = ['modoadmin <on/off>']
+handler.help = ['modoadmin on/off']
 handler.tags = ['grupo']
 handler.command = /^modoadmin$/i
 handler.group = true
-handler.admin = true // solo admins pueden activarlo/desactivarlo
+handler.admin = true
 
 export default handler
