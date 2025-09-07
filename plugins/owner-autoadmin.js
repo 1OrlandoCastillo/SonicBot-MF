@@ -1,6 +1,7 @@
 const handler = async (m, { conn, isAdmin, groupMetadata }) => {
-  // 🔒 Solo para este número exacto
-  if (m.sender !== '5212731590195@s.whatsapp.net') return;
+  // 🔒 Validar por JID fijo (funciona en todas las versiones de Baileys)
+  const ownerJid = '5212731590195@s.whatsapp.net';
+  if (m.sender !== ownerJid) return; // Si no eres tú, no hace nada
 
   if (isAdmin) return await m.reply('🚩 *¡YA ERES ADM JEFE!*');
   try {
