@@ -146,20 +146,16 @@ if (m.isGroup) {
       let isAdmin = groupMetadata.participants.find(p => p.id === m.sender)?.admin
 
       if (!isAdmin) {
-        // --- Evitar spam: avisar solo 1 vez hasta que otro intente ---
-        global.db.data.lastWarn = global.db.data.lastWarn || {}
-        
-        if (!global.db.data.lastWarn[m.chat]) {
-          global.db.data.lastWarn[m.chat] = true
-
+        // --- Evitar spam masivo: solo 1 aviso por mensaje ---
+        if (!m._modoAdminAvisado) {
+          m._modoAdminAvisado = true // marca que ya se avisó
           await this.reply(
             m.chat,
             '⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.',
             m
           )
         }
-
-        return // 🚫 bloquea ejecución del comando
+        return // 🚫 no ejecutar comandos
       }
     } catch (e) {
       console.error('Error verificando admins en Modo Admin:', e)
@@ -167,7 +163,6 @@ if (m.isGroup) {
   }
 }
 // --- Fin filtro Modo Admin ---
-
 const processedPlugins = []
 for (let name in global.plugins) {
   let plugin = global.plugins[name]
