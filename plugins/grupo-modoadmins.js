@@ -21,7 +21,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 
 handler.help = ['modoadmin on/off']
 handler.tags = ['grupo']
-handler.command = /^modoadmin$/i
+handler.command = ['modoadmin']   // 🔥 ahora es texto plano
 handler.group = true
 handler.admin = true
 
