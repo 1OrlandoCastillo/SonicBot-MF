@@ -94,22 +94,32 @@ const isROwner = allOwnerIds.includes(m.sender)
 const isOwner = isROwner || m.fromMe  
 const isMods = isOwner || global.mods.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender)  
 const isPrems = isROwner || global.prems.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender) || _user?.prem == true  
+
 // --- Filtro para Modo Admin ---
 if (m.isGroup) {
   let chat = global.db.data.chats[m.chat] || {}
+
   if (chat.onlyAdmins) {
     // verificar si es admin en el grupo
     let isAdmin = participants.find(p => this.decodeJid(p.id) === m.sender)?.admin
     if (!isAdmin) {
-      if (!m._notified) {
-        m._notified = true
-        await this.reply(m.chat, '⚠️ Solo los administradores pueden usar comandos en *Modo Admin*.', m)
+      chat.notifiedUsers = chat.notifiedUsers || {}
+
+      // Si nunca fue avisado, mandamos el mensaje
+      if (!chat.notifiedUsers[m.sender]) {
+        chat.notifiedUsers[m.sender] = true
+        await this.reply(m.chat, '⚠️ Este bot está en *Modo Admin*.\nSolo los administradores pueden usar comandos.', m)
       }
+
       return // 🔒 corta aquí y no ejecuta más plugins
     }
+  } else {
+    // Reiniciamos los avisos si se apaga el modo
+    if (chat.notifiedUsers) chat.notifiedUsers = {}
   }
 }
 // --- Fin filtro Modo Admin ---
+
 if (opts['queque'] && m.text && !(isMods || isPrems)) {  
   let queque = this.msgqueque, time = 1000 * 5  
   const previousID = queque[queque.length - 1]  
