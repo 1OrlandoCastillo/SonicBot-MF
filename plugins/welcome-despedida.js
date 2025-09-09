@@ -1,5 +1,5 @@
 // Bienvenida y despedida dinámicas con .setwelcome y .setbye
-// Funciona con API externa real (XTeam)
+// Versión solo texto (más ligera y estable)
 
 if (!global.conn) throw new Error('❌ global.conn no está definido')
 
@@ -20,33 +20,24 @@ global.conn.ev.on('group-participants.update', async (update) => {
         for (let user of participants) {
             const username = user.split('@')[0]
 
-            let avatar
-            try {
-                avatar = await global.conn.profilePictureUrl(user, 'image')
-            } catch {
-                avatar = 'https://telegra.ph/file/0d4d3f3d0f7c1a0d0a4f9.jpg'
-            }
-
             // Mensajes personalizados o por defecto
-            const welcomeMsg = (groupMessages[id] && groupMessages[id].welcome) || `👋 ¡Hola @user! Bienvenido(a) al grupo *${groupName}*`
-            const goodbyeMsg = (groupMessages[id] && groupMessages[id].goodbye) || `😢 @user ha salido del grupo *${groupName}*`
+            const welcomeMsg = (groupMessages[id] && groupMessages[id].welcome) || 
+                `👋 ¡Hola @user! Bienvenido(a) al grupo *${groupName}* 🎉`
 
-            let apiUrl, caption
+            const goodbyeMsg = (groupMessages[id] && groupMessages[id].goodbye) || 
+                `😢 @user ha salido del grupo *${groupName}*`
+
             if (action === 'add') {
-                apiUrl = `https://api.xteam.xyz/welcome?username=${encodeURIComponent(username)}&groupname=${encodeURIComponent(groupName)}&membercount=${groupMetadata.participants.length}&avatar=${encodeURIComponent(avatar)}`
-                caption = welcomeMsg.replace('@user', `@${username}`)
+                await global.conn.sendMessage(id, {
+                    text: welcomeMsg.replace('@user', `@${username}`),
+                    mentions: [user]
+                })
             } else if (action === 'remove') {
-                apiUrl = `https://api.xteam.xyz/goodbye?username=${encodeURIComponent(username)}&groupname=${encodeURIComponent(groupName)}&membercount=${groupMetadata.participants.length}&avatar=${encodeURIComponent(avatar)}`
-                caption = goodbyeMsg.replace('@user', `@${username}`)
-            } else {
-                continue
+                await global.conn.sendMessage(id, {
+                    text: goodbyeMsg.replace('@user', `@${username}`),
+                    mentions: [user]
+                })
             }
-
-            await global.conn.sendMessage(id, {
-                image: { url: apiUrl },
-                caption,
-                mentions: [user]
-            })
         }
 
     } catch (err) {
