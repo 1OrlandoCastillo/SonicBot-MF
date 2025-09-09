@@ -19,7 +19,7 @@ const handler = async (update) => {
         avatar = 'https://telegra.ph/file/0d4d3f3d0f7c1a0d0a4f9.jpg'
       }
 
-      // URL de la API (mismo estilo que el welcome, pero para "goodbye")
+      // API externa para generar tarjeta de despedida
       const apiUrl = `https://some-random-api.com/canvas/leave?type=png&username=${encodeURIComponent(username)}&discriminator=0001&guildName=${encodeURIComponent(groupName)}&memberCount=${groupMetadata.participants.length}&avatar=${encodeURIComponent(avatar)}&background=${encodeURIComponent('https://i.ibb.co/5cF1B3v/welcome-bg.jpg')}`
 
       await conn.sendMessage(id, {
