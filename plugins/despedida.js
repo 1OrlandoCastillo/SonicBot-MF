@@ -1,5 +1,3 @@
-import Canvas from 'canvas'
-
 const handler = async (update) => {
   const { conn } = global
   const { participants, action, id } = update
@@ -11,47 +9,28 @@ const handler = async (update) => {
     const groupName = groupMetadata.subject
 
     for (let user of participants) {
-      let ppUrl
+      const username = user.split('@')[0]
+
+      // Intentar obtener avatar del usuario
+      let avatar
       try {
-        ppUrl = await conn.profilePictureUrl(user, 'image')
+        avatar = await conn.profilePictureUrl(user, 'image')
       } catch {
-        ppUrl = 'https://telegra.ph/file/0d4d3f3d0f7c1a0d0a4f9.jpg'
+        avatar = 'https://telegra.ph/file/0d4d3f3d0f7c1a0d0a4f9.jpg'
       }
 
-      const canvas = Canvas.createCanvas(700, 300)
-      const ctx = canvas.getContext('2d')
-
-      const background = await Canvas.loadImage('https://i.ibb.co/5cF1B3v/welcome-bg.jpg')
-      ctx.drawImage(background, 0, 0, canvas.width, canvas.height)
-
-      const avatar = await Canvas.loadImage(ppUrl)
-      ctx.save()
-      ctx.beginPath()
-      ctx.arc(125, 125, 100, 0, Math.PI * 2, true)
-      ctx.closePath()
-      ctx.clip()
-      ctx.drawImage(avatar, 25, 25, 200, 200)
-      ctx.restore()
-
-      ctx.font = '40px sans-serif'
-      ctx.fillStyle = '#ffffff'
-      ctx.textAlign = 'left'
-      ctx.fillText(`¡Adiós!`, 250, 100)
-      ctx.fillText(`${user.split('@')[0]}`, 250, 160)
-      ctx.fillText(`del grupo:`, 250, 210)
-      ctx.fillText(`${groupName}`, 250, 260)
-
-      const buffer = canvas.toBuffer()
+      // URL de la API (mismo estilo que el welcome, pero para "goodbye")
+      const apiUrl = `https://some-random-api.com/canvas/leave?type=png&username=${encodeURIComponent(username)}&discriminator=0001&guildName=${encodeURIComponent(groupName)}&memberCount=${groupMetadata.participants.length}&avatar=${encodeURIComponent(avatar)}&background=${encodeURIComponent('https://i.ibb.co/5cF1B3v/welcome-bg.jpg')}`
 
       await conn.sendMessage(id, {
-        image: buffer,
-        caption: `😢 @${user.split('@')[0]} ha salido del grupo *${groupName}*`,
+        image: { url: apiUrl },
+        caption: `😢 @${username} ha salido del grupo *${groupName}*`,
         mentions: [user]
       })
     }
 
   } catch (err) {
-    console.error('Error en goodbye.js con banner:', err)
+    console.error('❌ Error en goodbye.js con API:', err)
   }
 }
 
