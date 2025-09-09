@@ -1,8 +1,12 @@
 const handler = async (update) => {
+  console.log('📩 EVENTO WELCOME:', update) // Para debug
+
   const { conn } = global
-  const { participants, action, id } = update
-  if (action !== 'add') return
+  const { participants, id } = update
+  const action = update.action || update.type  // 👈 universal
+
   if (!id) return
+  if (action !== 'add') return
 
   try {
     const groupMetadata = await conn.groupMetadata(id)
@@ -19,7 +23,7 @@ const handler = async (update) => {
         avatar = 'https://telegra.ph/file/0d4d3f3d0f7c1a0d0a4f9.jpg'
       }
 
-      // API externa para tarjeta de bienvenida
+      // API externa
       const apiUrl = `https://some-random-api.com/canvas/welcome?type=png&username=${encodeURIComponent(username)}&discriminator=0001&guildName=${encodeURIComponent(groupName)}&memberCount=${groupMetadata.participants.length}&avatar=${encodeURIComponent(avatar)}&background=${encodeURIComponent('https://i.ibb.co/5cF1B3v/welcome-bg.jpg')}`
 
       await conn.sendMessage(id, {
@@ -36,4 +40,3 @@ const handler = async (update) => {
 
 handler.event = 'group-participants.update'
 export default handler
-
