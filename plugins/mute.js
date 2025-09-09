@@ -33,18 +33,20 @@ let handler = async (m, { conn, command, args, usedPrefix }) => {
     if (global.db.data.users[who].muted) return m.reply('⚠️ Ese usuario ya estaba muteado.')
     global.db.data.users[who].muted = true
     
-    // ✅ Mensaje privado al usuario muteado
-    await conn.sendMessage(who, { text: `🔇 Has sido muteado en el grupo *${groupMetadata.subject}*.` })
-    return m.reply(`✅ Usuario muteado en silencio.`)
+    return conn.sendMessage(m.chat, { 
+      text: `🔇 El usuario @${who.split('@')[0]} ha sido muteado.`, 
+      mentions: [who] // 🔥 Esto hace que se vea como mención real
+    })
   }
 
   if (command.toLowerCase() === 'unmute') {
     if (!global.db.data.users[who].muted) return m.reply('⚠️ Ese usuario no estaba muteado.')
     global.db.data.users[who].muted = false
     
-    // ✅ Mensaje privado al usuario desmuteado
-    await conn.sendMessage(who, { text: `🔊 Has sido desmuteado en el grupo *${groupMetadata.subject}*.` })
-    return m.reply(`✅ Usuario desmuteado en silencio.`)
+    return conn.sendMessage(m.chat, { 
+      text: `🔊 El usuario @${who.split('@')[0]} ha sido desmuteado.`, 
+      mentions: [who] // 🔥 Igual, mención real
+    })
   }
 }
 
