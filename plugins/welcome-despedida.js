@@ -1,21 +1,29 @@
 // Bienvenida y despedida dinámicas con .setwelcome y .setbye
-// Versión solo texto (más ligera y estable)
+// Optimizado con cache de metadata para evitar rate-overlimit (429)
 
 if (!global.conn) throw new Error('❌ global.conn no está definido')
 
 // Configuración por grupo
-let groupMessages = {} // { 'groupId@g.us': { welcome: '', goodbye: '' } }
+let groupMessages = {}   // { 'groupId@g.us': { welcome: '', goodbye: '' } }
+let cachedGroups = {}    // cache de metadata { 'id@g.us': { subject, size } }
 
 // -------------------- EVENTO --------------------
 global.conn.ev.on('group-participants.update', async (update) => {
     try {
-        const { id } = update
-        const participants = update.participants || update.users
-        const action = update.action || update.type
+        const { id, participants, action } = update
         if (!id || !participants) return
 
-        const groupMetadata = await global.conn.groupMetadata(id)
-        const groupName = groupMetadata.subject
+        // Si no está en cache, obtener metadata UNA sola vez
+        if (!cachedGroups[id]) {
+            try {
+                const meta = await global.conn.groupMetadata(id)
+                cachedGroups[id] = { subject: meta.subject, size: meta.participants.length }
+            } catch {
+                cachedGroups[id] = { subject: 'Grupo', size: 0 }
+            }
+        }
+
+        const groupName = cachedGroups[id].subject
 
         for (let user of participants) {
             const username = user.split('@')[0]
@@ -32,11 +40,13 @@ global.conn.ev.on('group-participants.update', async (update) => {
                     text: welcomeMsg.replace('@user', `@${username}`),
                     mentions: [user]
                 })
+                cachedGroups[id].size++
             } else if (action === 'remove') {
                 await global.conn.sendMessage(id, {
                     text: goodbyeMsg.replace('@user', `@${username}`),
                     mentions: [user]
                 })
+                cachedGroups[id].size--
             }
         }
 
