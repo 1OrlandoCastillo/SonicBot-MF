@@ -13,22 +13,22 @@ let handler = async (m, { conn, command, args, usedPrefix }) => {
 
   global.db.data.users[who] = global.db.data.users[who] || {}
 
-  if (/^mute$/i.test(command)) {
+  if (command.toLowerCase() === 'mute') {
     if (global.db.data.users[who].muted) return m.reply('⚠️ Ese usuario ya estaba muteado.')
     global.db.data.users[who].muted = true
-    m.reply(`🔇 Usuario *${who.split('@')[0]}* muteado.`)
+    return m.reply(`🔇 Usuario *${who.split('@')[0]}* muteado.`)
   }
 
-  if (/^unmute$/i.test(command)) {
+  if (command.toLowerCase() === 'unmute') {
     if (!global.db.data.users[who].muted) return m.reply('⚠️ Ese usuario no estaba muteado.')
     global.db.data.users[who].muted = false
-    m.reply(`🔊 Usuario *${who.split('@')[0]}* desmuteado.`)
+    return m.reply(`🔊 Usuario *${who.split('@')[0]}* desmuteado.`)
   }
 }
 
 handler.help = ['mute @usuario', 'unmute @usuario']
 handler.tags = ['group']
-handler.command = /^(mute|unmute)$/i
+handler.command = ['mute', 'unmute']   // <-- AQUÍ estaba el problema
 handler.group = true
 handler.admin = true
 
