@@ -1,8 +1,12 @@
 const handler = async (update) => {
+  console.log('📩 EVENTO GOODBYE:', update) // Para debug
+
   const { conn } = global
-  const { participants, action, id } = update
-  if (action !== 'remove') return
+  const { participants, id } = update
+  const action = update.action || update.type  // 👈 universal
+
   if (!id) return
+  if (action !== 'remove') return
 
   try {
     const groupMetadata = await conn.groupMetadata(id)
@@ -11,7 +15,7 @@ const handler = async (update) => {
     for (let user of participants) {
       const username = user.split('@')[0]
 
-      // Intentar obtener avatar del usuario
+      // Intentar obtener avatar
       let avatar
       try {
         avatar = await conn.profilePictureUrl(user, 'image')
@@ -19,7 +23,7 @@ const handler = async (update) => {
         avatar = 'https://telegra.ph/file/0d4d3f3d0f7c1a0d0a4f9.jpg'
       }
 
-      // API externa para generar tarjeta de despedida
+      // API externa
       const apiUrl = `https://some-random-api.com/canvas/leave?type=png&username=${encodeURIComponent(username)}&discriminator=0001&guildName=${encodeURIComponent(groupName)}&memberCount=${groupMetadata.participants.length}&avatar=${encodeURIComponent(avatar)}&background=${encodeURIComponent('https://i.ibb.co/5cF1B3v/welcome-bg.jpg')}`
 
       await conn.sendMessage(id, {
