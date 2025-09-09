@@ -41,6 +41,8 @@ try {
   if (!('banned' in user)) user.banned = false  
   if (!isNumber(user.level)) user.level = 0  
   if (!isNumber(user.coins)) user.coins = 0  
+// Ignorar mensajes de usuarios muteados
+  if (global.db.data.users[m.sender]?.muted) return
 
   let chat = global.db.data.chats[m.chat] ||= {}  
   if (!('isBanned' in chat)) chat.isBanned = false  
