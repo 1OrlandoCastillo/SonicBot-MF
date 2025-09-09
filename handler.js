@@ -41,8 +41,17 @@ try {
   if (!('banned' in user)) user.banned = false  
   if (!isNumber(user.level)) user.level = 0  
   if (!isNumber(user.coins)) user.coins = 0  
-// Ignorar mensajes de usuarios muteados
-  if (global.db.data.users[m.sender]?.muted) return
+// 🚫 Si el usuario está muteado, borrar su mensaje en el grupo
+if (global.db.data.users[m.sender]?.muted) {
+  if (m.isGroup) {
+    try {
+      await conn.sendMessage(m.chat, { delete: m.key }) // eliminar mensaje
+    } catch (e) {
+      console.error('Error borrando mensaje de muteado:', e)
+    }
+  }
+  return // no seguir procesando
+}
 
   let chat = global.db.data.chats[m.chat] ||= {}  
   if (!('isBanned' in chat)) chat.isBanned = false  
