@@ -1,6 +1,14 @@
 let handler = async (m, { conn, command, args, usedPrefix }) => {
   if (!m.isGroup) return m.reply('❌ Este comando solo funciona en grupos.')
-  if (!m.isAdmin) return m.reply('❌ Solo los administradores pueden usar este comando.')
+
+  // 🔎 Verificar si el que escribe es admin
+  let groupMetadata = await conn.groupMetadata(m.chat)
+  let participants = groupMetadata.participants || []
+  let adminIds = participants.filter(p => p.admin).map(p => p.id)
+
+  if (!adminIds.includes(m.sender)) {
+    return m.reply('❌ Solo los administradores pueden usar este comando.')
+  }
 
   let who
   if (m.mentionedJid && m.mentionedJid.length > 0) {
@@ -28,8 +36,7 @@ let handler = async (m, { conn, command, args, usedPrefix }) => {
 
 handler.help = ['mute @usuario', 'unmute @usuario']
 handler.tags = ['group']
-handler.command = ['mute', 'unmute']   // <-- AQUÍ estaba el problema
+handler.command = ['mute', 'unmute']
 handler.group = true
-handler.admin = true
 
 export default handler
