@@ -1,5 +1,4 @@
-import Canvas from 'canvas'
-import fetch from 'node-fetch'
+import Jimp from 'jimp'
 
 const handler = async (update) => {
   const { conn } = global
@@ -12,44 +11,41 @@ const handler = async (update) => {
     const groupName = groupMetadata.subject
 
     for (let user of participants) {
-      // Obtener foto de perfil del usuario
       let ppUrl
       try {
         ppUrl = await conn.profilePictureUrl(user, 'image')
       } catch {
-        ppUrl = 'https://telegra.ph/file/0d4d3f3d0f7c1a0d0a4f9.jpg' // Default
+        ppUrl = 'https://telegra.ph/file/0d4d3f3d0f7c1a0d0a4f9.jpg'
       }
 
-      // Crear canvas
-      const canvas = Canvas.createCanvas(700, 250)
-      const ctx = canvas.getContext('2d')
+      const [background, avatar] = await Promise.all([
+        Jimp.read('https://i.ibb.co/5cF1B3v/welcome-bg.jpg'),
+        Jimp.read(ppUrl)
+      ])
 
-      // Fondo
-      const background = await Canvas.loadImage('https://i.ibb.co/5cF1B3v/welcome-bg.jpg') // Fondo bonito
-      ctx.drawImage(background, 0, 0, canvas.width, canvas.height)
+      background.resize(700, 250)
+      avatar.resize(200, 200)
 
-      // Foto del usuario
-      const avatar = await Canvas.loadImage(ppUrl)
-      ctx.beginPath()
-      ctx.arc(125, 125, 100, 0, Math.PI * 2, true)
-      ctx.closePath()
-      ctx.clip()
-      ctx.drawImage(avatar, 25, 25, 200, 200)
-      ctx.restore()
+      const mask = new Jimp(200, 200, 0x00000000)
+      mask.scan(0, 0, 200, 200, function (x, y, idx) {
+        const dx = x - 100
+        const dy = y - 100
+        if (dx * dx + dy * dy <= 100 * 100) {
+          this.bitmap.data[idx + 3] = 255
+        }
+      })
 
-      // Texto
-      ctx.font = '40px Sans'
-      ctx.fillStyle = '#ffffff'
-      ctx.textAlign = 'left'
-      ctx.fillText(`¡Bienvenido(a)!`, 250, 100)
-      ctx.fillText(`${user.split('@')[0]}`, 250, 160)
-      ctx.fillText(`al grupo:`, 250, 210)
-      ctx.fillText(`${groupName}`, 250, 260)
+      avatar.mask(mask, 0, 0)
+      background.composite(avatar, 25, 25)
 
-      // Convertir canvas a buffer
-      const buffer = canvas.toBuffer()
+      const font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE)
+      background.print(font, 250, 80, '¡Bienvenido(a)!')
+      background.print(font, 250, 130, `@${user.split('@')[0]}`)
+      background.print(font, 250, 180, 'al grupo:')
+      background.print(font, 250, 220, groupName)
 
-      // Enviar mensaje con imagen
+      const buffer = await background.getBufferAsync(Jimp.MIME_JPEG)
+
       await conn.sendMessage(id, {
         image: buffer,
         caption: `👋 ¡Hola @${user.split('@')[0]}! Bienvenido(a) al grupo *${groupName}*`,
@@ -58,7 +54,7 @@ const handler = async (update) => {
     }
 
   } catch (err) {
-    console.error('Error en welcome.js con banner:', err)
+    console.error('❌ Error en welcome.js con Jimp:', err)
   }
 }
 
