@@ -1,11 +1,12 @@
 // Bienvenida y despedida dinámicas con .setwelcome y .setbye
-// Optimizado con cache de metadata para evitar rate-overlimit (429)
+// Optimizado con cache + anti-duplicados + estética mejorada
 
 if (!global.conn) throw new Error('❌ global.conn no está definido')
 
 // Configuración por grupo
-let groupMessages = {}   // { 'groupId@g.us': { welcome: '', goodbye: '' } }
-let cachedGroups = {}    // cache de metadata { 'id@g.us': { subject, size } }
+let groupMessages = {}     // { 'groupId@g.us': { welcome: '', goodbye: '' } }
+let cachedGroups = {}      // { 'id@g.us': { subject, size } }
+let recentEvents = new Set() // para evitar duplicados
 
 // -------------------- EVENTO --------------------
 global.conn.ev.on('group-participants.update', async (update) => {
@@ -13,7 +14,13 @@ global.conn.ev.on('group-participants.update', async (update) => {
         const { id, participants, action } = update
         if (!id || !participants) return
 
-        // Si no está en cache, obtener metadata UNA sola vez
+        // Evitar duplicados usando llave única
+        const eventKey = `${id}-${participants.join(',')}-${action}`
+        if (recentEvents.has(eventKey)) return
+        recentEvents.add(eventKey)
+        setTimeout(() => recentEvents.delete(eventKey), 5000) // limpia en 5s
+
+        // Cache metadata
         if (!cachedGroups[id]) {
             try {
                 const meta = await global.conn.groupMetadata(id)
@@ -28,12 +35,24 @@ global.conn.ev.on('group-participants.update', async (update) => {
         for (let user of participants) {
             const username = user.split('@')[0]
 
-            // Mensajes personalizados o por defecto
-            const welcomeMsg = (groupMessages[id] && groupMessages[id].welcome) || 
-                `👋 ¡Hola @user! Bienvenido(a) al grupo *${groupName}* 🎉`
+            // Mensajes personalizados o por defecto estilo Lobyy Entrlocked
+            const welcomeMsg = (groupMessages[id] && groupMessages[id].welcome) ||
+`🛡️ ＬＯＢＢＹ ＥＮＴＲＬＯＣＫＥＤ 🛡️
+━━━━━━━━━━━━━━━
+⚔️ Jugador: @user  
+📡 Servidor: *${groupName}*  
+🎮 Estado: ¡En línea!  
 
-            const goodbyeMsg = (groupMessages[id] && groupMessages[id].goodbye) || 
-                `😢 @user ha salido del grupo *${groupName}*`
+Bienvenido al escuadrón 🚀`
+
+            const goodbyeMsg = (groupMessages[id] && groupMessages[id].goodbye) ||
+`💀 ＳＡＬＩＤＡ ＥＮＴＲＬＯＣＫＥＤ 💀
+━━━━━━━━━━━━━━━
+⚔️ Jugador: @user  
+📡 Servidor: *${groupName}*  
+🎮 Estado: ¡Desconectado!  
+
+Nos vemos en la próxima misión ⚡`
 
             if (action === 'add') {
                 await global.conn.sendMessage(id, {
