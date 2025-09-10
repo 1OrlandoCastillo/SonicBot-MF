@@ -118,7 +118,7 @@ const isBotAdmin = bot?.admin || false
 
 const ___dirname = path.join(path.dirname(fileURLToPath(import.meta.url)), './plugins')  
 
-global.idcanal = '120363403143798163@newsletter'  
+global.idcanal = '120363411154070926@newsletter'  
 global.namecanal = 'SonicBot-MF X Adri🤴🏻-Pitudo'  
 global.rcanal = {  
   contextInfo: {  
