@@ -1,22 +1,22 @@
-console.log('⧉ Inicializando Sonic...')
+console.log('⧉ Inicializando Anya...')
 
 import { join, dirname } from 'path'
 import { createRequire } from 'module'
 import { fileURLToPath } from 'url'
-import cluster from 'cluster'
+import { setupMaster, fork } from 'cluster'
 import { watchFile, unwatchFile } from 'fs'
 import cfonts from 'cfonts'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const require = createRequire(__dirname)
 
-cfonts.say('SonicBot-ProMax', {
+cfonts.say('Kiyomi\nUchiha', {
   font: 'block',
   align: 'center',
   gradient: ['cyan', 'blue']
 })
 
-cfonts.say('El mejor bot de WhatsApp', {
+cfonts.say('WhatsApp Multi-Bot Engine', {
   font: 'simple',
   align: 'center',
   gradient: ['blue', 'white']
@@ -31,12 +31,12 @@ async function launch(scripts) {
   for (const script of scripts) {
     const args = [join(__dirname, script), ...process.argv.slice(2)]
 
-    cluster.setupPrimary({
+    setupMaster({
       exec: args[0],
       args: args.slice(1),
     })
 
-    let child = cluster.fork()
+    let child = fork()
 
     child.on('exit', (code) => {
       isWorking = false
