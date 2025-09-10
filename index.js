@@ -3,13 +3,14 @@ console.log('⧉ Inicializando Anya...')
 import { join, dirname } from 'path'
 import { createRequire } from 'module'
 import { fileURLToPath } from 'url'
-import { setupMaster, fork } from 'cluster'
+import cluster from 'cluster'
 import { watchFile, unwatchFile } from 'fs'
 import cfonts from 'cfonts'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const require = createRequire(__dirname)
 
+// Banner bonito con cfonts
 cfonts.say('Kiyomi\nUchiha', {
   font: 'block',
   align: 'center',
@@ -31,24 +32,28 @@ async function launch(scripts) {
   for (const script of scripts) {
     const args = [join(__dirname, script), ...process.argv.slice(2)]
 
-    setupMaster({
+    // configuración del cluster
+    cluster.setupMaster({
       exec: args[0],
       args: args.slice(1),
     })
 
-    let child = fork()
+    let child = cluster.fork()
 
     child.on('exit', (code) => {
       isWorking = false
-      launch(scripts)
-
+      console.log(`❌ El proceso ${script} salió con código ${code}. Reiniciando...`)
       if (code === 0) return
+
       watchFile(args[0], () => {
         unwatchFile(args[0])
         launch(scripts)
       })
+
+      launch(scripts)
     })
   }
 }
 
+// Lanzar el bot principal
 launch(['main.js'])
