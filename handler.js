@@ -41,17 +41,6 @@ try {
   if (!('banned' in user)) user.banned = false  
   if (!isNumber(user.level)) user.level = 0  
   if (!isNumber(user.coins)) user.coins = 0  
-// 🚫 Si el usuario está muteado, borrar su mensaje en silencio
-if (global.db.data.users[m.sender]?.muted) {
-  if (m.isGroup) {
-    try {
-      await conn.sendMessage(m.chat, { delete: m.key })
-    } catch (e) {
-      console.error('Error borrando mensaje de muteado:', e)
-    }
-  }
-  return // detener el flujo
-}
 
   let chat = global.db.data.chats[m.chat] ||= {}  
   if (!('isBanned' in chat)) chat.isBanned = false  
@@ -129,8 +118,8 @@ const isBotAdmin = bot?.admin || false
 
 const ___dirname = path.join(path.dirname(fileURLToPath(import.meta.url)), './plugins')  
 
-global.idcanal = '120363411154070926@newsletter'  
-global.namecanal = 'SonicBot-MF X Adri🤴🏻-Pitudo'  
+global.idcanal = '120363403143798163@newsletter'  
+global.namecanal = 'LOVELLOUD Official Channel'  
 global.rcanal = {  
   contextInfo: {  
     isForwarded: true,  
@@ -732,7 +721,7 @@ if (m.isGroup && global.db.data.soloAdmin && global.db.data.soloAdmin[m.chat] ==
   if (isCommand && !isAdmin && !isOwner) {
     try {
       await this.sendMessage(m.chat, {
-        text: `╭─「 ✦ 🔐 ᴍᴏᴅᴏ sᴏʟᴏ-ᴀᴅᴍɪɴs ✦ 」─╮\n│\n╰➺ ✧ @${m.sender.split('@')[0]} el bot está en\n╰➺ ✧ modo *Solo Administradores*\n│\n╰➺ ✧ Solo admins del grupo y\n╰➺ ✧ owners del bot pueden usar comandos\n│\n╰➺ ✧ *Estado:* 🔐 Restringido\n\n> SonicBot Official`,
+        text: `╭─「 ✦ 🔐 ᴍᴏᴅᴏ sᴏʟᴏ-ᴀᴅᴍɪɴs ✦ 」─╮\n│\n╰➺ ✧ @${m.sender.split('@')[0]} el bot está en\n╰➺ ✧ modo *Solo Administradores*\n│\n╰➺ ✧ Solo admins del grupo y\n╰➺ ✧ owners del bot pueden usar comandos\n│\n╰➺ ✧ *Estado:* 🔐 Restringido\n\n> SonicBot-MF Official`,
         contextInfo: {
           ...rcanal.contextInfo,
           mentionedJid: [m.sender]
@@ -846,7 +835,7 @@ if (m.text && !commandExecuted && !m.commandExecuted) {
         }
       })
 
-      let message = `《✧》El comando *${fullCommand}* no existe en SonicBot MF.\n\n`
+      let message = `《✧》El comando *${fullCommand}* no existe en KIYOMI MD.\n\n`
 
       if (bestSuggestion && bestScore >= 10) {
 
@@ -897,9 +886,9 @@ if (m.text && !commandExecuted && !m.commandExecuted) {
 
 global.dfail = (type, m, conn) => {  
   const msg = {  
-    rowner: `✤ Hola, este comando solo puede ser utilizado por el *Creador* del Bot.`,  
-    owner: `✤ Hola, este comando solo puede ser utilizado por el *Creador* del Bot y *Sub Bots*.`,  
-    mods: `✤ Hola, este comando solo puede ser utilizado por los *Moderadores* del  Bot.`,  
+    rowner: `✤ Hola, este comando solo puede ser utilizado por el *Creador* de el Bot.`,  
+    owner: `✤ Hola, este comando solo puede ser utilizado por el *Creador* de el Bot y *Sub Bots*.`,  
+    mods: `✤ Hola, este comando solo puede ser utilizado por los *Moderadores* de el Bot.`,  
     premium: `✤ Hola, este comando solo puede ser utilizado por Usuarios *Premium*.`,  
     group: `✤ Hola, este comando solo puede ser utilizado en *Grupos*.`,  
     private: `✤ Hola, este comando solo puede ser utilizado en mi Chat *Privado*.`,  
