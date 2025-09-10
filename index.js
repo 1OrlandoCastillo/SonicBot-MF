@@ -3,7 +3,7 @@ console.log('⧉ Inicializando Sonic...')
 import { join, dirname } from 'path'
 import { createRequire } from 'module'
 import { fileURLToPath } from 'url'
-import { setupMaster, fork } from 'cluster'
+import cluster from 'cluster'
 import { watchFile, unwatchFile } from 'fs'
 import cfonts from 'cfonts'
 
@@ -31,12 +31,12 @@ async function launch(scripts) {
   for (const script of scripts) {
     const args = [join(__dirname, script), ...process.argv.slice(2)]
 
-    setupMaster({
+    cluster.setupPrimary({
       exec: args[0],
       args: args.slice(1),
     })
 
-    let child = fork()
+    let child = cluster.fork()
 
     child.on('exit', (code) => {
       isWorking = false
