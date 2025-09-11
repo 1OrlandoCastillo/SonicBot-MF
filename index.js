@@ -10,6 +10,7 @@ import cfonts from 'cfonts'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const require = createRequire(__dirname)
 
+// Mensajes iniciales con CFonts
 cfonts.say('Kiyomi\nUchiha', {
   font: 'block',
   align: 'center',
@@ -29,26 +30,35 @@ async function launch(scripts) {
   isWorking = true
 
   for (const script of scripts) {
-    const args = [join(__dirname, script), ...process.argv.slice(2)]
+    const scriptPath = join(__dirname, script)
+    const args = [scriptPath, ...process.argv.slice(2)]
 
     setupMaster({
-      exec: args[0],
+      exec: scriptPath,
       args: args.slice(1),
     })
 
-    let child = fork()
+    const child = fork()
 
     child.on('exit', (code) => {
+      console.log(`⚠️ Script ${script} finalizó con código ${code}`)
       isWorking = false
-      launch(scripts)
 
-      if (code === 0) return
-      watchFile(args[0], () => {
-        unwatchFile(args[0])
+      // Reiniciar script solo si no fue finalización normal
+      if (code !== 0) {
+        console.log(`🔄 Reiniciando ${script}...`)
         launch(scripts)
-      })
+      }
+    })
+
+    // Hot reload: si el archivo cambia, reinicia el script
+    watchFile(scriptPath, () => {
+      unwatchFile(scriptPath)
+      console.log(`♻️ Archivo ${script} actualizado, reiniciando...`)
+      launch(scripts)
     })
   }
 }
 
+// Iniciar main.js
 launch(['main.js'])
