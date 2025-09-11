@@ -1,4 +1,4 @@
-console.log('⧉ Inicializando Sonic Bot...')
+console.log('⧉ Inicializando Anya...')
 
 import { join, dirname } from 'path'
 import { createRequire } from 'module'
@@ -10,14 +10,13 @@ import cfonts from 'cfonts'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const require = createRequire(__dirname)
 
-// 🎨 Mensajes iniciales
-cfonts.say('Sonic Bot', {
+cfonts.say('Kiyomi\nUchiha', {
   font: 'block',
   align: 'center',
   gradient: ['cyan', 'blue']
 })
 
-cfonts.say('WhatsApp Multi-Device', {
+cfonts.say('WhatsApp Multi-Bot Engine', {
   font: 'simple',
   align: 'center',
   gradient: ['blue', 'white']
@@ -30,41 +29,26 @@ async function launch(scripts) {
   isWorking = true
 
   for (const script of scripts) {
-    try {
-      const scriptPath = join(__dirname, script)
-      const args = [scriptPath, ...process.argv.slice(2)]
+    const args = [join(__dirname, script), ...process.argv.slice(2)]
 
-      console.log(`🚀 Iniciando ${script}...`)
+    setupMaster({
+      exec: args[0],
+      args: args.slice(1),
+    })
 
-      setupMaster({
-        exec: scriptPath,
-        args: args.slice(1),
-      })
+    let child = fork()
 
-      const child = fork()
+    child.on('exit', (code) => {
+      isWorking = false
+      launch(scripts)
 
-      child.on('exit', (code, signal) => {
-        console.log(`⚠️ Script ${script} finalizó con código ${code} (signal: ${signal})`)
-        isWorking = false
-
-        if (code !== 0) {
-          console.log(`🔄 Reiniciando ${script}...`)
-          launch(scripts)
-        }
-      })
-
-      // Hot reload: reinicia si el archivo cambia
-      watchFile(scriptPath, () => {
-        unwatchFile(scriptPath)
-        console.log(`♻️ Archivo ${script} actualizado, reiniciando...`)
+      if (code === 0) return
+      watchFile(args[0], () => {
+        unwatchFile(args[0])
         launch(scripts)
       })
-    } catch (err) {
-      console.error(`❌ Error al intentar iniciar ${script}:`, err)
-      isWorking = false
-    }
+    })
   }
 }
 
-// 🟢 Iniciar main.js
 launch(['main.js'])
