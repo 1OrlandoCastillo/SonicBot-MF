@@ -2,7 +2,7 @@
   "name": "Sonic Bot",
   "version": "1.0.0",
   "description": "Multi Device",
-  "main": "main.js",
+  "main": "index.js",
   "type": "module",
   "directories": {
     "lib": "lib",
@@ -10,7 +10,7 @@
     "plugins": "plugins"
   },
   "scripts": {
-    "start": "node main.js"
+    "start": "node index.js"
   },
   "homepage": "https://github.com/1OrlandoCastillo/SonicBot-MF",
   "author": {
