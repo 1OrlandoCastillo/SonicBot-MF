@@ -331,7 +331,7 @@ export async function handler(chatUpdate) {
                     await this.readMessages([m.key]);
                     await this.sendPresenceUpdate('composing', m.chat);
                     await delay(Math.floor(Math.random() * 500) + 500);
-
+                    
                     await plugin.call(this, m, extra)
                     if (!isPrems) m.coin = m.coin || plugin.coin || false
                 } catch (e) {
@@ -345,7 +345,7 @@ export async function handler(chatUpdate) {
                     }
                 } finally {
                     await this.sendPresenceUpdate('paused', m.chat);
-
+                    
                     if (typeof plugin.after === 'function') {
                         try {
                             await plugin.after.call(this, m, extra)
@@ -380,4 +380,38 @@ export async function handler(chatUpdate) {
                 if (m.plugin in stats) {
                     stat = stats[m.plugin]
                     if (!isNumber(stat.total)) stat.total = 1
-                    if (!isNumber(stat.success)) stat.success = m.error != null ?
+                    if (!isNumber(stat.success)) stat.success = m.error != null ? 0 : 1
+                    if (!isNumber(stat.last)) stat.last = now
+                    if (!isNumber(stat.lastSuccess)) stat.lastSuccess = m.error != null ? 0 : now
+                } else
+                    stat = stats[m.plugin] = { total: 1, success: m.error != null ? 0 : 1, last: now, lastSuccess: m.error != null ? 0 : now }
+                stat.total += 1
+                stat.last = now
+                if (m.error == null) {
+                    stat.success += 1
+                    stat.lastSuccess = now
+                }
+            }
+        }
+        try {
+            if (!opts['noprint']) await (await import(`./lib/print.js`)).default(m, this)
+        } catch (e) { console.log(m, m.quoted, e) }
+        let settingsREAD = global.db.data.settings[this.user.jid] || {}  
+        if (opts['autoread']) await this.readMessages([m.key])
+        if (global.db.data.chats[m.chat]?.reaction && m.text.match(/(ción|dad|aje|oso|izar|mente|pero|tion|age|ous|ate|and|but|ify|ai|yuki|a|s)/gi)) {
+            const pickRandom = (list) => list[Math.floor(Math.random() * list.length)]
+            let emot = pickRandom(["🍟", "😃", "😄", "😁", "😆", "🍓", "😅", "😂", "🤣", "🥲", "☺️", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "🌺", "🌸", "😚", "😋", "😛", "😝", "😜", "🤪", "🤨", "🌟", "🤓", "😎", "🥸", "🤩", "🥳", "😏", "💫", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😶‍🌫️", "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🫣", "🤭", "🤖", "🍭", "🤫", "🫠", "🤥", "😶", "📇", "😐", "💧", "😑", "🫨", "😬", "🙄", "😯", "😦", "😧", "😮", "😲", "🥱", "😴", "🤤", "😪", "😮‍💨", "😵", "😵‍💫", "🤐", "🥴", "🤢", "🤮", "🤧", "😷", "🤒", "🤕", "🤑", "🤠", "😈", "👿", "👺", "🧿", "🌩", "👻", "😺", "😸", "😹", "😻", "😼", "😽", "🙀", "😿", "😾", "🫶", "👍", "✌️", "🙏", "🫵", "🤏", "🤌", "☝️", "🖕", "🙏", "🫵", "🫂", "🐱", "🤹‍♀️", "🤹‍♂️", "🗿", "✨", "⚡", "🔥", "🌈", "🩷", "❤️", "🧡", "💛", "💚", "🩵", "💙", "💜", "🖤", "🩶", "🤍", "🤎", "💔", "❤️‍🔥", "❤️‍🩹", "❣️", "💕", "💞", "💓", "💗", "💖", "💘", "💝", "🚩", "👊", "⚡️", "💋", "🫰", "💅", "👑", "🐣", "🐤", "🐈"])
+            if (!m.fromMe) return this.sendMessage(m.chat, { react: { text: emot, key: m.key }})
+        }
+    }
+}
+global.dfail = (type, m, conn) => { failureHandler(type, conn, m); };
+const file = global.__filename(import.meta.url, true);
+watchFile(file, async () => {
+    unwatchFile(file);
+    console.log(chalk.green('Actualizando "handler.js"'));
+    if (global.conns && global.conns.length > 0 ) {
+        const users = [...new Set([...global.conns.filter((conn) => conn.user && conn.ws.socket && conn.ws.socket.readyState !== ws.CLOSED).map((conn) => conn)])];
+        for (const userr of users) { userr.subreloadHandler(false) }
+    }
+});
