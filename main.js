@@ -14,13 +14,12 @@ import { tmpdir } from 'os'
 import { format } from 'util'
 import pino from 'pino'
 import { Boom } from '@hapi/boom'
-import { makeWASocket, protoType, serialize, makeStore } from './lib/simple.js'
+import { makeWASocket, protoType, serialize } from './lib/simple.js'
 import { Low, JSONFile } from 'lowdb'
-import lodash from 'lodash'
+import lodash from 'lodash' 
 import readline from 'readline'
 import NodeCache from 'node-cache'
 import qrcode from 'qrcode-terminal'
-import { spawn } from 'child_process'
 
 const { proto } = (await import('@whiskeysockets/baileys')).default
 const {
@@ -67,7 +66,7 @@ const __dirname = global.__dirname(import.meta.url)
 global.opts = new Object(yargs(process.argv.slice(2)).exitProcess(false).parse())
 global.prefix = new RegExp(
   '^[' +
-    (global.opts['prefix'] || '‎z/#$%.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') +
+    (opts['prefix'] || '‎z/#$%.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') +
     ']'
 )
 
@@ -82,7 +81,7 @@ global.loadDatabase = async function loadDatabase() {
           clearInterval(this)
           resolve(global.db.data == null ? global.loadDatabase() : global.db.data)
         }
-      }, 1000)
+      }, 1 * 1000)
     )
   if (global.db.data !== null) return
   global.db.READ = true
@@ -99,7 +98,7 @@ global.loadDatabase = async function loadDatabase() {
     antiImg: {},
     ...(global.db.data || {}),
   }
-  global.db.chain = lodash.chain(global.db.data)
+  global.db.chain = lodash.chain(global.db.data) 
 }
 
 global.authFile = `sessions`
@@ -130,18 +129,18 @@ const connectionOptions = {
   retryRequestDelayMs: 10,
   transactionOpts: { maxCommitRetries: 10, delayBetweenTriesMs: 10 },
   maxMsgRetryCount: 15,
-  appStateMacVerification: { patch: false, snapshot: false },
+  appStateMacVerification: {
+    patch: false,
+    snapshot: false,
+  },
   getMessage: async (key) => {
     const jid = jidNormalizedUser(key.remoteJid)
-    const msg = await global.store.loadMessage(jid, key.id)
+    const msg = await store.loadMessage(jid, key.id)
     return msg?.message || ''
   },
 }
 
 global.conn = makeWASocket(connectionOptions)
-
-// Creamos store global
-global.store = makeStore(global.db)
 
 async function handleLogin() {
   if (conn.authState.creds.registered) {
@@ -149,32 +148,48 @@ async function handleLogin() {
     return
   }
 
-  let loginMethod = (await question(
+  let loginMethod = await question(
     chalk.green(
       '¿Cómo deseas iniciar sesión?\nEscribe "qr" para escanear el código QR o "code" para usar un código de 8 dígitos:\n'
     )
-  )).toLowerCase().trim()
+  )
+
+  loginMethod = loginMethod.toLowerCase().trim()
 
   if (loginMethod === 'code') {
-    let phoneNumber = (await question(chalk.blue('Ingresa el número de WhatsApp donde estará el bot (incluye código país, ej: 521XXXXXXXXXX):\n'))).replace(/\D/g, '')
-    if (phoneNumber.startsWith('52') && phoneNumber.length === 12) phoneNumber = `521${phoneNumber.slice(2)}`
-    else if (phoneNumber.startsWith('52')) phoneNumber = `521${phoneNumber.slice(2)}`
-    else if (phoneNumber.startsWith('0')) phoneNumber = phoneNumber.replace(/^0/, '')
+    let phoneNumber = await question(chalk.blue('Ingresa el número de WhatsApp donde estará el bot (incluye código país, ej: 521XXXXXXXXXX):\n'))
+    phoneNumber = phoneNumber.replace(/\D/g, '') // Solo números
+
+
+    if (phoneNumber.startsWith('52') && phoneNumber.length === 12) {
+      phoneNumber = `521${phoneNumber.slice(2)}`
+    } else if (phoneNumber.startsWith('52')) {
+      phoneNumber = `521${phoneNumber.slice(2)}`
+    } else if (phoneNumber.startsWith('0')) {
+      phoneNumber = phoneNumber.replace(/^0/, '')
+    }
 
     if (typeof conn.requestPairingCode === 'function') {
       try {
+
         if (conn.ws.readyState === ws.OPEN) {
           let code = await conn.requestPairingCode(phoneNumber)
           code = code?.match(/.{1,4}/g)?.join('-') || code
           console.log(chalk.cyan('Tu código de emparejamiento es:', code))
-        } else console.log(chalk.red('La conexión no está abierta. Intenta nuevamente.'))
+        } else {
+          console.log(chalk.red('La conexión no está abierta. Intenta nuevamente.'))
+        }
       } catch (e) {
         console.log(chalk.red('Error al solicitar código de emparejamiento:'), e.message || e)
       }
-    } else console.log(chalk.red('Tu versión de Baileys no soporta emparejamiento por código.'))
+    } else {
+      console.log(chalk.red('Tu versión de Baileys no soporta emparejamiento por código.'))
+    }
   } else {
     console.log(chalk.yellow('Generando código QR, escanéalo con tu WhatsApp...'))
-    conn.ev.on('connection.update', ({ qr }) => { if (qr) qrcode.generate(qr, { small: true }) })
+    conn.ev.on('connection.update', ({ qr }) => {
+      if (qr) qrcode.generate(qr, { small: true })
+    })
   }
 }
 
@@ -183,17 +198,17 @@ await handleLogin()
 conn.isInit = false
 conn.well = false
 
-if (!global.opts['test']) {
+if (!opts['test']) {
   if (global.db) {
     setInterval(async () => {
       if (global.db.data) await global.db.write()
-      if (global.opts['autocleartmp']) {
+      if (opts['autocleartmp']) {
         const tmp = [tmpdir(), 'tmp', 'serbot']
         tmp.forEach((filename) => {
           spawn('find', [filename, '-amin', '3', '-type', 'f', '-delete'])
         })
       }
-    }, 30000)
+    }, 30 * 1000)
   }
 }
 
@@ -290,10 +305,16 @@ global.reloadHandler = async function (restartConn) {
     } catch {}
     global.conn.ev.removeAllListeners()
 
+
     const preservedStartTime = global.conn.startTime
+
     global.conn = makeWASocket(connectionOptions)
 
-    if (preservedStartTime) global.conn.startTime = preservedStartTime
+
+    if (preservedStartTime) {
+      global.conn.startTime = preservedStartTime
+    }
+
     isInit = true
   }
 
@@ -306,5 +327,181 @@ global.reloadHandler = async function (restartConn) {
   conn.handler = handler.handler.bind(global.conn)
   conn.connectionUpdate = connectionUpdate.bind(global.conn)
   conn.credsUpdate = saveCreds.bind(global.conn, true)
+
+  conn.ev.on('messages.upsert', conn.handler)
+  conn.ev.on('connection.update', conn.connectionUpdate)
+  conn.ev.on('creds.update', conn.credsUpdate)
+
   isInit = false
+  return true
 }
+
+const pluginFolder = global.__dirname(join(__dirname, './plugins/index'))
+const pluginFilter = (filename) => /\.js$/.test(filename)
+global.plugins = {}
+
+async function filesInit() {
+  for (const filename of readdirSync(pluginFolder).filter(pluginFilter)) {
+    try {
+      const file = global.__filename(join(pluginFolder, filename))
+      const module = await import(file)
+
+
+      let plugin = module.default || module
+
+
+      if (typeof plugin === 'function') {
+
+        plugin = {
+          handler: plugin,
+          command: plugin.command || [],
+          tags: plugin.tags || [],
+          help: plugin.help || [],
+          disabled: false
+        }
+      }
+
+
+      if (plugin.command && typeof plugin.command === 'string') {
+        plugin.command = [plugin.command]
+      }
+
+      global.plugins[filename] = plugin
+
+    } catch (e) {
+      conn.logger.error(`Error cargando plugin ${filename}:`, e)
+      delete global.plugins[filename]
+    }
+  }
+}
+await filesInit()
+
+global.reload = async (_ev, filename) => {
+  if (pluginFilter(filename)) {
+    const dir = global.__filename(join(pluginFolder, filename), true)
+    if (filename in global.plugins) {
+      if (existsSync(dir)) conn.logger.info(`Updated plugin - '${filename}'`)
+      else {
+        conn.logger.warn(`Deleted plugin - '${filename}'`)
+        return delete global.plugins[filename]
+      }
+    } else conn.logger.info(`New plugin - '${filename}'`)
+
+    const err = syntaxerror(readFileSync(dir), filename, {
+      sourceType: 'module',
+      allowAwaitOutsideFunction: true,
+    })
+    if (err) conn.logger.error(`Syntax error while loading '${filename}':\n${format(err)}`)
+    else {
+      try {
+        const module = await import(`${global.__filename(dir)}?update=${Date.now()}`)
+        global.plugins[filename] = module.default || module
+      } catch (e) {
+        conn.logger.error(`Error requiring plugin '${filename}':\n${format(e)}`)
+      } finally {
+        global.plugins = Object.fromEntries(Object.entries(global.plugins).sort(([a], [b]) => a.localeCompare(b)))
+      }
+    }
+  }
+}
+Object.freeze(global.reload)
+
+watch(pluginFolder, global.reload)
+await global.reloadHandler()
+
+
+global.reconnectSubBots = async function() {
+  if (!global.conns || !Array.isArray(global.conns)) {
+    global.conns = []
+  }
+
+  const serbotDir = './Serbot'
+  if (!existsSync(serbotDir)) {
+    console.log(chalk.yellow('No se encontró la carpeta Serbot'))
+    return
+  }
+
+  const subBotFolders = readdirSync(serbotDir).filter(folder => {
+    const folderPath = join(serbotDir, folder)
+    return statSync(folderPath).isDirectory() && existsSync(join(folderPath, 'creds.json'))
+  })
+
+  if (subBotFolders.length === 0) {
+    console.log(chalk.yellow('No se encontraron sub-bots para reconectar'))
+    return
+  }
+
+  console.log(chalk.cyan(`\n🔄 Reconectando ${subBotFolders.length} sub-bots...`))
+
+  for (const folder of subBotFolders) {
+    try {
+      const botPath = join(serbotDir, folder)
+      const credsPath = join(botPath, 'creds.json')
+
+      if (!existsSync(credsPath)) {
+        console.log(chalk.red(`❌ No se encontró creds.json en ${folder}`))
+        continue
+      }
+
+
+      const isAlreadyConnected = global.conns.some(conn => 
+        conn.user && conn.user.jid && conn.user.jid.includes(folder)
+      )
+
+      if (isAlreadyConnected) {
+        console.log(chalk.green(`✅ Sub-bot ${folder} ya está conectado`))
+        continue
+      }
+
+
+      const serbotModule = await import('./plugins/serbot-serbot.js')
+      if (serbotModule.AYBot) {
+        await serbotModule.AYBot({
+          pathAYBot: botPath,
+          m: null,
+          conn: global.conn,
+          args: [],
+          usedPrefix: '.',
+          command: 'qr',
+          fromCommand: false
+        })
+        console.log(chalk.green(`✅ Sub-bot ${folder} reconectado exitosamente`))
+      } else {
+        console.log(chalk.red(`❌ No se pudo importar AYBot para ${folder}`))
+      }
+
+
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+    } catch (error) {
+      console.log(chalk.red(`❌ Error reconectando sub-bot ${folder}:`, error.message))
+    }
+  }
+
+  console.log(chalk.cyan(`\n🎉 Proceso de reconexión de sub-bots completado`))
+}
+
+
+const originalConnectionUpdate = connectionUpdate
+connectionUpdate = async function(update) {
+  await originalConnectionUpdate.call(this, update)
+
+
+  if (update.connection === 'open' && !this.subBotsReconnected) {
+    this.subBotsReconnected = true
+    console.log(chalk.cyan('\nBot principal conectado, iniciando reconexión de sub-bots...'))
+    setTimeout(() => {
+      global.reloadHandler().then(() => {
+        global.reconnectSubBots().catch(console.error)
+      })
+    }, 5000) 
+  }
+}
+
+
+setTimeout(() => {
+  if (global.conn && global.conn.user) {
+    console.log(chalk.cyan('\nIniciando reconexión automática de sub-bots..'))
+    global.reconnectSubBots().catch(console.error)
+  }
+}, 10000) 
