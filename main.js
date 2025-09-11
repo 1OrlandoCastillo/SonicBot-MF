@@ -270,4 +270,35 @@ async function connectionUpdate(update) {
 
 process.on('uncaughtException', console.error)
 
-// --- Resto del código de reloadHandler, plugins, sub-bots y reconexión mantiene tu estructura original ---
+let isInit = true
+let handler = await import('./handler.js')
+global.reloadHandler = async function (restartConn) {
+  try {
+    const Handler = await import(`./handler.js?update=${Date.now()}`).catch(console.error)
+    if (Handler && Object.keys(Handler).length) handler = Handler
+  } catch (e) {
+    console.error(e)
+  }
+
+  if (restartConn) {
+    try {
+      if (global.conn.ws) global.conn.ws.close()
+    } catch {}
+    global.conn.ev.removeAllListeners()
+
+    const preservedStartTime = global.conn.startTime
+    global.conn = makeWASocket(connectionOptions)
+
+    if (preservedStartTime) global.conn.startTime = preservedStartTime
+    isInit = true
+  }
+
+  if (!isInit) {
+    conn.ev.off('messages.upsert', conn.handler)
+    conn.ev.off('connection.update', conn.connectionUpdate)
+    conn.ev.off('creds.update', conn.credsUpdate)
+  }
+
+  conn.handler = handler.handler.bind(global.conn)
+  conn.connectionUpdate = connectionUpdate.bind(global.conn)
+  conn.credsUpdate = saveCreds.bind(global.conn, true)
