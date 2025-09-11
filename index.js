@@ -10,7 +10,7 @@ import cfonts from 'cfonts'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const require = createRequire(__dirname)
 
-// Mensajes iniciales con CFonts
+// 🎨 Mensajes iniciales
 cfonts.say('Sonic Bot', {
   font: 'block',
   align: 'center',
@@ -30,35 +30,41 @@ async function launch(scripts) {
   isWorking = true
 
   for (const script of scripts) {
-    const scriptPath = join(__dirname, script)
-    const args = [scriptPath, ...process.argv.slice(2)]
+    try {
+      const scriptPath = join(__dirname, script)
+      const args = [scriptPath, ...process.argv.slice(2)]
 
-    setupMaster({
-      exec: scriptPath,
-      args: args.slice(1),
-    })
+      console.log(`🚀 Iniciando ${script}...`)
 
-    const child = fork()
+      setupMaster({
+        exec: scriptPath,
+        args: args.slice(1),
+      })
 
-    child.on('exit', (code) => {
-      console.log(`⚠️ Script ${script} finalizó con código ${code}`)
-      isWorking = false
+      const child = fork()
 
-      // Reiniciar script solo si no fue finalización normal
-      if (code !== 0) {
-        console.log(`🔄 Reiniciando ${script}...`)
+      child.on('exit', (code, signal) => {
+        console.log(`⚠️ Script ${script} finalizó con código ${code} (signal: ${signal})`)
+        isWorking = false
+
+        if (code !== 0) {
+          console.log(`🔄 Reiniciando ${script}...`)
+          launch(scripts)
+        }
+      })
+
+      // Hot reload: reinicia si el archivo cambia
+      watchFile(scriptPath, () => {
+        unwatchFile(scriptPath)
+        console.log(`♻️ Archivo ${script} actualizado, reiniciando...`)
         launch(scripts)
-      }
-    })
-
-    // Hot reload: si el archivo cambia, reinicia el script
-    watchFile(scriptPath, () => {
-      unwatchFile(scriptPath)
-      console.log(`♻️ Archivo ${script} actualizado, reiniciando...`)
-      launch(scripts)
-    })
+      })
+    } catch (err) {
+      console.error(`❌ Error al intentar iniciar ${script}:`, err)
+      isWorking = false
+    }
   }
 }
 
-// 🚀 Iniciar el bot desde main.js
+// 🟢 Iniciar main.js
 launch(['main.js'])
