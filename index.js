@@ -1,4 +1,4 @@
-console.log('⧉ Inicializando Anya...')
+console.log('⧉ Inicializando Sonic Bot...')
 
 import { join, dirname } from 'path'
 import { createRequire } from 'module'
@@ -11,13 +11,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const require = createRequire(__dirname)
 
 // Mensajes iniciales con CFonts
-cfonts.say('Kiyomi\nUchiha', {
+cfonts.say('Sonic Bot', {
   font: 'block',
   align: 'center',
   gradient: ['cyan', 'blue']
 })
 
-cfonts.say('WhatsApp Multi-Bot Engine', {
+cfonts.say('WhatsApp Multi-Device', {
   font: 'simple',
   align: 'center',
   gradient: ['blue', 'white']
@@ -60,5 +60,5 @@ async function launch(scripts) {
   }
 }
 
-// Iniciar main.js
+// 🚀 Iniciar el bot desde main.js
 launch(['main.js'])
