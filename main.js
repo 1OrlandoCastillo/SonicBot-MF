@@ -14,12 +14,13 @@ import { tmpdir } from 'os'
 import { format } from 'util'
 import pino from 'pino'
 import { Boom } from '@hapi/boom'
-import { makeWASocket, protoType, serialize } from './lib/simple.js'
+import { makeWASocket, protoType, serialize, makeStore } from './lib/simple.js'
 import { Low, JSONFile } from 'lowdb'
 import lodash from 'lodash'
 import readline from 'readline'
 import NodeCache from 'node-cache'
 import qrcode from 'qrcode-terminal'
+import { spawn } from 'child_process'
 
 const { proto } = (await import('@whiskeysockets/baileys')).default
 const {
@@ -66,7 +67,7 @@ const __dirname = global.__dirname(import.meta.url)
 global.opts = new Object(yargs(process.argv.slice(2)).exitProcess(false).parse())
 global.prefix = new RegExp(
   '^[' +
-    (opts['prefix'] || '‎z/#$%.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') +
+    (global.opts['prefix'] || '‎z/#$%.\\-').replace(/[|\\{}()[\]^$+*?.\-\^]/g, '\\$&') +
     ']'
 )
 
@@ -132,12 +133,15 @@ const connectionOptions = {
   appStateMacVerification: { patch: false, snapshot: false },
   getMessage: async (key) => {
     const jid = jidNormalizedUser(key.remoteJid)
-    const msg = await store.loadMessage(jid, key.id)
+    const msg = await global.store.loadMessage(jid, key.id)
     return msg?.message || ''
   },
 }
 
 global.conn = makeWASocket(connectionOptions)
+
+// Creamos store global
+global.store = makeStore(global.db)
 
 async function handleLogin() {
   if (conn.authState.creds.registered) {
@@ -179,11 +183,11 @@ await handleLogin()
 conn.isInit = false
 conn.well = false
 
-if (!opts['test']) {
+if (!global.opts['test']) {
   if (global.db) {
     setInterval(async () => {
       if (global.db.data) await global.db.write()
-      if (opts['autocleartmp']) {
+      if (global.opts['autocleartmp']) {
         const tmp = [tmpdir(), 'tmp', 'serbot']
         tmp.forEach((filename) => {
           spawn('find', [filename, '-amin', '3', '-type', 'f', '-delete'])
@@ -302,3 +306,5 @@ global.reloadHandler = async function (restartConn) {
   conn.handler = handler.handler.bind(global.conn)
   conn.connectionUpdate = connectionUpdate.bind(global.conn)
   conn.credsUpdate = saveCreds.bind(global.conn, true)
+  isInit = false
+}
