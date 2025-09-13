@@ -15,7 +15,7 @@ let handler = async (m, { conn }) => {
   });
 
   // Construir mensaje bonito
-  let mensaje = `*🎩 Total de Funciones*: ${totalf}\n\n`;
+  let mensaje = `✅ 𝖳𝖮𝖳𝖠𝖫 𝖣𝖤 𝖢𝖮𝖬𝖠𝖭𝖣𝖮𝖲 SONICBOT-MF: ${totalf}\n\n`;
   for (let tag in categorias) {
     mensaje += `*📂 ${tag.toUpperCase()}*\n`;
     categorias[tag].forEach(cmd => {
