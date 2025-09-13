@@ -1,143 +1,95 @@
-import fetch from "node-fetch";
-import yts from "yt-search";
-import axios from "axios";
+import yts from 'yt-search';
+import fetch from 'node-fetch';
+const limit = 100;
 
-const dev = "SonicBot-MF";
+const isYTUrl = (url) => /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/i.test(url);
 
-const formatAudio = ['mp3', 'm4a', 'webm', 'acc', 'flac', 'opus', 'ogg', 'wav'];
-const formatVideo = ['360', '480', '720', '1080', '1440', '4k'];
-
-// === ddownr helper ===
-const ddownr = {
-  download: async (url, format) => {
-    if (!formatAudio.includes(format) && !formatVideo.includes(format)) {
-      throw new Error("Formato no soportado.");
-    }
-
-    const config = {
-      method: 'GET',
-      url: `https://p.oceansaver.in/ajax/download.php?format=${format}&url=${encodeURIComponent(url)}&api=dfcb6d76f2f6a9894gjkege8a4ab232222`,
-      headers: { 'User-Agent': 'Mozilla/5.0' }
-    };
-
-    const response = await axios.request(config);
-    if (response.data?.success) {
-      const { id, title, info } = response.data;
-      const downloadUrl = await ddownr.cekProgress(id);
-      return { id, image: info.image, title, downloadUrl };
-    }
-    throw new Error('Fallo al obtener datos del video.');
-  },
-
-  cekProgress: async (id) => {
-    const config = {
-      method: 'GET',
-      url: `https://p.oceansaver.in/ajax/progress.php?id=${id}`,
-      headers: { 'User-Agent': 'Mozilla/5.0' }
-    };
-
-    let intentos = 0;
-    while (intentos < 20) {
-      const response = await axios.request(config);
-      if (response.data?.success && response.data.progress >= 100) {
-        return response.data.download_url;
-      }
-      await new Promise(r => setTimeout(r, 5000));
-      intentos++;
-    }
-    throw new Error("Timeout esperando descarga.");
-  }
-};
-
-// === Handler ===
 const handler = async (m, { conn, text, command }) => {
   try {
-    if (!text?.trim()) return conn.reply(m.chat, '✎ Ingresa el nombre de la música.', m);
-
-    const search = await yts(text);
-    if (!search.all?.length) return m.reply('No se encontraron resultados.');
-
-    const videoInfo = search.all.find(v => !!v.ago) || search.all[0];
-    const { title, thumbnail, timestamp, views, ago, url } = videoInfo;
-
-    const thumb = (await conn.getFile(thumbnail)).data;
-    const vistaTexto = formatViews(views);
-    const mensaje = `🎶 *Título:* ${title}\n📀 *Duración:* ${timestamp}\n👁️ *Vistas:* ${vistaTexto}\n📌 *Canal:* ${videoInfo.author.name || 'Desconocido'}\n🕒 *Publicado:* ${ago}\n🔗 *Enlace:* ${url}`;
-
-    await conn.reply(m.chat, mensaje, m, {
-      contextInfo: {
-        externalAdReply: {
-          title: "Descarga YouTube",
-          body: "Downloader",
-          mediaUrl: url,
-          sourceUrl: url,
-          thumbnail: thumb,
-          renderLargerThumbnail: true
-        }
-      }
-    });
-
-    // === Audio ===
-    if (['play', 'yta', 'mp3', 'ytmp3', 'playaudio'].includes(command)) {
-      try {
-        const api = await ddownr.download(url, 'mp3');
-        await conn.sendMessage(m.chat, { audio: { url: api.downloadUrl }, mimetype: "audio/mpeg" }, { quoted: m });
-      } catch {
-        const api = await fetch(`https://api.stellarwa.xyz/dow/ytmp3?url=${url}&apikey=proyectsV2`).then(r => r.json());
-        if (!api.data?.dl) throw new Error();
-        await conn.sendMessage(m.chat, {
-          audio: { url: api.data.dl },
-          fileName: `${api.data.title}.mp3`,
-          mimetype: 'audio/mpeg'
-        }, { quoted: m });
-      }
+    if (!text.trim()) {
+      return conn.reply(m.chat, `🕸 Ingresa el nombre de la música o una URL de YouTube.`, m);
     }
 
-    // === Audio DOC ===
-    else if (['play3', 'ytadoc', 'playdoc', 'ytmp3doc'].includes(command)) {
-      const api = await ddownr.download(url, 'mp3');
-      await conn.sendMessage(m.chat, { document: { url: api.downloadUrl }, mimetype: "audio/mpeg", fileName: `${title}`, caption: `${dev} Aquí tienes tu audio` }, { quoted: m });
+    const esURL = isYTUrl(text);
+    let url, title;
+
+    if (!esURL) {
+      const search = await yts(text);
+      if (!search.all.length) return m.reply('🍁 No se encontraron resultados.');
+
+      const videoInfo = search.all[0];
+      ({ title, url } = videoInfo);
+
+      const vistas = (videoInfo.views || 0).toLocaleString();
+      const canal = videoInfo.author?.name || 'Desconocido';
+      const infoMessage = `˚∩　ׅ　🅨𝗈𝗎𝖳𝗎𝖻𝖾 🅟𝗅𝖺𝗒　ׄᰙ　ׅ
+
+> 🕸̴𖫲᮫ִ۫𝆬  Descargando › *${title}*
+
+𖣣ֶㅤ֯⌗ 🐤 ׄ ⬭ Canal › *${canal}*
+𖣣ֶㅤ֯⌗ 🌿 ׄ ⬭ Duración › *${videoInfo.timestamp}*
+𖣣ֶㅤ֯⌗ 🌾 ׄ ⬭ Vistas › *${vistas}*
+𖣣ֶㅤ֯⌗ ⭐ ׄ ⬭ Publicado › *${videoInfo.ago}*
+𖣣ֶㅤ֯⌗ 🥙 ׄ ⬭ Enlace › *${url}*
+
+${dev}`;
+
+      const thumb = (await conn.getFile(videoInfo.thumbnail))?.data;
+      await conn.sendMessage(m.chat, { image: thumb, caption: infoMessage }, { quoted: m });
+    } else {
+      url = text;
     }
 
-    // === Video ===
-    else if (['play2', 'ytv', 'mp4', 'play4', 'ytvdoc', 'play2doc', 'ytmp4doc'].includes(command)) {
-      const docMode = ['play4', 'ytvdoc', 'play2doc', 'ytmp4doc'].includes(command);
-      const fuentes = [
-        { sistema: "Stellar", url: `https://api.stellarwa.xyz/dow/ytmp4?url=${encodeURIComponent(url)}&apikey=proyectsV2` },
-        { sistema: "SiputzX", url: `https://api.siputzx.my.id/api/d/ytmp4?url=${url}` }
-      ];
-      for (let fuente of fuentes) {
-        try {
-          const res = await fetch(fuente.url).then(r => r.json());
-          const dl = res?.data?.dl || res?.result?.download?.url;
-          if (dl) {
-            const objeto = {
-              [docMode ? 'document' : 'video']: { url: dl },
-              fileName: `${title}.mp4`,
-              mimetype: 'video/mp4',
-              caption: `✅ ${docMode ? "Documento" : "Video"} desde *${fuente.sistema}*`,
-              thumbnail: thumb
-            };
-            await conn.sendMessage(m.chat, objeto, { quoted: m });
-            return;
-          }
-        } catch (e) {
-          console.error(`Error con ${fuente.sistema}:`, e.message);
-        }
-      }
-      return m.reply("✱ No se encontró un enlace de descarga válido.");
-    }
+    if (['play', 'mp3', 'playaudio', 'ytmp3'].includes(command)) {
+      const response = await fetch(`${api.url}/dow/ytmp3v2?url=${encodeURIComponent(url)}&apikey=${api.key}`);
+      const result = await response.json();
 
-  } catch (error) {
-    console.error("Error general:", error);
-    return m.reply(`𓁏 *Error:* ${error.message}`);
+      if (!result.status || !result.data) return m.reply('🐼 Error al descargar el audio.');
+
+      const { dl, title } = result.data;
+
+      await conn.sendMessage(
+        m.chat,
+        {
+          audio: { url: dl },
+          fileName: `${title}.mp3`,
+          mimetype: 'audio/mpeg',
+          ptt: true
+        },
+        { quoted: m }
+      );
+    } else if (['play2', 'mp4', 'playvideo', 'ytmp4'].includes(command)) {
+      const response = await fetch(`${api.url}/dow/ytmp4v2?url=${url}&apikey=${api.key}`);
+      const result = await response.json();
+
+      if (!result.status || !result.data) return m.reply('🐼 Error al descargar el video.');
+
+      const { dl, title } = result.data;
+
+      const res = await fetch(dl);
+      const contentLength = res.headers.get('Content-Length');
+      const fileSize = parseInt(contentLength || '0', 10) / (1024 * 1024);
+      const asDocument = fileSize >= limit;
+
+      await conn.sendMessage(
+        m.chat,
+        {
+          video: { url: dl },
+          fileName: `${title}.mp4`,
+          mimetype: 'video/mp4',
+          caption: dev,
+         // ptv: true,
+          asDocument
+        },
+        { quoted: m }
+      );
+     } 
+  } catch (e) {
+    await m.reply('🕸 Error.');
   }
 };
 
-handler.command = handler.help = ['play', 'play2', 'mp3', 'yta', 'mp4', 'ytv', 'play3', 'ytadoc', 'playdoc', 'ytmp3doc', 'play4', 'ytvdoc', 'play2doc', 'ytmp4doc'];
-handler.tags = ['downloader'];
-export default handler;
+handler.command = handler.help = ['play', 'mp3', 'playaudio', 'ytmp3', 'play2', 'mp4', 'playvideo', 'ytmp4'];
+handler.tags = ['dow'];
 
-function formatViews(views) {
-  return views >= 1000 ? `${(views / 1000).toFixed(1)}k (${views.toLocaleString()})` : views.toString();
-}
+export default handler;
