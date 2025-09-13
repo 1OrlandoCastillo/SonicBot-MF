@@ -13,9 +13,12 @@ export default {
     if (!m.isGroup) return m.reply('❌ Este comando solo funciona en grupos')
     if (!isAdmin && !isOwner) return m.reply('❌ Solo los administradores pueden usar este comando')
 
+    // 🔹 Asegurar que existe el objeto chats
+    if (!global.db.data.chats) global.db.data.chats = {}
+
     const chatId = m.chat
 
-    // 🔹 Siempre inicializar la configuración si no existe
+    // 🔹 Inicializar config si no existe
     if (!global.db.data.chats[chatId]) {
       global.db.data.chats[chatId] = {
         welcome: { text: '👋 Bienvenido @user', enabled: false },
@@ -63,9 +66,10 @@ export default {
   }
 }
 
-// 🔹 Listener global (cuando entran o salen usuarios)
+// 🔹 Listener de entradas/salidas
 global.conn.ev.on('group-participants.update', async ({ id, participants, action }) => {
   try {
+    if (!global.db.data.chats) global.db.data.chats = {}
     const chat = global.db.data.chats[id]
     if (!chat) return
 
