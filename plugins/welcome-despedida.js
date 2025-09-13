@@ -1,4 +1,4 @@
-// plugins/welcome.js
+// plugins/welcome-despedida.js
 export default {
   command: ['setwelcome', 'setdespedida', 'welcome', 'despedida'],
   tags: ['group'],
@@ -14,9 +14,13 @@ export default {
     if (!isAdmin && !isOwner) return m.reply('❌ Solo los administradores pueden usar este comando')
 
     const chatId = m.chat
-    global.db.data.chats[chatId] = global.db.data.chats[chatId] || {
-      welcome: { text: '👋 Bienvenido @user', enabled: false },
-      bye: { text: '👋 Adiós @user', enabled: false }
+
+    // 🔹 Siempre inicializar la configuración si no existe
+    if (!global.db.data.chats[chatId]) {
+      global.db.data.chats[chatId] = {
+        welcome: { text: '👋 Bienvenido @user', enabled: false },
+        bye: { text: '👋 Adiós @user', enabled: false }
+      }
     }
 
     let chatConfig = global.db.data.chats[chatId]
@@ -59,7 +63,7 @@ export default {
   }
 }
 
-// Listener global (maneja entradas/salidas de miembros)
+// 🔹 Listener global (cuando entran o salen usuarios)
 global.conn.ev.on('group-participants.update', async ({ id, participants, action }) => {
   try {
     const chat = global.db.data.chats[id]
