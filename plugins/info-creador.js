@@ -15,12 +15,11 @@ let handler = async (m, { conn }) => {
   // Enviamos el mensaje inicial
   let msg = await conn.sendMessage(m.chat, { text: loading[0] }, { quoted: m });
 
-  // Función para editar el mensaje (compatible con todas las versiones)
+  // Función para editar el mensaje
   const editMessage = async (messageKey, newText) => {
     try {
       await conn.sendMessage(m.chat, { text: newText, edit: messageKey });
     } catch (e) {
-      // fallback: eliminar y enviar de nuevo si no se puede editar
       try { await conn.sendMessage(m.chat, { delete: messageKey }); } catch {}
       msg = await conn.sendMessage(m.chat, { text: newText }, { quoted: m });
     }
@@ -33,13 +32,27 @@ let handler = async (m, { conn }) => {
   }
 
   // Mensaje del bot
-  await conn.sendMessage(m.chat, { text: "⚡ Hola, soy SonicBot-ProMax ⚡\nAquí está el contacto de mi creador" }, { quoted: m });
+  await conn.sendMessage(
+    m.chat, 
+    { text: "⚡ Hola, soy SonicBot-ProMax ⚡\nAquí están los contactos de mis creadores:" }, 
+    { quoted: m }
+  );
 
-  // VCard
-  let vcard = `BEGIN:VCARD\nVERSION:3.0\nN:;White444;;\nFN:White444\nTEL;waid=5212731590195:5212731590195\nEND:VCARD`;
+  // VCards de los 2 owners
+  let vcard1 = `BEGIN:VCARD\nVERSION:3.0\nN:;White444;;\nFN:White444\nTEL;waid=5212731590195:5212731590195\nEND:VCARD`;
+  let vcard2 = `BEGIN:VCARD\nVERSION:3.0\nN:;Adri;;\nFN:Adri\nTEL;waid=5215514638457:5215514638457\nEND:VCARD`;
+
   await conn.sendMessage(
     m.chat,
-    { contacts: { displayName: 'White444', contacts: [{ vcard }] } },
+    { 
+      contacts: { 
+        displayName: 'Owners SonicBot-ProMax', 
+        contacts: [
+          { vcard: vcard1 },
+          { vcard: vcard2 }
+        ] 
+      } 
+    },
     { quoted: m }
   );
 };
