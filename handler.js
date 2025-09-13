@@ -118,8 +118,8 @@ const isBotAdmin = bot?.admin || false
 
 const ___dirname = path.join(path.dirname(fileURLToPath(import.meta.url)), './plugins')  
 
-global.idcanal = '120363411154070926@newsletter'  
-global.namecanal = 'SonicBot-MF X Adri🤴🏻-Pitudo'  
+global.idcanal = '120363403143798163@newsletter'  
+global.namecanal = 'LOVELLOUD Official Channel'  
 global.rcanal = {  
   contextInfo: {  
     isForwarded: true,  
@@ -670,4 +670,441 @@ if (m.isGroup && global.db.data.antiCaracter && global.db.data.antiCaracter[m.ch
     if (!isAdmin) {
       try {
 
-        await this.sendMessage(m.chat, { delete
+        await this.sendMessage(m.chat, { delete: m.key })
+
+
+        await this.sendMessage(m.chat, {
+          text: `@${m.sender.split('@')[0]} el mensaje excede el límite de ${global.db.data.antiCaracter[m.chat].limit} caracteres permitidos, serás eliminado.`,
+          contextInfo: {
+            ...rcanal.contextInfo,
+            mentionedJid: [m.sender]
+          }
+        }, { quoted: m })
+
+
+        await this.groupParticipantsUpdate(m.chat, [m.sender], 'remove')
+
+      } catch (error) {
+        console.error('Error en anti-caracteres:', error)
+
+        try {
+          await this.sendMessage(m.chat, { delete: m.key })
+          await this.sendMessage(m.chat, {
+            text: `@${m.sender.split('@')[0]} el mensaje excede el límite de ${global.db.data.antiCaracter[m.chat].limit} caracteres permitidos, serás eliminado.`,
+            contextInfo: {
+              ...rcanal.contextInfo,
+              mentionedJid: [m.sender]
+            }
+          }, { quoted: m })
+        } catch (e) {
+          console.error('Error eliminando mensaje con caracteres excesivos:', e)
+        }
+      }
+      return
+    }
+  }
+}
+
+
+if (m.isGroup && global.db.data.soloAdmin && global.db.data.soloAdmin[m.chat] === true) {
+  const str2Regex = str => str.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&')
+  let _prefix = global.prefix
+  let isCommand = (_prefix instanceof RegExp ?
+    _prefix.test(m.text) :
+    Array.isArray(_prefix) ?
+      _prefix.some(p => new RegExp(str2Regex(p)).test(m.text)) :
+      typeof _prefix === 'string' ?
+        new RegExp(str2Regex(_prefix)).test(m.text) :
+        false
+  )
+
+  if (isCommand && !isAdmin && !isOwner) {
+    try {
+      await this.sendMessage(m.chat, {
+        text: `╭─「 ✦ 🔐 ᴍᴏᴅᴏ sᴏʟᴏ-ᴀᴅᴍɪɴs ✦ 」─╮\n│\n╰➺ ✧ @${m.sender.split('@')[0]} el bot está en\n╰➺ ✧ modo *Solo Administradores*\n│\n╰➺ ✧ Solo admins del grupo y\n╰➺ ✧ owners del bot pueden usar comandos\n│\n╰➺ ✧ *Estado:* 🔐 Restringido\n\n> LOVELLOUD Official`,
+        contextInfo: {
+          ...rcanal.contextInfo,
+          mentionedJid: [m.sender]
+        }
+      }, { quoted: m })
+    } catch (error) {
+      console.error('Error en solo-admin:', error)
+    }
+    return
+  }
+}
+
+if (m.text && !commandExecuted && !m.commandExecuted) {
+
+
+  if (!m.isGroup) return
+
+  const str2Regex = str => str.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&')
+  let _prefix = conn.prefix ? conn.prefix : global.prefix
+  let match = (_prefix instanceof RegExp ?  
+    [[_prefix.exec(m.text), _prefix]] :  
+    Array.isArray(_prefix) ?  
+      _prefix.map(p => {  
+        let re = p instanceof RegExp ? p : new RegExp(str2Regex(p))  
+        return [re.exec(m.text), re]  
+      }) :  
+      typeof _prefix === 'string' ?  
+        [[new RegExp(str2Regex(_prefix)).exec(m.text), new RegExp(str2Regex(_prefix))]] :  
+        [[[], new RegExp]]  
+  ).find(p => p[1] && p[0])
+
+  if (match) {
+    const prefixMatch = match[0]
+    const noPrefix = m.text.slice(prefixMatch[0].length).trim()
+    const [commandText, ...args] = noPrefix.split(/\s+/)
+    const command = commandText?.toLowerCase()
+
+    if (command) {
+
+      const fullCommand = prefixMatch[0] + commandText
+      const menuCommand = prefixMatch[0] + 'menu'
+
+
+      let bestSuggestion = null
+      let bestScore = 0
+      const allCommands = []
+
+
+      processedPlugins.forEach(plugin => {
+        if (plugin.command && Array.isArray(plugin.command)) {
+          plugin.command.forEach(cmd => {
+            if (typeof cmd === 'string') {
+              allCommands.push(cmd)
+            }
+          })
+        }
+      })
+
+
+      allCommands.forEach(cmd => {
+        if (cmd.toLowerCase() !== command) {
+          let score = 0
+          const cmdLower = cmd.toLowerCase()
+
+
+          if (command.length === 1) {
+            if (cmdLower.startsWith(command)) score += 50
+            if (cmdLower.includes(command)) score += 30
+          }
+
+
+          if (command.length <= 3) {
+            if (cmdLower.startsWith(command)) score += 40
+            if (cmdLower.includes(command)) score += 25
+          }
+
+
+          if (command.length === cmdLower.length) {
+            let charMatches = 0
+            for (let i = 0; i < command.length; i++) {
+              if (command[i] === cmdLower[i]) charMatches++
+            }
+
+            if (charMatches / command.length >= 0.7) score += 35
+          }
+
+
+          if (cmdLower.includes(command)) score += 20
+
+
+          if (command.includes(cmdLower)) score += 15
+
+
+          if (cmdLower.startsWith(command) || command.startsWith(cmdLower)) score += 10
+
+
+          if (cmdLower.endsWith(command) || command.endsWith(cmdLower)) score += 8
+
+
+          for (let i = 0; i < Math.min(command.length, cmdLower.length); i++) {
+            if (command[i] === cmdLower[i]) score += 3
+          }
+
+
+          if (command.length === cmdLower.length) score += 5
+
+          if (score > bestScore) {
+            bestScore = score
+            bestSuggestion = cmd
+          }
+        }
+      })
+
+      let message = `《✧》El comando *${fullCommand}* no existe en KIYOMI MD.\n\n`
+
+      if (bestSuggestion && bestScore >= 10) {
+
+        const cmdLower = bestSuggestion.toLowerCase()
+        let similarityScore = 0
+
+
+        let charMatches = 0
+        for (let i = 0; i < Math.min(command.length, cmdLower.length); i++) {
+          if (command[i] === cmdLower[i]) charMatches++
+        }
+
+
+        const charSimilarity = charMatches / Math.max(command.length, cmdLower.length)
+
+
+        let contentSimilarity = 0
+        if (cmdLower.includes(command)) contentSimilarity = command.length / cmdLower.length
+        else if (command.includes(cmdLower)) contentSimilarity = cmdLower.length / command.length
+
+
+        let startSimilarity = 0
+        const minLength = Math.min(command.length, cmdLower.length)
+        for (let i = 0; i < minLength; i++) {
+          if (command[i] === cmdLower[i]) startSimilarity += 1
+        }
+        startSimilarity = startSimilarity / minLength
+
+
+        const finalSimilarity = (charSimilarity * 0.4 + contentSimilarity * 0.4 + startSimilarity * 0.2)
+        const percentage = Math.min(100, Math.round(finalSimilarity * 100))
+
+        message += `*Posibilidad de que sea:*\n`
+        message += `╰➺ *${prefixMatch[0]}${bestSuggestion}* (${percentage}%)\n\n`
+      }
+
+      message += `> Por favor usa *${menuCommand}* para ver la lista de comandos disponibles.`
+
+      return conn.sendMessage(m.chat, {
+        text: message,
+        contextInfo: {
+          ...rcanal.contextInfo
+        }
+      }, { quoted: m })
+    }
+  }
+}
+
+global.dfail = (type, m, conn) => {  
+  const msg = {  
+    rowner: `✤ Hola, este comando solo puede ser utilizado por el *Creador* de la Bot.`,  
+    owner: `✤ Hola, este comando solo puede ser utilizado por el *Creador* de la Bot y *Sub Bots*.`,  
+    mods: `✤ Hola, este comando solo puede ser utilizado por los *Moderadores* de la Bot.`,  
+    premium: `✤ Hola, este comando solo puede ser utilizado por Usuarios *Premium*.`,  
+    group: `✤ Hola, este comando solo puede ser utilizado en *Grupos*.`,  
+    private: `✤ Hola, este comando solo puede ser utilizado en mi Chat *Privado*.`,  
+    admin: `✤ Hola, este comando solo puede ser utilizado por los *Administradores* del Grupo.`,  
+    botAdmin: `✤ Hola, la bot debe ser *Administradora* para ejecutar este Comando.`,  
+    unreg: `✤ Hola, para usar este comando debes estar *Registrado.*`,  
+    restrict: `✤ Hola, esta característica está *deshabilitada.*`  
+  }[type]  
+  if (msg) return conn.reply(m.chat, msg, m, rcanal)  
+}
+
+} catch (e) {
+console.error(e)
+} finally {
+if (opts['queque'] && m.text) {
+const quequeIndex = this.msgqueque.indexOf(m.id || m.key.id)
+if (quequeIndex !== -1) this.msgqueque.splice(quequeIndex, 1)
+}
+
+let user, stats = global.db.data.stats  
+if (m) {  
+  if (m.sender && (user = global.db.data.users[m.sender])) {  
+    user.exp += m.exp  
+    user.limit -= m.limit * 1  
+  }  
+
+  let stat  
+  if (m.plugin) {  
+    let now = +new Date  
+    stat = stats[m.plugin] ||= {  
+      total: 0,  
+      success: 0,  
+      last: 0,  
+      lastSuccess: 0  
+    }  
+    stat.total += 1  
+    stat.last = now  
+    if (m.error == null) {  
+      stat.success += 1  
+      stat.lastSuccess = now  
+    }  
+  }  
+}  
+
+try {  
+  if (!opts['noprint']) await (await import(`./lib/print.js`)).default(m, this)  
+} catch (e) {  
+  console.log(m, m.quoted, e)  
+}  
+
+const settingsREAD = global.db.data.settings[this.user.jid] || {}
+
+
+const isSubBot = this.user.jid !== global.conn.user.jid
+let shouldAutoRead = true
+
+if (isSubBot) {
+  try {
+    const botNumber = this.user.jid.split('@')[0].replace(/\D/g, '')
+    const configPath = `./Serbot/${botNumber}/config.json`
+
+    if (existsSync(configPath)) {
+      const config = JSON.parse(readFileSync(configPath, 'utf-8'))
+
+      if (config.autoRead === false) {
+        shouldAutoRead = false
+      }
+    }
+  } catch (error) {
+
+    console.error('Error leyendo configuración de auto-leer:', error)
+  }
+}
+
+
+if (shouldAutoRead) {
+  try {
+    await this.readMessages([m.key])
+
+    if (m.isGroup) {
+      await this.readMessages([m.key], { readEphemeral: true })
+    }
+  } catch (e) {
+    console.error('Error al marcar como leído:', e)
+  }
+
+  if (m.isGroup && global.db.data.modoIA && global.db.data.modoIA[m.chat] === true && m.text && !m.fromMe) {
+    try {
+
+      const { callGeminiAPI, isLikelyCommand } = await import('./lib/geminiAPI.js')
+
+
+      if (isLikelyCommand(m.text)) return
+
+
+      if (m.text.trim().length < 3) return
+
+
+      if (/^[\s\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]*$/u.test(m.text)) return
+
+
+      const userName = m.pushName || m.name || 'Usuario'
+      const groupName = await this.getName(m.chat) || 'Grupo'
+
+
+      await this.sendPresenceUpdate('composing', m.chat)
+
+
+      const response = await callGeminiAPI(m.text, userName, groupName, m.chat)
+
+
+      if (response && response.length > 0) {
+        await this.sendMessage(m.chat, {
+          text: response,
+          contextInfo: {
+            ...rcanal.contextInfo
+          }
+        }, { quoted: m })
+      }
+
+    } catch (error) {
+      console.error('Error en Modo IA:', error)
+
+    }
+  }
+
+
+if (m.isGroup && global.db.data.modoHot && global.db.data.modoHot[m.chat] === true && m.text && !m.fromMe) {
+  try {
+
+    const { callGeminiHotAPI, isLikelyCommand } = await import('./lib/geminiAPI.js')
+
+
+    if (isLikelyCommand(m.text)) return
+
+
+    if (m.text.trim().length < 3) return
+
+
+    if (/^[\s\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]*$/u.test(m.text)) return
+
+
+    const userName = m.pushName || m.name || 'Usuario'
+    const groupName = await this.getName(m.chat) || 'Grupo'
+
+
+    await this.sendPresenceUpdate('composing', m.chat)
+
+
+    const response = await callGeminiHotAPI(m.text, userName, groupName, m.chat)
+
+
+    if (response && response.length > 0) {
+      await this.sendMessage(m.chat, {
+        text: response,
+        contextInfo: {
+          ...rcanal.contextInfo
+        }
+      }, { quoted: m })
+    }
+
+  } catch (error) {
+    console.error('Error en Modo Hot:', error)
+
+  }
+}
+
+
+if (m.isGroup && global.db.data.modoIlegal && global.db.data.modoIlegal[m.chat] === true && m.text && !m.fromMe) {
+  try {
+
+    const { callGeminiIlegalAPI, isLikelyCommand } = await import('./lib/geminiAPI.js')
+
+
+    if (isLikelyCommand(m.text)) return
+
+
+    if (m.text.trim().length < 3) return
+
+
+    if (/^[\s\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]*$/u.test(m.text)) return
+
+
+    const userName = m.pushName || m.name || 'Usuario'
+    const groupName = await this.getName(m.chat) || 'Grupo'
+
+
+    await this.sendPresenceUpdate('composing', m.chat)
+
+
+    const response = await callGeminiIlegalAPI(m.text, userName, groupName, m.chat)
+
+
+    if (response && response.length > 0) {
+      await this.sendMessage(m.chat, {
+        text: response,
+        contextInfo: {
+          ...rcanal.contextInfo
+        }
+      }, { quoted: m })
+    }
+
+  } catch (error) {
+    console.error('Error en Modo Ilegal:', error)
+
+  }
+}
+
+}
+
+}
+}
+
+let file = global.__filename(import.meta.url, true)
+watchFile(file, async () => {
+unwatchFile(file)
+console.log(chalk.magenta("Se actualizó 'handler.js'"))
+if (global.reloadHandler) console.log(await global.reloadHandler())
+})
