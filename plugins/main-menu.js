@@ -1,6 +1,12 @@
 import { promises as fs } from 'fs'
-import { join } from 'path'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+import fetch from 'node-fetch'
 import { xpRange } from '../lib/levelling.js'
+
+// Definir __dirname en ESModules
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 let tags = {
   'ADRIPENUDO': '👑「 *`MENUS SONIBOT-MF`* 」👑',
@@ -22,7 +28,7 @@ let tags = {
   'logos': '「EDICION LOGOS」🍨', 
 }
 
-const vid = 'https://files.catbox.moe/wsm4rs.jpg';
+const vid = 'https://files.catbox.moe/wsm4rs.jpg'
 
 const defaultMenu = {
   before: `*•:•:•:•:•:•:•:•:•:•☾☼☽•:•.•:•.•:•:•:•:•:•*
@@ -46,7 +52,7 @@ const defaultMenu = {
   after: '> ¡Gracias por usar el bot!',
 }
 
-let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
+let handler = async (m, { conn, usedPrefix: _p }) => {
   try {
     // Cargar package.json
     let _package = JSON.parse(await fs.readFile(join(__dirname, '../package.json')).catch(_ => '{}')) || {}
@@ -124,7 +130,7 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
       '%': '%',
       p: _p,
       uptime, muptime,
-      me: await conn.getName(conn.user.jid),
+      me: await conn.getName(conn.user.id), // ✅ Ajustado
       taguser: '@' + m.sender.split('@')[0],
       npmname: _package.name || '',
       npmdesc: _package.description || '',
@@ -138,10 +144,16 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
       readmore: readMore
     }
 
-    let text = _text.replace(new RegExp(`%(${Object.keys(replace).sort((a,b)=>b.length-a.length).join('|')})`, 'g'), (_, name) => replace[name] || '')
+    let text = _text.replace(
+      new RegExp(`%(${Object.keys(replace).sort((a,b)=>b.length-a.length).join('|')})`, 'g'),
+      (_, name) => replace[name] || ''
+    )
 
     // Reacción al mensaje
     await m.react('✨')
+
+    // Descargar thumbnail como buffer
+    let thumb = await (await fetch('https://qu.ax/kJBTp.jpg')).buffer()
 
     // Enviar menú
     await conn.sendMessage(m.chat, {
@@ -152,7 +164,7 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
         externalAdReply: {
           title: 'SonicBot-MF',
           body: 'Bot Oficial',
-          thumbnailUrl: 'https://qu.ax/kJBTp.jpg',
+          thumbnail: thumb, // ✅ Usamos buffer en lugar de thumbnailUrl
           sourceUrl: 'https://qu.ax/GEUuj.jpg'
         }
       }
