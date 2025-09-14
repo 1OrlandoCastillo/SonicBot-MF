@@ -118,8 +118,8 @@ const isBotAdmin = bot?.admin || false
 
 const ___dirname = path.join(path.dirname(fileURLToPath(import.meta.url)), './plugins')  
 
-global.idcanal = '120363403143798163@newsletter'  
-global.namecanal = 'LOVELLOUD Official Channel'  
+global.idcanal = '120363411154070926@newsletter'  
+global.namecanal = 'SonicBot-MF X Adri🤴🏻-Pitudo'  
 global.rcanal = {  
   contextInfo: {  
     isForwarded: true,  
@@ -721,7 +721,7 @@ if (m.isGroup && global.db.data.soloAdmin && global.db.data.soloAdmin[m.chat] ==
   if (isCommand && !isAdmin && !isOwner) {
     try {
       await this.sendMessage(m.chat, {
-        text: `╭─「 ✦ 🔐 ᴍᴏᴅᴏ sᴏʟᴏ-ᴀᴅᴍɪɴs ✦ 」─╮\n│\n╰➺ ✧ @${m.sender.split('@')[0]} el bot está en\n╰➺ ✧ modo *Solo Administradores*\n│\n╰➺ ✧ Solo admins del grupo y\n╰➺ ✧ owners del bot pueden usar comandos\n│\n╰➺ ✧ *Estado:* 🔐 Restringido\n\n> LOVELLOUD Official`,
+        text: `╭─「 ✦ 🔐 ᴍᴏᴅᴏ sᴏʟᴏ-ᴀᴅᴍɪɴs ✦ 」─╮\n│\n╰➺ ✧ @${m.sender.split('@')[0]} el bot está en\n╰➺ ✧ modo *Solo Administradores*\n│\n╰➺ ✧ Solo admins del grupo y\n╰➺ ✧ owners del bot pueden usar comandos\n│\n╰➺ ✧ *Estado:* 🔐 Restringido\n\n> SonicBot-MF Official`,
         contextInfo: {
           ...rcanal.contextInfo,
           mentionedJid: [m.sender]
@@ -835,7 +835,7 @@ if (m.text && !commandExecuted && !m.commandExecuted) {
         }
       })
 
-      let message = `《✧》El comando *${fullCommand}* no existe en KIYOMI MD.\n\n`
+      let message = `《✧》El comando *${fullCommand}* no existe en SonicBot MF.\n\n`
 
       if (bestSuggestion && bestScore >= 10) {
 
