@@ -20,12 +20,12 @@ let tags = {
   'emox': '「ANIMES」🍨',
   'database': '「DATABASE」🍨',
   'grupo': '「GRUPOS」🍨',
-  'nable': '「ON / OFF」', 
+  'nable': '「ON / OFF」',
   'descargas': '「DESCARGAS」🍨',
   'tools': '「HERRAMIENTAS」🍨',
   'info': '「INFORMACIÓN」🍨',
   'owner': '「CREADOR」🍨',
-  'logos': '「EDICION LOGOS」🍨', 
+  'logos': '「EDICION LOGOS」🍨',
 }
 
 const vid = 'https://files.catbox.moe/wsm4rs.jpg'
@@ -52,6 +52,16 @@ const defaultMenu = {
   after: '> ¡Gracias por usar el bot!',
 }
 
+// Función segura para obtener nombres
+async function safeGetName(conn, id) {
+  try {
+    if (!id) return 'Usuario'
+    return await conn.getName(id) || id
+  } catch {
+    return id || 'Usuario'
+  }
+}
+
 let handler = async (m, { conn, usedPrefix: _p }) => {
   try {
     // Cargar package.json
@@ -64,7 +74,7 @@ let handler = async (m, { conn, usedPrefix: _p }) => {
     let level = user.level || 1
     let role = user.role || 'Aldeano'
     let { min, xp, max } = xpRange(level, global.multiplier || 1)
-    let name = await conn.getName(m.sender)
+    let name = await safeGetName(conn, m.sender)
 
     // Fecha y hora
     let d = new Date(Date.now() + 3600000)
@@ -78,9 +88,9 @@ let handler = async (m, { conn, usedPrefix: _p }) => {
     // Greeting
     let hour = d.getHours()
     let greeting = (hour >= 0 && hour < 6) ? 'Bᴜᴇɴᴀs Nᴏᴄʜᴇs 🌙'
-                 : (hour < 12) ? 'Bᴜᴇɴᴏs Dɪᴀs 🌞'
-                 : (hour < 18) ? 'Bᴜᴇɴᴀs Tᴀʀᴅᴇs 🌇'
-                 : 'Bᴜᴇɴᴀs Nᴏᴄʜᴇs 🌙'
+      : (hour < 12) ? 'Bᴜᴇɴᴏs Dɪᴀs 🌞'
+      : (hour < 18) ? 'Bᴜᴇɴᴀs Tᴀʀᴅᴇs 🌇'
+      : 'Bᴜᴇɴᴀs Nᴏᴄʜᴇs 🌙'
 
     // Uptime
     let _uptime = process.uptime() * 1000
@@ -130,8 +140,8 @@ let handler = async (m, { conn, usedPrefix: _p }) => {
       '%': '%',
       p: _p,
       uptime, muptime,
-      me: await conn.getName(conn.user.id), // ✅ Ajustado
-      taguser: '@' + m.sender.split('@')[0],
+      me: conn.user ? await safeGetName(conn, conn.user.id || conn.user.jid) : 'SonicBot-MF',
+      taguser: '@' + (m.sender ? m.sender.split('@')[0] : 'user'),
       npmname: _package.name || '',
       npmdesc: _package.description || '',
       version: _package.version || '',
@@ -145,12 +155,12 @@ let handler = async (m, { conn, usedPrefix: _p }) => {
     }
 
     let text = _text.replace(
-      new RegExp(`%(${Object.keys(replace).sort((a,b)=>b.length-a.length).join('|')})`, 'g'),
+      new RegExp(`%(${Object.keys(replace).sort((a, b) => b.length - a.length).join('|')})`, 'g'),
       (_, name) => replace[name] || ''
     )
 
     // Reacción al mensaje
-    await m.react('✨')
+    await m.react?.('✨')
 
     // Descargar thumbnail como buffer
     let thumb = await (await fetch('https://qu.ax/kJBTp.jpg')).buffer()
@@ -164,7 +174,7 @@ let handler = async (m, { conn, usedPrefix: _p }) => {
         externalAdReply: {
           title: 'SonicBot-MF',
           body: 'Bot Oficial',
-          thumbnail: thumb, // ✅ Usamos buffer en lugar de thumbnailUrl
+          thumbnail: thumb,
           sourceUrl: 'https://qu.ax/GEUuj.jpg'
         }
       }
@@ -190,5 +200,5 @@ function clockString(ms) {
   let h = isNaN(ms) ? '--' : Math.floor(ms / 3600000)
   let m = isNaN(ms) ? '--' : Math.floor(ms / 60000) % 60
   let s = isNaN(ms) ? '--' : Math.floor(ms / 1000) % 60
-  return [h,m,s].map(v => v.toString().padStart(2,'0')).join(':')
+  return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':')
 }
