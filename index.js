@@ -1,54 +1,44 @@
-console.log('⧉ Inicializando Anya...')
+@echo off
+REM Verificar si Node.js está instalado
+where node >nul 2>nul
+if %errorlevel% neq 0 (
+    echo [Console @ Ruby-Bot] Node.js no esta instalado. Ejecutando instalador...
+    start /wait node-installer.msi
+) else (
+    echo [Console @ Ruby-Bot] Node.js ya esta instalado.
+)
 
-import { join, dirname } from 'path'
-import { createRequire } from 'module'
-import { fileURLToPath } from 'url'
-import { setupMaster, fork } from 'cluster'
-import { watchFile, unwatchFile } from 'fs'
-import cfonts from 'cfonts'
+REM Verificar si Git está instalado
+where git >nul 2>nul
+if %errorlevel% neq 0 (
+    echo [Console @ Ruby-Bot] Git no esta instalado. Ejecutando instalador...
+    start /wait git-installer.exe
+) else (
+    echo [Console @ Ruby-Bot] Git ya esta instalado.
+)
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const require = createRequire(__dirname)
+REM Verificar si ImageMagick está instalado
+where convert >nul 2>nul
+if %errorlevel% neq 0 (
+    echo [Console @ Ruby-Bot] ImageMagick no esta instalado. Ejecutando instalador...
+    start /wait imagemagick-installer.exe
+) else (
+    echo [Console @ Ruby-Bot] ImageMagick ya esta instalado.
+)
 
-cfonts.say('Kiyomi\nUchiha', {
-  font: 'block',
-  align: 'center',
-  gradient: ['cyan', 'blue']
-})
+REM Ejecutar Git pull
+echo [Console @ Ruby-Bot] Verificando Actualizaciones...
+git pull
 
-cfonts.say('WhatsApp Multi-Bot Engine', {
-  font: 'simple',
-  align: 'center',
-  gradient: ['blue', 'white']
-})
+REM Ejecutar npm install (ignorar crasheo)
+echo [Console @ Ruby-Bot] Instalando Dependencias...
+npm install
+if %errorlevel% neq 0 (
+    echo [Console @ Ruby-Bot] Se detectó un problema después de npm install, pero se ignorará para continuar.
+)
 
-let isWorking = false
+REM Ejecutar node index.js
+echo Ejecutando node index.js...
+node index.js
 
-async function launch(scripts) {
-  if (isWorking) return
-  isWorking = true
-
-  for (const script of scripts) {
-    const args = [join(__dirname, script), ...process.argv.slice(2)]
-
-    setupMaster({
-      exec: args[0],
-      args: args.slice(1),
-    })
-
-    let child = fork()
-
-    child.on('exit', (code) => {
-      isWorking = false
-      launch(scripts)
-
-      if (code === 0) return
-      watchFile(args[0], () => {
-        unwatchFile(args[0])
-        launch(scripts)
-      })
-    })
-  }
-}
-
-launch(['main.js'])
+pause
