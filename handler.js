@@ -6,7 +6,10 @@ import { unwatchFile, watchFile, readFileSync, existsSync } from 'fs'
 import chalk from 'chalk'
 import fetch from 'node-fetch'
 
-const { proto } = (await import('@whiskeysockets/baileys')).default
+// Import robusto de @whiskeysockets/baileys (soporta export en root o en .default)
+const _baileysModule = await import('@whiskeysockets/baileys').catch(() => null)
+const _baileys = _baileysModule?.default || _baileysModule || {}
+const proto = _baileys.proto // puede ser undefined y eso está bien si no se usa aquí
 
 const isNumber = x => typeof x === 'number' && !isNaN(x)
 const delay = ms => isNumber(ms) ? new Promise(resolve => setTimeout(resolve, ms)) : Promise.resolve()
