@@ -1,14 +1,13 @@
-console.log('⧉ Inicializando Anya...')
-
 import { join, dirname } from 'path'
-import { createRequire } from 'module'
 import { fileURLToPath } from 'url'
-import { setupMaster, fork } from 'cluster'
+import cluster from 'cluster'
 import { watchFile, unwatchFile } from 'fs'
 import cfonts from 'cfonts'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const require = createRequire(__dirname)
+const { setupMaster, setupPrimary, fork } = cluster
+
+console.log('⧉ Inicializando Anya...')
 
 cfonts.say('Kiyomi\nUchiha', {
   font: 'block',
@@ -29,24 +28,52 @@ async function launch(scripts) {
   isWorking = true
 
   for (const script of scripts) {
-    const args = [join(__dirname, script), ...process.argv.slice(2)]
+    const execPath = join(__dirname, script)
+    const args = [execPath, ...process.argv.slice(2)]
 
-    setupMaster({
-      exec: args[0],
-      args: args.slice(1),
-    })
-
-    let child = fork()
-
-    child.on('exit', (code) => {
-      isWorking = false
-      launch(scripts)
-
-      if (code === 0) return
-      watchFile(args[0], () => {
-        unwatchFile(args[0])
-        launch(scripts)
+    // Preferir setupPrimary si está disponible (Node >=16+), sino setupMaster
+    const setupFn = setupPrimary || setupMaster
+    try {
+      setupFn({
+        exec: args[0],
+        args: args.slice(1)
       })
+    } catch (e) {
+      console.error('Error en setupMaster/setupPrimary:', e)
+    }
+
+    let child
+    try {
+      child = fork()
+    } catch (e) {
+      console.error(`Error al forkear ${execPath}:`, e)
+      isWorking = false
+      continue
+    }
+
+    child.on('exit', (code, signal) => {
+      console.log(`Worker (${execPath}) exited with code=${code} signal=${signal}`)
+      // permitir relanzar
+      isWorking = false
+
+      // Si salió con código 0, no relanzar inmediatamente
+      if (code === 0) return
+
+      // Reiniciar después de breve retardo para evitar bucles rápidos
+      setTimeout(() => {
+        try { unwatchFile(execPath) } catch {}
+        try { launch(scripts) } catch (e) { console.error('Error relanzando scripts:', e) }
+      }, 1000)
+
+      // Vigilar cambios en el archivo para relanzar cuando se guarde
+      try {
+        watchFile(execPath, () => {
+          try { unwatchFile(execPath) } catch {}
+          try { launch(scripts) } catch (e) { console.error('Error relanzando desde watcher:', e) }
+        })
+      } catch (e) {
+        console.error('Error setting watchFile:', e)
+      }
     })
   }
 }
